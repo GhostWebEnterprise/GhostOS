@@ -1,0 +1,31 @@
+name: GhostOS manifest check
+
+on:
+  push:
+    paths:
+      - 'manifests/**'
+      - 'scripts/**'
+      - '.github/workflows/manifest-check.yml'
+  pull_request:
+    paths:
+      - 'manifests/**'
+      - 'scripts/**'
+      - '.github/workflows/manifest-check.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate XML manifest
+        run: xmllint --noout manifests/ghostos-23.2.xml
+
+      - name: Validate build script
+        run: bash -n scripts/ghostos-build.sh
+
+      - name: Show supported devices
+        run: |
+          grep -E 'android_device_oneplus_(larry|oscaro)' manifests/ghostos-23.2.xml
