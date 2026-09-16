@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <!-- GhostOS device foundation for OnePlus Nord CE 3 Lite 5G (larry). -->
+    <remote name="lineage" fetch="https://github.com/LineageOS/" />
+
+    <project name="android_device_oneplus_larry"
+             path="device/oneplus/larry"
+             remote="lineage"
+             revision="lineage-23.2" />
+
+    <project name="android_device_oneplus_sm6375-common"
+             path="device/oneplus/sm6375-common"
+             remote="lineage"
+             revision="lineage-23.2" />
+
+    <project name="android_kernel_oneplus_sm6375"
+             path="kernel/oneplus/sm6375"
+             remote="lineage"
+             revision="lineage-23.2" />
+</manifest>
