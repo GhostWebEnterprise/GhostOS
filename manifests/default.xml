@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<manifest>
-    <remote name="aosp" fetch="https://android.googlesource.com/" review="https://android-review.googlesource.com/" />
-    <default remote="aosp" revision="refs/heads/android17-release" sync-j="4" />
-
-    <include name="ghostos_larry.xml" />
-</manifest>
