@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "presets": [
+    {
+      "id": "standard",
+      "name": "Standard",
+      "description": "Secure everyday defaults with minimal disruption.",
+      "network": {"route": "direct", "killSwitch": false, "blockTrackers": true, "blockLan": false},
+      "sensors": {"backgroundCamera": false, "backgroundMicrophone": false, "backgroundLocation": "approximate"},
+      "clipboard": {"notifyReads": true, "autoClearSeconds": 120},
+      "usb": {"lockedMode": "charge_only"},
+      "notifications": {"hideSensitiveOnLockscreen": true}
+    },
+    {
+      "id": "private",
+      "name": "Private",
+      "description": "Routes traffic through GhostWeb VPN and tightens privacy controls.",
+      "network": {"route": "ghostweb_vpn", "killSwitch": true, "blockTrackers": true, "blockLan": true},
+      "sensors": {"backgroundCamera": false, "backgroundMicrophone": false, "backgroundLocation": "deny"},
+      "clipboard": {"notifyReads": true, "autoClearSeconds": 30},
+      "usb": {"lockedMode": "charge_only"},
+      "notifications": {"hideSensitiveOnLockscreen": true}
+    },
+    {
+      "id": "maximum",
+      "name": "Maximum",
+      "description": "Maximum isolation for high-risk situations; connectivity may be reduced.",
+      "network": {"route": "tor", "killSwitch": true, "blockTrackers": true, "blockLan": true},
+      "sensors": {"backgroundCamera": false, "backgroundMicrophone": false, "backgroundLocation": "deny"},
+      "clipboard": {"notifyReads": true, "autoClearSeconds": 15},
+      "usb": {"lockedMode": "charge_only"},
+      "notifications": {"hideSensitiveOnLockscreen": true}
+    },
+    {
+      "id": "custom",
+      "name": "Custom",
+      "description": "User-defined policy assembled from GhostMode controls.",
+      "network": {"route": "user_selected", "killSwitch": false, "blockTrackers": true, "blockLan": false},
+      "sensors": {"backgroundCamera": false, "backgroundMicrophone": false, "backgroundLocation": "user_selected"},
+      "clipboard": {"notifyReads": true, "autoClearSeconds": 60},
+      "usb": {"lockedMode": "user_selected"},
+      "notifications": {"hideSensitiveOnLockscreen": true}
+    }
+  ]
+}
