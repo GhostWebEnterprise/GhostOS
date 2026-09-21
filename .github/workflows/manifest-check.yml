@@ -45,11 +45,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [ -d ghostos/ghostmode ]; then
-            find ghostos/ghostmode -type f -name '*.json' -print0 | while IFS= read -r -d '' file; do
-              python3 -m json.tool "$file" >/dev/null
-            done
-          fi
+          find ghostos/ghostmode -type f -name '*.json' -print0 | while IFS= read -r -d '' file; do
+            python3 -m json.tool "$file" >/dev/null
+          done
+
+      - name: Test GhostMode manager and rollback
+        working-directory: ghostos/ghostmode
+        run: python3 -m unittest -v test_manager.py
 
       - name: Show supported devices
         run: |
