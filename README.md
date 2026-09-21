@@ -1,6 +1,12 @@
 # GhostOS
 
+[![Website](https://img.shields.io/badge/Website-ghostweb.bot.cd-0b57d0?style=plastic&logo=googlechrome&logoColor=white)](https://ghostweb.bot.cd)
+[![GitHub](https://img.shields.io/badge/GitHub-GhostWebEnterprise-181717?style=plastic&logo=github&logoColor=white)](https://github.com/GhostWebEnterprise)
+[![Status](https://img.shields.io/badge/Status-In%20Development-orange?style=plastic)](https://ghostweb.bot.cd/ghostos.html)
+
 A privacy-focused Android ROM project with a common GhostOS layer and per-device ports.
+
+**Official GhostWeb project hub:** https://ghostweb.bot.cd
 
 ## Initial target
 
@@ -9,7 +15,7 @@ A privacy-focused Android ROM project with a common GhostOS layer and per-device
 - Architecture: ARM64
 - A/B dynamic partitions
 
-The initial `larry` port is based on the existing open device-tree ecosystem and is intended to be adapted to GhostOS rather than copied blindly. The current public LineageOS tree provides the device-specific foundation and depends on `android_device_oneplus_sm6375-common`.
+The initial `larry` port is based on the existing open device-tree ecosystem and is intended to be adapted to GhostOS rather than copied blindly.
 
 ## Architecture
 
@@ -61,6 +67,6 @@ Device ports are isolated from the common GhostOS layer. A device is not marked 
 
 ## Current status
 
-**Project initialized. `larry` is the first port. More devices are tracked in `devices/README.md`.**
+**Under development and not public-release ready. `larry` is the first port. More devices are tracked in `devices/README.md`.**
 
 This repository contains build orchestration and GhostOS-specific code/configuration. Device-specific proprietary blobs are not redistributed here.
