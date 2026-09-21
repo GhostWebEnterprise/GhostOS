@@ -14,8 +14,8 @@
     {
       "id": "private",
       "name": "Private",
-      "description": "Routes traffic through GhostWeb VPN and tightens privacy controls.",
-      "network": {"route": "ghostweb_vpn", "killSwitch": true, "blockTrackers": true, "blockLan": true},
+      "description": "Tightens privacy controls while keeping routing provider-neutral.",
+      "network": {"route": "direct", "killSwitch": false, "blockTrackers": true, "blockLan": true},
       "sensors": {"backgroundCamera": false, "backgroundMicrophone": false, "backgroundLocation": "deny"},
       "clipboard": {"notifyReads": true, "autoClearSeconds": 30},
       "usb": {"lockedMode": "charge_only"},
