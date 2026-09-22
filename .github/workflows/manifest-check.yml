@@ -10,6 +10,7 @@ on:
       - 'manifests/**'
       - 'scripts/**'
       - 'ghostos/ghostmode/**'
+      - 'tests/**'
       - 'docs/GHOSTMODE-IMPLEMENTATION.md'
       - '.github/workflows/manifest-check.yml'
   pull_request:
@@ -19,6 +20,7 @@ on:
       - 'manifests/**'
       - 'scripts/**'
       - 'ghostos/ghostmode/**'
+      - 'tests/**'
       - 'docs/GHOSTMODE-IMPLEMENTATION.md'
       - '.github/workflows/manifest-check.yml'
   workflow_dispatch:
@@ -52,6 +54,9 @@ jobs:
       - name: Test GhostMode manager and rollback
         working-directory: ghostos/ghostmode
         run: python3 -m unittest -v test_manager.py
+
+      - name: Test GhostMode Android adapter contracts
+        run: python3 -m unittest -v tests/test_ghostmode_android_adapters.py
 
       - name: Show supported devices
         run: |
