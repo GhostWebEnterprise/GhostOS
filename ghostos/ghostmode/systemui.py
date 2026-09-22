@@ -21,7 +21,7 @@ class GhostModeSystemUI:
         return {
             "active": active is not None,
             "label": "GhostMode",
-            "preset": active.get("preset") if active else None,
+            "preset": (active.get("id") or active.get("preset")) if active else None,
             "degraded": bool(degraded),
             "degraded_controls": degraded,
         }
