@@ -37,8 +37,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libxml2-utils
 
-      - name: Validate XML manifest
-        run: xmllint --noout manifests/ghostos-23.2.xml
+      - name: Validate XML manifests
+        run: |
+          xmllint --noout manifests/ghostos-23.2.xml
+          xmllint --noout manifests/ghostos_larry.xml
+
+      - name: Validate larry upstream foundations
+        shell: bash
+        run: |
+          set -euo pipefail
+          for repo in \
+            android_device_oneplus_larry \
+            android_device_oneplus_sm6375-common \
+            android_kernel_oneplus_sm6375; do
+            git ls-remote --exit-code --heads "https://github.com/LineageOS/${repo}.git" lineage-23.2 >/dev/null
+          done
 
       - name: Validate build script
         run: bash -n scripts/ghostos-build.sh
