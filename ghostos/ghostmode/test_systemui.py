@@ -1,15 +1,31 @@
-import json
 import unittest
 from pathlib import Path
 
-from ghostos.ghostmode.manager import GhostModeManager, MemoryAdapter
+from ghostos.ghostmode.manager import GhostModeManager
 from ghostos.ghostmode.systemui import GhostModeSystemUI
+
+
+PRESETS = Path(__file__).with_name("presets.json")
+
+
+class MemoryAdapter:
+    supported = True
+
+    def __init__(self):
+        self.applied = []
+        self.rolled_back = []
+
+    def apply(self, policy):
+        self.applied.append(policy)
+        return policy
+
+    def rollback(self, token):
+        self.rolled_back.append(token)
 
 
 class GhostModeSystemUITest(unittest.TestCase):
     def manager(self):
-        presets = json.loads(Path("ghostos/ghostmode/presets.json").read_text())
-        return GhostModeManager(presets, [MemoryAdapter("host", supported=True)])
+        return GhostModeManager(PRESETS, {"host": MemoryAdapter()})
 
     def test_tile_reflects_activation_and_deactivation(self):
         manager = self.manager()
