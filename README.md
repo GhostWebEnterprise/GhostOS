@@ -8,7 +8,7 @@
 
 [![Website](https://img.shields.io/badge/Website-ghostweb.bot.cd-0b57d0?style=plastic&logo=googlechrome&logoColor=white)](https://ghostweb.bot.cd)
 [![GitHub](https://img.shields.io/badge/GitHub-GhostWebEnterprise-181717?style=plastic&logo=github&logoColor=white)](https://github.com/GhostWebEnterprise)
-[![Status](https://img.shields.io/badge/Status-Under%20Development-orange?style=plastic)](https://ghostweb.bot.cd/ghostos.html)\n[![Need support?](https://img.shields.io/badge/Need%20support%3F-Contact%3A%20support--ghostweb%40proton.me-6D4AFF?style=plastic&logo=protonmail&logoColor=white)](mailto:support-ghostweb@proton.me)
+[![Status](https://img.shields.io/badge/Status-Under%20Development-orange?style=plastic)](https://ghostweb.bot.cd/ghostos.html)[![Need support?](https://img.shields.io/badge/Need%20support%3F-Contact%3A%20support--ghostweb%40proton.me-6D4AFF?style=plastic&logo=protonmail&logoColor=white)](mailto:support-ghostweb@proton.me)
 
 A privacy-focused Android ROM project with a common GhostOS layer and per-device ports.
 
