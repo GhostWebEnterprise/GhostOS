@@ -12,6 +12,8 @@
 
 A privacy-focused Android ROM project with a common GhostOS layer and per-device ports.
 
+
+[![Project Hub](https://img.shields.io/badge/Project%20Hub-ghostweb.bot.cd-0B57D0?style=plastic&logo=googlechrome&logoColor=white)](https://ghostweb.bot.cd/ghostos.html)
 **Official GhostWeb project hub:** https://ghostweb.bot.cd
 
 ## Initial target
