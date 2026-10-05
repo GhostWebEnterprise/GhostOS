@@ -1,3 +1,9 @@
+<div align="center">
+
+<img src="GhostOS_GhostWeb_logo.png" width="220" alt="GhostOS by GhostWeb logo" />
+
+</div>
+
 # GhostOS
 
 [![Website](https://img.shields.io/badge/Website-ghostweb.bot.cd-0b57d0?style=plastic&logo=googlechrome&logoColor=white)](https://ghostweb.bot.cd)
