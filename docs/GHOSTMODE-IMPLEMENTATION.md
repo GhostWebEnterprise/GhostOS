@@ -25,7 +25,7 @@ Transitions must be serialized, locally audited, and rollback reversible when an
 
 ## Phase 3 — policy adapters
 
-- Network: firewall, GhostWeb VPN, Tor, kill switch, LAN policy.
+- Network: firewall, optional Tor routing, kill switch for supported local policies, LAN policy. GhostWeb VPN integration is explicitly out of scope.
 - Privacy: background camera/microphone/location, clipboard notification and expiry.
 - Device: USB locked-mode and sensitive lock-screen notifications.
 - Profiles: optional profile switching/isolation hooks after the profile layer exists.
@@ -41,7 +41,7 @@ Privacy Center receives a GhostMode card with active state, four preset choices,
 - Schema validation in CI.
 - Unit tests for policy resolution and rollback.
 - Integration tests for each adapter.
-- Confirm VPN/Tor route and kill-switch behavior with network tests.
+- Confirm supported firewall/Tor routing and kill-switch behavior with network tests; do not include GhostWeb VPN integration.
 - Confirm USB policy across locked/unlocked transitions.
 - Confirm state restoration after reboot and deactivation.
 - Run device smoke tests on `larry`.
