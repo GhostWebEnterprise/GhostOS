@@ -69,6 +69,14 @@ Common device interface
 12. Flashable images + OTA
 13. Release artifacts
 
+## Optional GhostWeb Signal
+
+GhostWeb Signal can be explicitly enabled with `GHOSTOS_WITH_SIGNAL=true` in
+the build script. It is excluded by default and verified before inclusion as
+an ordinary, upstream-signed app. See
+[`packages/apps/GhostWebSignal/README.md`](packages/apps/GhostWebSignal/README.md)
+for pins, build requirements, Android security behavior and release blockers.
+
 ## Device support policy
 
 Device ports are isolated from the common GhostOS layer. A device is not marked release-ready until its kernel, vendor interface, proprietary extraction, AVB configuration, SELinux policy, boot/recovery path, radio/camera/audio, and OTA path are tested on real hardware.

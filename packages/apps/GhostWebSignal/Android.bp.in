@@ -1,0 +1,16 @@
+// Staged only after APK verification. Keep the original upstream signature.
+android_app_import {
+    name: "GhostWebSignal",
+    apk: "GhostWebSignal.apk",
+    presigned: true,
+    preprocessed: true,
+    // The pinned APK uses compressed JNI with extractNativeLibs=true.
+    // Repacking it would invalidate its v2 signature. ghostos-signal.py verifies
+    // both the signature and this manifest setting before staging these bytes.
+    skip_preprocessed_apk_checks: true,
+    privileged: false,
+    product_specific: true,
+    dex_preopt: {
+        enabled: false,
+    },
+}

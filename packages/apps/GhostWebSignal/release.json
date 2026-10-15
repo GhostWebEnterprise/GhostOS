@@ -1,0 +1,9 @@
+{
+  "tag": "v8.19.2-7",
+  "url": "https://github.com/GhostWebEnterprise/ghost-web-signal/releases/download/v8.19.2-7/GhostWeb-Signal-v8.19.2-7.apk",
+  "package": "org.ghostweb.signal",
+  "version_name": "8.19.2-7",
+  "version_code": 172007,
+  "sha256": "4081a1a8b96f5e3c98aa1656b9b8946a754eab75e3b8c1d97a53a5efb41f47de",
+  "certificate_sha256": "64bb12f28a7d39d2cf921024c6d36019ea3808481bd4471511bd83ca64f20435"
+}
