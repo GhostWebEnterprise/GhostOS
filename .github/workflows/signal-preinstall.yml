@@ -1,0 +1,35 @@
+name: Optional GhostWeb Signal preinstall
+
+on:
+  pull_request:
+    paths:
+      - 'packages/apps/GhostWebSignal/**'
+      - 'scripts/ghostos-*'
+      - 'tests/test_signal_preinstall.py'
+      - '.github/workflows/signal-preinstall.yml'
+  push:
+    branches: [main, 'feat/optional-ghostweb-signal']
+    paths:
+      - 'packages/apps/GhostWebSignal/**'
+      - 'scripts/ghostos-*'
+      - 'tests/test_signal_preinstall.py'
+      - '.github/workflows/signal-preinstall.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate build script
+        run: bash -n scripts/ghostos-build.sh
+      - name: Test preinstall validation and opt-in/out
+        run: python3 -m unittest discover -s tests -p test_signal_preinstall.py -v
+      - name: Install Android verification tools
+        run: sudo apt-get update && sudo apt-get install -y apksigner aapt
+      - name: Verify pinned published APK (no release or ROM publication)
+        run: python3 scripts/ghostos-signal.py
