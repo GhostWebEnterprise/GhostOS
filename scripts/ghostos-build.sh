@@ -17,16 +17,18 @@ usage() {
 command -v repo >/dev/null || { echo "ERROR: repo is required" >&2; exit 1; }
 [[ -f "$MANIFEST" ]] || { echo "ERROR: missing $MANIFEST" >&2; exit 1; }
 
-mkdir -p "$ANDROID_DIR/.repo/local_manifests"
+mkdir -p "$ANDROID_DIR"
+cd "$ANDROID_DIR"
 
-if [[ ! -d "$ANDROID_DIR/.repo" ]]; then
+# A fresh checkout has no .repo/manifest.xml. Initialize it before creating
+# local_manifests; otherwise a new checkout incorrectly skips repo init.
+if [[ ! -f ".repo/manifest.xml" ]]; then
   echo "==> Initializing LineageOS 23.2 source tree"
-  repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs "$ANDROID_DIR"
+  repo init -u https://github.com/LineageOS/android.git -b lineage-23.2 --git-lfs
 fi
 
-cp "$MANIFEST" "$ANDROID_DIR/.repo/local_manifests/ghostos.xml"
-
-cd "$ANDROID_DIR"
+mkdir -p ".repo/local_manifests"
+cp "$MANIFEST" ".repo/local_manifests/ghostos.xml"
 echo "==> Syncing GhostOS device foundation"
 repo sync -c --no-clone-bundle --no-tags -j"$JOBS"
 
