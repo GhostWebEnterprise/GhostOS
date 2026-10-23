@@ -16,6 +16,15 @@ class PlatformBackend(Protocol):
     def restore(self, snapshot: Any) -> None: ...
 
 
+class PartialPolicyApplyError(RuntimeError):
+    """A backend changed state but could not restore its pre-apply snapshot."""
+    rollback_required = True
+
+    def __init__(self, name: str, rollback_token: Any):
+        super().__init__(f"{name} partial apply could not be restored")
+        self.rollback_token = rollback_token
+
+
 @dataclass
 class AndroidPolicyAdapter:
     name: str
@@ -29,7 +38,14 @@ class AndroidPolicyAdapter:
         if self.backend is None:
             raise RuntimeError(f"{self.name} backend unavailable")
         snapshot = self.backend.read()
-        self.backend.apply(policy)
+        try:
+            self.backend.apply(policy)
+        except Exception:
+            try:
+                self.backend.restore(snapshot)
+            except Exception as restore_exc:
+                raise PartialPolicyApplyError(self.name, snapshot) from restore_exc
+            raise
         return snapshot
 
     def rollback(self, snapshot: Any) -> None:
