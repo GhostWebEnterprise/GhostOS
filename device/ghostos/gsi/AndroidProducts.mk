@@ -1,0 +1,1 @@
+PRODUCT_MAKEFILES := $(LOCAL_DIR)/ghostos_arm64.mk

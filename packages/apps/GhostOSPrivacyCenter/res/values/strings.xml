@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GhostOS Privacy</string>
+    <string name="intro">Manage Android privacy controls. Changes are applied by Android Settings.</string>
+    <string name="permissions">Privacy and permissions</string>
+    <string name="location">Location access</string>
+    <string name="vpn">VPN and always-on VPN</string>
+    <string name="network">Network and Private DNS</string>
+    <string name="apps">App permissions and notifications</string>
+    <string name="security">Screen lock and security</string>
+    <string name="unavailable">This Settings page is unavailable on this build.</string>
+    <string name="scope">Experimental AOSP-based build. GrapheneOS-inspired appearance does not provide GrapheneOS device hardening. Camera and microphone controls are available in Android Privacy settings and Quick Settings where supported.</string>
+</resources>
