@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 'feature/ghostmode-*'
+      - 'feature/universal-gsi-larry'
       - 'fix/ghostmode-*'
     paths:
       - 'manifests/**'
@@ -12,6 +13,10 @@ on:
       - 'ghostos/ghostmode/**'
       - 'tests/**'
       - 'docs/GHOSTMODE-IMPLEMENTATION.md'
+      - 'docs/UNIVERSAL-CHECKPOINT.md'
+      - 'device/ghostos/**'
+      - 'vendor/ghostos/**'
+      - 'packages/apps/GhostOSPrivacyCenter/**'
       - '.github/workflows/manifest-check.yml'
   pull_request:
     branches:
@@ -22,6 +27,10 @@ on:
       - 'ghostos/ghostmode/**'
       - 'tests/**'
       - 'docs/GHOSTMODE-IMPLEMENTATION.md'
+      - 'docs/UNIVERSAL-CHECKPOINT.md'
+      - 'device/ghostos/**'
+      - 'vendor/ghostos/**'
+      - 'packages/apps/GhostOSPrivacyCenter/**'
       - '.github/workflows/manifest-check.yml'
   workflow_dispatch:
 
