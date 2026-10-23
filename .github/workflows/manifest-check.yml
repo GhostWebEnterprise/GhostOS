@@ -65,6 +65,9 @@ jobs:
       - name: Validate build script
         run: bash -n scripts/ghostos-build.sh
 
+      - name: Test clean and partial checkout bootstrap
+        run: bash tests/test_build_bootstrap.sh
+
       - name: Validate GhostMode policy files
         shell: bash
         run: |
