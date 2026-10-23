@@ -22,7 +22,8 @@ class GhostModeSystemUI:
             "active": active is not None,
             "label": "GhostMode",
             "preset": (active.get("id") or active.get("preset")) if active else None,
-            "degraded": bool(degraded),
+            "degraded": bool(degraded) or self._manager.get_recovery_required(),
+            "recovery_required": self._manager.get_recovery_required(),
             "degraded_controls": degraded,
         }
 
