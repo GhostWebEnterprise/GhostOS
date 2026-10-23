@@ -26,7 +26,7 @@ booted, or verified. This is an incomplete development checkpoint, not a release
 
 These files are not wired into a synchronized Android checkout yet. They have
 not passed Soong, resource compilation, Java compilation, or runtime testing.
-The old build script and manifests remain unchanged in this checkpoint.
+The existing manifests remain unchanged. The LineageOS bootstrap script was subsequently fixed to initialize `repo` before creating local manifests; this does not validate an Android build.
 
 ## Repository evidence inspected
 
@@ -102,11 +102,10 @@ the earlier request as approval for an unspecified paid subscription or budget.
    builder with sufficient storage/RAM. Keep the checkout on a Linux filesystem.
    Use isolated build workers; do not run untrusted PR code on a persistent
    privileged self-hosted runner or expose release keys to PR jobs.
-2. Fix `scripts/ghostos-build.sh`: it currently creates `.repo/local_manifests`
-   before testing `.repo` existence, so fresh `repo init` is skipped. Run init
-   inside the source directory, before creating local manifests. Separate GSI
-   AOSP and larry LineageOS checkouts; do not mix Android 15 and existing 23.2
-   manifests. Preserve unrelated local manifests.
+2. Validate the corrected `scripts/ghostos-build.sh` bootstrap in a clean
+   Linux source checkout. Keep GSI AOSP and larry LineageOS checkouts separate;
+   do not mix Android 15 and existing 23.2 manifests. Preserve unrelated local
+   manifests.
 3. Add pinned manifests, source staging and target-specific build drivers.
    GSI uses the generic_arm64 BoardConfig; larry uses upstream larry BoardConfig.
    Verify product discovery, lunch release configuration and full dependency
