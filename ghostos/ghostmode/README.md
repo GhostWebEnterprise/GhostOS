@@ -5,7 +5,7 @@ GhostMode is the policy orchestration layer for GhostOS. It provides a single us
 ## Presets
 
 - **Standard** — secure daily defaults, tracker blocking, locked-screen USB charge-only, sensitive notification protection.
-- **Private** — GhostWeb VPN routing, network kill switch, LAN isolation, stricter sensor/clipboard policy.
+- **Private** — Provider-neutral direct routing, LAN isolation, and stricter sensor/clipboard policy; GhostWeb VPN is not integrated.
 - **Maximum** — Tor routing where available, kill switch, LAN isolation, shortest clipboard lifetime and strict background sensor policy.
 - **Custom** — user-controlled policy assembled from the same primitives.
 
@@ -26,8 +26,8 @@ Network       Privacy          Device
 policy        policy           policy
  |               |                |
 Firewall     Sensors          USB restricted
-VPN/Tor      Clipboard        notifications
-Kill switch  permissions      profile hooks
+LAN policy   Clipboard        notifications
+Tor hooks    permissions      profile hooks
 ```
 
 ## Activation contract
@@ -45,7 +45,7 @@ Kill switch  permissions      profile hooks
 - No preset wipes user data.
 - No preset changes credentials, disables emergency calling, or intentionally prevents device recovery.
 - Destructive duress actions are outside GhostMode and must never be enabled implicitly.
-- VPN/Tor unavailability must be visible; GhostMode must not claim protected routing when the requested route is unavailable.
+- Optional routing unavailability must be visible; GhostMode must not claim protected routing when the requested route is unavailable. GhostWeb VPN integration is excluded.
 - Device-specific hooks must be capability checked.
 - Security-sensitive state transitions must be auditable locally without recording message content, browsing content, secrets, or clipboard contents.
 
@@ -55,7 +55,7 @@ Kill switch  permissions      profile hooks
 2. GhostMode Manager service/API.
 3. Privacy Center preset selector and effective-policy preview.
 4. SystemUI Quick Settings tile and active-state indicator.
-5. Firewall / GhostWeb VPN routing provider.
+5. Firewall / network policy adapter (GhostWeb VPN excluded).
 6. Tor provider interface.
 7. Sensor, clipboard, notification and USB policy adapters.
 8. Auditor events and automated tests.

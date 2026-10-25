@@ -26,6 +26,7 @@ class GhostModeManager:
         self._adapters = dict(adapters or {})
         self._active: dict[str, Any] | None = None
         self._snapshot: dict[str, Any] | None = None
+        self._applied: list[tuple[Any, Any]] = []
 
     @staticmethod
     def _validate_presets(raw: Any) -> dict[str, dict[str, Any]]:
@@ -63,6 +64,8 @@ class GhostModeManager:
         return effective
 
     def activate(self, preset: str, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        if self._active is not None:
+            raise PolicyError("deactivate the active GhostMode preset before activating another")
         target = self.preview_policy(preset, overrides)
         previous = copy.deepcopy(self._active)
         applied: list[tuple[Any, Any]] = []
@@ -78,10 +81,24 @@ class GhostModeManager:
                 adapter.rollback(token)
             raise AdapterError("GhostMode transition rolled back") from exc
         self._snapshot = previous
+        self._applied = applied
         self._active = target
         return copy.deepcopy(target)
 
     def deactivate(self) -> None:
+        if self._active is None:
+            return
+        # Restore actual adapter state in reverse apply order. On failure,
+        # retain the active state and only the not-yet-restored snapshots so
+        # SystemUI cannot falsely report that protection was deactivated.
+        for index in range(len(self._applied) - 1, -1, -1):
+            adapter, token = self._applied[index]
+            try:
+                adapter.rollback(token)
+            except Exception as exc:
+                self._applied = self._applied[:index + 1]
+                raise AdapterError("GhostMode deactivation incomplete; rollback must be retried") from exc
+        self._applied = []
         self._active = copy.deepcopy(self._snapshot)
         self._snapshot = None
 

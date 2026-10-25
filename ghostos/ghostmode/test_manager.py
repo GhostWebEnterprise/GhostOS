@@ -58,5 +58,60 @@ class GhostModeManagerTest(unittest.TestCase):
         self.assertEqual(manager.get_degraded_controls(), ["usb"])
 
 
+    def test_deactivation_restores_adapters_in_reverse_order(self):
+        order = []
+
+        class TrackedAdapter(Adapter):
+            def __init__(self, name):
+                super().__init__()
+                self.name = name
+
+            def rollback(self, token):
+                order.append(self.name)
+                super().rollback(token)
+
+        network = TrackedAdapter("network")
+        usb = TrackedAdapter("usb")
+        manager = GhostModeManager(self.path, {"network": network, "usb": usb})
+        manager.activate("standard")
+        manager.deactivate()
+        self.assertEqual(order, ["usb", "network"])
+        self.assertEqual(len(network.rolled_back), 1)
+        self.assertEqual(len(usb.rolled_back), 1)
+        self.assertIsNone(manager.get_active_policy())
+
+    def test_failed_deactivation_keeps_active_state_and_can_retry(self):
+        class FlakyAdapter(Adapter):
+            fail_rollback = True
+
+            def rollback(self, token):
+                if self.fail_rollback:
+                    raise RuntimeError("restore unavailable")
+                super().rollback(token)
+
+        network = Adapter()
+        usb = FlakyAdapter()
+        manager = GhostModeManager(self.path, {"network": network, "usb": usb})
+        manager.activate("standard")
+        with self.assertRaises(AdapterError):
+            manager.deactivate()
+        self.assertIsNotNone(manager.get_active_policy())
+        self.assertEqual(network.rolled_back, [])
+        usb.fail_rollback = False
+        manager.deactivate()
+        self.assertEqual(len(usb.rolled_back), 1)
+        self.assertEqual(len(network.rolled_back), 1)
+        self.assertIsNone(manager.get_active_policy())
+
+    def test_active_preset_cannot_discard_rollback_snapshots(self):
+        manager = GhostModeManager(self.path, {"network": Adapter()})
+        manager.activate("standard")
+        with self.assertRaises(PolicyError):
+            manager.activate("private")
+        self.assertEqual(manager.get_active_policy()["id"], "standard")
+        manager.deactivate()
+        self.assertIsNone(manager.get_active_policy())
+
+
 if __name__ == "__main__":
     unittest.main()
