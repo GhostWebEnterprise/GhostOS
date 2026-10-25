@@ -18,6 +18,7 @@ class GhostModePrivacyCenter:
         active = self._manager.get_active_policy()
         return {
             "active": active is not None,
+            "recovery_required": self._manager.get_recovery_required(),
             "active_policy": active,
             "presets": self._manager.get_presets(),
             "capabilities": self._manager.get_capabilities(),

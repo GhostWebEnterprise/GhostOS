@@ -25,8 +25,8 @@ class GhostModeManager:
         self._presets = self._validate_presets(raw)
         self._adapters = dict(adapters or {})
         self._active: dict[str, Any] | None = None
-        self._snapshot: dict[str, Any] | None = None
         self._applied: list[tuple[Any, Any]] = []
+        self._recovery_required = False
 
     @staticmethod
     def _validate_presets(raw: Any) -> dict[str, dict[str, Any]]:
@@ -54,6 +54,9 @@ class GhostModeManager:
     def get_active_policy(self) -> dict[str, Any] | None:
         return copy.deepcopy(self._active)
 
+    def get_recovery_required(self) -> bool:
+        return self._recovery_required
+
     def preview_policy(self, preset: str, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
         key = preset.strip().lower()
         if key not in self._presets:
@@ -65,42 +68,55 @@ class GhostModeManager:
 
     def activate(self, preset: str, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
         if self._active is not None:
-            raise PolicyError("deactivate the active GhostMode preset before activating another")
+            raise AdapterError("deactivate GhostMode before changing presets")
         target = self.preview_policy(preset, overrides)
-        previous = copy.deepcopy(self._active)
         applied: list[tuple[Any, Any]] = []
         try:
             for name, adapter in self._adapters.items():
                 section = target.get(name)
                 if section is None:
                     continue
-                token = adapter.apply(copy.deepcopy(section))
+                try:
+                    token = adapter.apply(copy.deepcopy(section))
+                except Exception as exc:
+                    if getattr(exc, "rollback_required", False):
+                        applied.append((adapter, exc.rollback_token))
+                    raise
                 applied.append((adapter, token))
         except Exception as exc:
-            for adapter, token in reversed(applied):
-                adapter.rollback(token)
+            failed = self._rollback(applied)
+            if failed:
+                self._active = target  # conservative: platform may still be modified
+                self._applied = failed
+                self._recovery_required = True
+                raise AdapterError("GhostMode activation rollback incomplete") from exc
             raise AdapterError("GhostMode transition rolled back") from exc
-        self._snapshot = previous
         self._applied = applied
         self._active = target
+        self._recovery_required = False
         return copy.deepcopy(target)
+
+    @staticmethod
+    def _rollback(applied: list[tuple[Any, Any]]) -> list[tuple[Any, Any]]:
+        failed: list[tuple[Any, Any]] = []
+        for adapter, token in reversed(applied):
+            try:
+                adapter.rollback(token)
+            except Exception:
+                failed.append((adapter, token))
+        return list(reversed(failed))
 
     def deactivate(self) -> None:
         if self._active is None:
             return
-        # Restore actual adapter state in reverse apply order. On failure,
-        # retain the active state and only the not-yet-restored snapshots so
-        # SystemUI cannot falsely report that protection was deactivated.
-        for index in range(len(self._applied) - 1, -1, -1):
-            adapter, token = self._applied[index]
-            try:
-                adapter.rollback(token)
-            except Exception as exc:
-                self._applied = self._applied[:index + 1]
-                raise AdapterError("GhostMode deactivation incomplete; rollback must be retried") from exc
+        failed = self._rollback(self._applied)
+        if failed:
+            self._applied = failed
+            self._recovery_required = True
+            raise AdapterError("GhostMode deactivation rollback incomplete")
         self._applied = []
-        self._active = copy.deepcopy(self._snapshot)
-        self._snapshot = None
+        self._active = None
+        self._recovery_required = False
 
     def get_capabilities(self) -> dict[str, bool]:
         return {name: bool(getattr(adapter, "supported", True)) for name, adapter in self._adapters.items()}

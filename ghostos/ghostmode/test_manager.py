@@ -96,7 +96,7 @@ class GhostModeManagerTest(unittest.TestCase):
         with self.assertRaises(AdapterError):
             manager.deactivate()
         self.assertIsNotNone(manager.get_active_policy())
-        self.assertEqual(network.rolled_back, [])
+        self.assertEqual(len(network.rolled_back), 1)
         usb.fail_rollback = False
         manager.deactivate()
         self.assertEqual(len(usb.rolled_back), 1)
@@ -106,7 +106,7 @@ class GhostModeManagerTest(unittest.TestCase):
     def test_active_preset_cannot_discard_rollback_snapshots(self):
         manager = GhostModeManager(self.path, {"network": Adapter()})
         manager.activate("standard")
-        with self.assertRaises(PolicyError):
+        with self.assertRaises(AdapterError):
             manager.activate("private")
         self.assertEqual(manager.get_active_policy()["id"], "standard")
         manager.deactivate()

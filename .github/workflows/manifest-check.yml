@@ -80,6 +80,9 @@ jobs:
         working-directory: ghostos/ghostmode
         run: python3 -m unittest -v test_manager.py
 
+      - name: Test GhostMode partial rollback and recovery regression
+        run: python3 -m unittest -v ghostos.ghostmode.test_rollback_recovery
+
       - name: Test GhostMode Android adapter contracts
         run: python3 -m unittest -v tests/test_ghostmode_android_adapters.py
 
