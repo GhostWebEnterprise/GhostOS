@@ -74,6 +74,17 @@ class GhostModeManager:
             raise AdapterError("no platform adapters configured; policy was not applied")
         if not any(target.get(name) is not None for name in self._adapters):
             raise AdapterError("no matching platform adapters configured; policy was not applied")
+        # Preflight every requested policy section. Otherwise a partial set of
+        # adapters could report an entire preset as active without enforcing it.
+        required = {name for name, section in target.items() if isinstance(section, dict) and section}
+        unavailable = sorted(
+            name for name in required
+            if name not in self._adapters or not bool(getattr(self._adapters[name], "supported", True))
+        )
+        if unavailable:
+            raise AdapterError(
+                f"missing or unsupported platform adapters for: {', '.join(unavailable)}; policy was not applied"
+            )
         applied: list[tuple[Any, Any]] = []
         try:
             for name, adapter in self._adapters.items():
