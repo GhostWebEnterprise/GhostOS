@@ -57,6 +57,25 @@ class GhostModeManagerTest(unittest.TestCase):
         self.assertIsNone(manager.get_active_policy())
         self.assertFalse(manager.get_recovery_required())
 
+    def test_partial_adapter_set_does_not_claim_full_policy_active(self):
+        network = Adapter()
+        manager = GhostModeManager(self.path, {"network": network})
+        with self.assertRaisesRegex(AdapterError, "missing or unsupported platform adapters"):
+            manager.activate("private")
+        self.assertEqual(network.applied, [])
+        self.assertIsNone(manager.get_active_policy())
+        self.assertFalse(manager.get_recovery_required())
+
+    def test_unsupported_adapter_blocks_before_any_platform_changes(self):
+        network = Adapter()
+        usb = Adapter()
+        usb.supported = False
+        manager = GhostModeManager(self.path, {"network": network, "usb": usb})
+        with self.assertRaisesRegex(AdapterError, "missing or unsupported platform adapters"):
+            manager.activate("standard")
+        self.assertEqual(network.applied, [])
+        self.assertEqual(usb.applied, [])
+
     def test_failed_transition_rolls_back_prior_adapters(self):
         network = Adapter()
         usb = Adapter(fail=True)
@@ -120,7 +139,7 @@ class GhostModeManagerTest(unittest.TestCase):
         self.assertIsNone(manager.get_active_policy())
 
     def test_active_preset_cannot_discard_rollback_snapshots(self):
-        manager = GhostModeManager(self.path, {"network": Adapter()})
+        manager = GhostModeManager(self.path, {"network": Adapter(), "usb": Adapter()})
         manager.activate("standard")
         with self.assertRaises(AdapterError):
             manager.activate("private")
