@@ -72,6 +72,8 @@ class GhostModeManager:
         target = self.preview_policy(preset, overrides)
         if not self._adapters:
             raise AdapterError("no platform adapters configured; policy was not applied")
+        if not any(target.get(name) is not None for name in self._adapters):
+            raise AdapterError("no matching platform adapters configured; policy was not applied")
         applied: list[tuple[Any, Any]] = []
         try:
             for name, adapter in self._adapters.items():
