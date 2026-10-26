@@ -41,6 +41,13 @@ class GhostModeManagerTest(unittest.TestCase):
         with self.assertRaises(PolicyError):
             GhostModeManager(self.path).preview_policy("missing")
 
+    def test_activation_without_adapters_fails_closed(self):
+        manager = GhostModeManager(self.path)
+        with self.assertRaisesRegex(AdapterError, "no platform adapters configured"):
+            manager.activate("standard")
+        self.assertIsNone(manager.get_active_policy())
+        self.assertFalse(manager.get_recovery_required())
+
     def test_failed_transition_rolls_back_prior_adapters(self):
         network = Adapter()
         usb = Adapter(fail=True)
