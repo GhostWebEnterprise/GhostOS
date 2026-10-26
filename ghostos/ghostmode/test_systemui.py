@@ -25,7 +25,9 @@ class MemoryAdapter:
 
 class GhostModeSystemUITest(unittest.TestCase):
     def manager(self):
-        return GhostModeManager(PRESETS, {"network": MemoryAdapter()})
+        return GhostModeManager(PRESETS, {
+            name: MemoryAdapter() for name in ("network", "sensors", "clipboard", "usb", "notifications")
+        })
 
     def test_tile_reflects_activation_and_deactivation(self):
         manager = self.manager()
@@ -41,6 +43,13 @@ class GhostModeSystemUITest(unittest.TestCase):
         manager = GhostModeManager(PRESETS, {"host": MemoryAdapter()})
         ui = GhostModeSystemUI(manager, default_preset="standard")
         with self.assertRaisesRegex(AdapterError, "no matching platform adapters configured"):
+            ui.click()
+        self.assertFalse(ui.tile_state()["active"])
+
+    def test_tile_stays_inactive_with_missing_policy_adapters(self):
+        manager = GhostModeManager(PRESETS, {"network": MemoryAdapter()})
+        ui = GhostModeSystemUI(manager, default_preset="standard")
+        with self.assertRaisesRegex(AdapterError, "missing or unsupported platform adapters"):
             ui.click()
         self.assertFalse(ui.tile_state()["active"])
 
