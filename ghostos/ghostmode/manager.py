@@ -70,6 +70,8 @@ class GhostModeManager:
         if self._active is not None:
             raise AdapterError("deactivate GhostMode before changing presets")
         target = self.preview_policy(preset, overrides)
+        if not self._adapters:
+            raise AdapterError("no platform adapters configured; policy was not applied")
         applied: list[tuple[Any, Any]] = []
         try:
             for name, adapter in self._adapters.items():
