@@ -48,8 +48,17 @@ class PrivacyCenterTest(unittest.TestCase):
             center.activate("standard")
         self.assertFalse(center.card_state()["active"])
 
-    def test_activate_and_deactivate_reflect_manager_state(self):
+    def test_partial_support_does_not_mark_card_active(self):
         manager = GhostModeManager(PRESETS, {"network": WorkingAdapter()})
+        center = GhostModePrivacyCenter(manager)
+        with self.assertRaisesRegex(AdapterError, "missing or unsupported platform adapters"):
+            center.activate("standard")
+        self.assertFalse(center.card_state()["active"])
+
+    def test_activate_and_deactivate_reflect_manager_state(self):
+        manager = GhostModeManager(PRESETS, {
+            name: WorkingAdapter() for name in ("network", "sensors", "clipboard", "usb", "notifications")
+        })
         center = GhostModePrivacyCenter(manager)
         result = center.activate("standard")
         self.assertEqual(result["policy"], manager.get_active_policy())
