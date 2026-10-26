@@ -48,6 +48,15 @@ class GhostModeManagerTest(unittest.TestCase):
         self.assertIsNone(manager.get_active_policy())
         self.assertFalse(manager.get_recovery_required())
 
+    def test_activation_with_unrelated_adapter_fails_closed(self):
+        unrelated = Adapter()
+        manager = GhostModeManager(self.path, {"notifications": unrelated})
+        with self.assertRaisesRegex(AdapterError, "no matching platform adapters configured"):
+            manager.activate("standard")
+        self.assertEqual(unrelated.applied, [])
+        self.assertIsNone(manager.get_active_policy())
+        self.assertFalse(manager.get_recovery_required())
+
     def test_failed_transition_rolls_back_prior_adapters(self):
         network = Adapter()
         usb = Adapter(fail=True)
