@@ -37,6 +37,31 @@ class GhostModeManagerTest(unittest.TestCase):
         self.assertFalse(preview["network"]["blockLan"])
         self.assertTrue(manager.preview_policy("private")["network"]["blockLan"])
 
+    def test_repository_presets_route_to_available_android_adapter_contracts(self):
+        presets_path = Path(__file__).with_name("presets.json")
+        network = Adapter()
+        privacy = Adapter()
+        device = Adapter()
+        manager = GhostModeManager(presets_path, {
+            "network": network,
+            "privacy": privacy,
+            "device": device,
+        })
+
+        policy = manager.activate("private")
+
+        self.assertEqual(network.applied, [policy["network"]])
+        self.assertEqual(privacy.applied, [{
+            "sensors": policy["sensors"],
+            "clipboard": policy["clipboard"],
+        }])
+        self.assertEqual(device.applied, [{
+            "usb": policy["usb"],
+            "notifications": policy["notifications"],
+        }])
+        manager.deactivate()
+        self.assertIsNone(manager.get_active_policy())
+
     def test_unknown_preset_is_rejected(self):
         with self.assertRaises(PolicyError):
             GhostModeManager(self.path).preview_policy("missing")
