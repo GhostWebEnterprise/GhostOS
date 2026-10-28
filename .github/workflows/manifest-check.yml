@@ -68,6 +68,9 @@ jobs:
       - name: Validate Android 17 bootstrap script syntax
         run: bash -n scripts/init-android17.sh
 
+      - name: Test Android 17 bootstrap path and manifest handling
+        run: bash tests/test_android17_bootstrap.sh
+
       - name: Test clean and partial checkout bootstrap
         run: bash tests/test_build_bootstrap.sh
 
