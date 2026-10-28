@@ -62,8 +62,11 @@ jobs:
             git ls-remote --exit-code --heads "https://github.com/LineageOS/${repo}.git" lineage-23.2 >/dev/null
           done
 
-      - name: Validate build script
+      - name: Validate LineageOS build script syntax
         run: bash -n scripts/ghostos-build.sh
+
+      - name: Validate Android 17 bootstrap script syntax
+        run: bash -n scripts/init-android17.sh
 
       - name: Test clean and partial checkout bootstrap
         run: bash tests/test_build_bootstrap.sh
