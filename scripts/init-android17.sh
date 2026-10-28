@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="${1:-$PWD}
-"
-ROOT="${ROOT%$'\n'}"
+ROOT="${1:-$PWD}"
 cd "$ROOT"
 
 command -v repo >/dev/null || { echo "repo is required" >&2; exit 1; }
