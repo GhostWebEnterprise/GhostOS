@@ -66,17 +66,50 @@ class GhostModeManager:
             self._deep_merge(effective, overrides)
         return effective
 
+    def _adapter_policies(self, policy: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+        """Route the public preset schema to the available policy adapters.
+
+        Production presets keep controls grouped as network/sensors/clipboard/
+        usb/notifications. The Android adapter contract groups sensors and
+        clipboard under privacy, and USB/notifications under device. Existing
+        direct adapter sections remain supported for focused host tests.
+        """
+        sections = {
+            name: value
+            for name, value in policy.items()
+            if isinstance(value, dict) and value
+        }
+        if "privacy" in sections and any(name in sections for name in ("sensors", "clipboard")):
+            raise AdapterError("ambiguous GhostMode privacy sections")
+        if "device" in sections and any(name in sections for name in ("usb", "notifications")):
+            raise AdapterError("ambiguous GhostMode device sections")
+
+        routed: dict[str, dict[str, Any]] = {}
+        for name, section in sections.items():
+            if name in self._adapters:
+                routed[name] = copy.deepcopy(section)
+            elif name in ("sensors", "clipboard"):
+                routed.setdefault("privacy", {})[name] = copy.deepcopy(section)
+            elif name in ("usb", "notifications"):
+                routed.setdefault("device", {})[name] = copy.deepcopy(section)
+            elif name in ("network", "privacy", "device"):
+                routed[name] = copy.deepcopy(section)
+            else:
+                raise AdapterError(f"no adapter mapping for policy section: {name}")
+        return routed
+
     def activate(self, preset: str, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
         if self._active is not None:
             raise AdapterError("deactivate GhostMode before changing presets")
         target = self.preview_policy(preset, overrides)
         if not self._adapters:
             raise AdapterError("no platform adapters configured; policy was not applied")
-        if not any(target.get(name) is not None for name in self._adapters):
+        adapter_policies = self._adapter_policies(target)
+        required = set(adapter_policies)
+        if not any(name in self._adapters for name in required):
             raise AdapterError("no matching platform adapters configured; policy was not applied")
-        # Preflight every requested policy section. Otherwise a partial set of
-        # adapters could report an entire preset as active without enforcing it.
-        required = {name for name, section in target.items() if isinstance(section, dict) and section}
+        # Preflight every adapter required by the real preset schema. A partial
+        # adapter set must never report the full policy as active.
         unavailable = sorted(
             name for name in required
             if name not in self._adapters or not bool(getattr(self._adapters[name], "supported", True))
@@ -88,7 +121,7 @@ class GhostModeManager:
         applied: list[tuple[Any, Any]] = []
         try:
             for name, adapter in self._adapters.items():
-                section = target.get(name)
+                section = adapter_policies.get(name)
                 if section is None:
                     continue
                 try:
