@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
-# Offline regression for repo init ordering. No Android checkout or build required.
+# Offline regression for repo init ordering and safe Android source paths.
 set -euo pipefail
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+INSIDE=""
+cleanup() {
+  rm -rf -- "$WORK"
+  if [[ -n "${INSIDE:-}" ]]; then
+    rm -rf -- "$INSIDE"
+  fi
+}
+trap cleanup EXIT
 mkdir -p "$WORK/bin"
 cat > "$WORK/bin/repo" <<'MOCK'
 #!/usr/bin/env bash
@@ -45,4 +52,24 @@ printf '<manifest name="preserve"/>\n' | cmp - "$WORK/partial/.repo/local_manife
 mkdir -p "$WORK/existing/.repo"
 : > "$WORK/existing/.repo/manifest.xml"
 run_case existing 0
-printf 'GhostOS bootstrap regression: 3 cases passed\n'
+
+# The builder must refuse both an Android source tree inside GhostOS and an
+# Android target that contains the GhostOS checkout. No repo command may run.
+INSIDE="$ROOT/.ghostos-build-bootstrap-test-target-$$-$RANDOM"
+: > "$GHOSTOS_REPO_LOG"
+if ANDROID_DIR="$INSIDE" DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/inside.out" 2>&1; then
+  echo "Android source directory inside GhostOS was unexpectedly accepted" >&2
+  exit 1
+fi
+grep -q "must be outside the GhostOS repository" "$WORK/inside.out"
+test ! -s "$GHOSTOS_REPO_LOG"
+
+: > "$GHOSTOS_REPO_LOG"
+if ANDROID_DIR="$ROOT/.." DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/ancestor.out" 2>&1; then
+  echo "Android source directory containing GhostOS was unexpectedly accepted" >&2
+  exit 1
+fi
+grep -q "must not contain the GhostOS repository" "$WORK/ancestor.out"
+test ! -s "$GHOSTOS_REPO_LOG"
+
+echo "GhostOS bootstrap regression: 3 init cases and 2 source-path safety cases passed"
