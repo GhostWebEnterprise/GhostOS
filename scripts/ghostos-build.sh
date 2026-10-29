@@ -3,8 +3,9 @@ set -euo pipefail
 
 DEVICE="${DEVICE:-larry}"
 JOBS="${JOBS:-$(nproc)}"
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ANDROID_DIR="${ANDROID_DIR:-$ROOT/android}"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+# Keep the large LineageOS checkout outside the GhostOS repository by default.
+ANDROID_DIR="${ANDROID_DIR:-${GHOSTOS_ANDROID_DIR:-$ROOT/../ghostos-android16-larry}}"
 MANIFEST="$ROOT/manifests/ghostos-23.2.xml"
 
 usage() {
@@ -18,6 +19,22 @@ command -v repo >/dev/null || { echo "ERROR: repo is required" >&2; exit 1; }
 [[ -f "$MANIFEST" ]] || { echo "ERROR: missing $MANIFEST" >&2; exit 1; }
 
 mkdir -p "$ANDROID_DIR"
+ANDROID_DIR="$(cd "$ANDROID_DIR" && pwd -P)"
+
+# Never initialize or sync a full Android source tree inside or above GhostOS.
+case "$ANDROID_DIR/" in
+  "$ROOT/"*)
+    echo "ERROR: Android source directory must be outside the GhostOS repository: $ANDROID_DIR" >&2
+    exit 1
+    ;;
+esac
+case "$ROOT/" in
+  "$ANDROID_DIR/"*)
+    echo "ERROR: Android source directory must not contain the GhostOS repository: $ANDROID_DIR" >&2
+    exit 1
+    ;;
+esac
+
 cd "$ANDROID_DIR"
 
 # A fresh checkout has no .repo/manifest.xml. Initialize it before creating
