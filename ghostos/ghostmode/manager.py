@@ -167,9 +167,17 @@ class GhostModeManager:
         self._recovery_required = False
 
     def get_capabilities(self) -> dict[str, bool]:
-        return {name: bool(getattr(adapter, "supported", True)) for name, adapter in self._adapters.items()}
+        """Report every adapter category required by the shipped presets."""
+        required: set[str] = set()
+        for preset in self._presets.values():
+            required.update(self._adapter_policies(preset))
+        return {
+            name: name in self._adapters and bool(getattr(self._adapters[name], "supported", True))
+            for name in sorted(required)
+        }
 
     def get_degraded_controls(self) -> list[str]:
+        """List missing or unsupported required backends; never hide unwired controls."""
         return [name for name, supported in self.get_capabilities().items() if not supported]
 
     @classmethod
