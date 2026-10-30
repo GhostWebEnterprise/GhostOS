@@ -51,46 +51,35 @@ jobs:
         with:
           packages: platform-tools
 
-      - name: Install Android API 36 platform
-        run: sdkmanager "platforms;android-36"
+      - name: Install Android API 36 and build tools
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Compile Privacy Center Android sources against API 36
+      - name: Link Privacy Center Android resources and compile sources against API 36
         shell: bash
         run: |
           set -euo pipefail
           android_jar="$ANDROID_HOME/platforms/android-36/android.jar"
+          aapt2="$ANDROID_HOME/build-tools/36.0.0/aapt2"
           test -f "$android_jar" || { echo "::error::Android API 36 android.jar is missing"; exit 1; }
-          mkdir -p build/android-stubs/org/ghostos/privacy build/android-classes
-          cat > build/android-stubs/org/ghostos/privacy/R.java <<'EOF_R'
-          package org.ghostos.privacy;
-          public final class R {
-              public static final class string {
-                  public static final int app_name = 1;
-                  public static final int intro = 2;
-                  public static final int permissions = 3;
-                  public static final int location = 4;
-                  public static final int vpn = 5;
-                  public static final int network = 6;
-                  public static final int apps = 7;
-                  public static final int security = 8;
-                  public static final int scope = 9;
-                  public static final int unavailable = 10;
-                  public static final int ghostmode_tile_label = 11;
-                  public static final int ghostmode_tile_subtitle = 12;
-                  public static final int ghostmode_tile_description = 13;
-                  public static final int device_admin_description = 14;
-                  public static final int ghostmode_policy_ready = 15;
-                  public static final int ghostmode_device_owner_required = 16;
-                  public static final int ghostmode_admin_inactive = 17;
-                  public static final int ghostmode_policy_unavailable = 18;
-              }
-          }
-          EOF_R
+          test -x "$aapt2" || { echo "::error::Android build-tools aapt2 is missing"; exit 1; }
+          mkdir -p build/android-generated build/android-classes
+          "$aapt2" compile --dir packages/apps/GhostOSPrivacyCenter/res -o build/ghostos-privacy-resources.zip
+          "$aapt2" link \
+            -o build/ghostos-privacy-center-res.apk \
+            --manifest packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml \
+            -I "$android_jar" \
+            --min-sdk-version 29 \
+            --target-sdk-version 36 \
+            --java build/android-generated \
+            build/ghostos-privacy-resources.zip
+          test -f build/android-generated/org/ghostos/privacy/R.java \
+            || { echo "::error::aapt2 did not generate the Privacy Center R.java"; exit 1; }
           javac -source 17 -target 17 -classpath "$android_jar" -d build/android-classes \
-            build/android-stubs/org/ghostos/privacy/R.java \
+            build/android-generated/org/ghostos/privacy/R.java \
             $(find packages/apps/GhostOSPrivacyCenter/src -type f -name '*.java' -print)
           test -f build/android-classes/org/ghostos/privacy/GhostModeQuickSettingsTile.class
           test -f build/android-classes/org/ghostos/privacy/GhostModeDevicePolicyAdapter.class
+          test -f build/android-classes/org/ghostos/privacy/PrivacyActivity.class
 
       - name: Validate XML manifests
         run: |
@@ -98,6 +87,7 @@ jobs:
           xmllint --noout manifests/ghostos_larry.xml
           xmllint --noout packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml
           xmllint --noout packages/apps/GhostOSPrivacyCenter/res/values/strings.xml
+          xmllint --noout packages/apps/GhostOSPrivacyCenter/res/values/styles.xml
           xmllint --noout packages/apps/GhostOSPrivacyCenter/res/xml/device_admin.xml
 
       - name: Validate larry upstream foundations
@@ -150,7 +140,7 @@ jobs:
       - name: Test GhostMode Quick Settings tile declaration and fail-closed state
         run: python3 -m unittest -v tests/test_ghostos_quick_settings_tile.py
 
-      - name: Test Android Device Owner policy adapter
+      - name: Test Android Device Owner policy adapter and resources
         run: python3 -m unittest -v tests/test_ghostmode_device_policy_adapter.py
 
       - name: Show supported devices
