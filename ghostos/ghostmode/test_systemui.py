@@ -39,6 +39,13 @@ class GhostModeSystemUITest(unittest.TestCase):
         deactivated = ui.click()
         self.assertFalse(deactivated["active"])
 
+    def test_tile_reports_degraded_when_required_backends_are_unwired(self):
+        manager = GhostModeManager(PRESETS)
+        state = GhostModeSystemUI(manager).tile_state()
+        self.assertFalse(state["active"])
+        self.assertTrue(state["degraded"])
+        self.assertEqual(state["degraded_controls"], ["device", "network", "privacy"])
+
     def test_tile_does_not_activate_when_no_adapter_matches(self):
         manager = GhostModeManager(PRESETS, {"host": MemoryAdapter()})
         ui = GhostModeSystemUI(manager, default_preset="standard")
