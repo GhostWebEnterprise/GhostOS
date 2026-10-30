@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Offline regression for Android 17 bootstrap path and manifest handling.
+# Offline regression for the AOSP-only Android 17 bootstrap.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -25,11 +25,10 @@ case "$1" in
       echo "repo sync ran before repo init" >&2
       exit 1
     }
-    test -f .repo/local_manifests/ghostos_larry.xml || {
-      echo "GhostOS larry manifest missing before sync" >&2
+    test ! -e .repo/local_manifests/ghostos_larry.xml || {
+      echo "Android 16 LineageOS larry manifest was mixed into Android 17" >&2
       exit 1
     }
-    cmp "$GHOSTOS_MANIFEST_SOURCE" .repo/local_manifests/ghostos_larry.xml
     ;;
   *)
     echo "unexpected repo command: $*" >&2
@@ -41,7 +40,6 @@ chmod +x "$WORK/bin/repo"
 
 export PATH="$WORK/bin:$PATH"
 export GHOSTOS_REPO_LOG="$WORK/repo.log"
-export GHOSTOS_MANIFEST_SOURCE="$ROOT/manifests/ghostos_larry.xml"
 ANDROID_DIR="$WORK/android17-source"
 
 # Invoke from an unrelated working directory to prove paths are script-relative.
@@ -53,7 +51,8 @@ ANDROID_DIR="$WORK/android17-source"
 test "$(wc -l < "$GHOSTOS_REPO_LOG")" -eq 2
 grep -F "$ANDROID_DIR"$'\t'"init " "$GHOSTOS_REPO_LOG" >/dev/null
 grep -F "$ANDROID_DIR"$'\t'"sync " "$GHOSTOS_REPO_LOG" >/dev/null
-cmp "$ROOT/manifests/ghostos_larry.xml" "$ANDROID_DIR/.repo/local_manifests/ghostos_larry.xml"
+test -f "$ANDROID_DIR/.repo/manifest.xml"
+test ! -e "$ANDROID_DIR/.repo/local_manifests/ghostos_larry.xml"
 
 # A mistaken target inside the repository must fail before repo init/sync.
 INSIDE="$ROOT/.android17-bootstrap-test-target"
@@ -67,4 +66,4 @@ grep -q "must be outside the GhostOS repository" "$WORK/inside.log"
 rm -rf "$INSIDE"
 test "$(wc -l < "$GHOSTOS_REPO_LOG")" -eq 2
 
-echo "GhostOS Android 17 bootstrap regression: path, init order, manifest and safety checks passed"
+echo "GhostOS Android 17 bootstrap regression: AOSP-only sync and path safety passed"
