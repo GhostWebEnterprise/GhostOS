@@ -118,6 +118,15 @@ class GhostModeManagerTest(unittest.TestCase):
         self.assertEqual(manager.get_degraded_controls(), ["usb"])
 
 
+    def test_missing_adapter_categories_are_reported_as_degraded(self):
+        manager = GhostModeManager(Path(__file__).with_name("presets.json"))
+        self.assertEqual(manager.get_capabilities(), {
+            "device": False,
+            "network": False,
+            "privacy": False,
+        })
+        self.assertEqual(manager.get_degraded_controls(), ["device", "network", "privacy"])
+
     def test_deactivation_restores_adapters_in_reverse_order(self):
         order = []
 
