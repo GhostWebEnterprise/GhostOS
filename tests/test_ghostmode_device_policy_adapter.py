@@ -69,8 +69,10 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         on_create = activity.split("@Override protected void onResume()", 1)[0]
         self.assertNotIn("adapter.apply(", on_create)
-        self.assertIn("cameraSwitch.setOnCheckedChangeListener", activity)
-        self.assertIn("screenCaptureSwitch.setOnCheckedChangeListener", activity)
+        self.assertIn('cameraSwitch = addPolicySwitch', activity)
+        self.assertIn('screenCaptureSwitch = addPolicySwitch', activity)
+        self.assertIn('policySwitch.setOnCheckedChangeListener', activity)
+        self.assertIn('bindPolicySwitch(policySwitch, control)', activity)
         self.assertIn("adapter.availability()", activity)
         self.assertIn("adapter.apply(Collections.singletonMap(control, enabled))", activity)
         self.assertIn("failure.getSuppressed().length > 0", activity)
