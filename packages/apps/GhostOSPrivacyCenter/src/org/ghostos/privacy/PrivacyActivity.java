@@ -23,6 +23,7 @@ public final class PrivacyActivity extends Activity {
     private TextView readiness;
     private Switch cameraSwitch;
     private Switch screenCaptureSwitch;
+    private Switch usbDataSwitch;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -45,6 +46,8 @@ public final class PrivacyActivity extends Activity {
         cameraSwitch = addPolicySwitch(R.string.ghostmode_camera_control, "camera");
         screenCaptureSwitch = addPolicySwitch(
                 R.string.ghostmode_screen_capture_control, "screenCapture");
+        usbDataSwitch = addPolicySwitch(
+                R.string.ghostmode_usb_data_control, "usbDataSignaling");
         refreshPolicyControls();
 
         link(R.string.permissions, Settings.ACTION_PRIVACY_SETTINGS);
@@ -85,10 +88,20 @@ public final class PrivacyActivity extends Activity {
 
         showPolicyReadiness(availability);
         boolean ready = availability == GhostModeDevicePolicyAdapter.Availability.READY;
+        boolean usbSupported = false;
+        if (ready) {
+            try {
+                usbSupported = adapter.isUsbDataSignalingSupported();
+            } catch (RuntimeException unsupported) {
+                usbSupported = false;
+            }
+        }
         cameraSwitch.setVisibility(ready ? View.VISIBLE : View.GONE);
         screenCaptureSwitch.setVisibility(ready ? View.VISIBLE : View.GONE);
+        usbDataSwitch.setVisibility(ready && usbSupported ? View.VISIBLE : View.GONE);
         cameraSwitch.setEnabled(ready);
         screenCaptureSwitch.setEnabled(ready);
+        usbDataSwitch.setEnabled(ready && usbSupported);
         if (!ready) {
             return;
         }
@@ -97,9 +110,14 @@ public final class PrivacyActivity extends Activity {
             setCheckedWithoutApplying(cameraSwitch, adapter.isCameraDisabled(), "camera");
             setCheckedWithoutApplying(
                     screenCaptureSwitch, adapter.isScreenCaptureDisabled(), "screenCapture");
+            if (usbSupported) {
+                setCheckedWithoutApplying(
+                        usbDataSwitch, adapter.isUsbDataSignalingEnabled(), "usbDataSignaling");
+            }
         } catch (RuntimeException unavailable) {
             cameraSwitch.setVisibility(View.GONE);
             screenCaptureSwitch.setVisibility(View.GONE);
+            usbDataSwitch.setVisibility(View.GONE);
             readiness.setText(R.string.ghostmode_policy_unavailable);
         }
     }
@@ -133,6 +151,7 @@ public final class PrivacyActivity extends Activity {
     private void applyPolicy(String control, boolean enabled) {
         cameraSwitch.setEnabled(false);
         screenCaptureSwitch.setEnabled(false);
+        usbDataSwitch.setEnabled(false);
         try {
             if (adapter.availability() != GhostModeDevicePolicyAdapter.Availability.READY) {
                 Toast.makeText(this, R.string.ghostmode_policy_unavailable, Toast.LENGTH_LONG).show();
@@ -145,10 +164,14 @@ public final class PrivacyActivity extends Activity {
                 message = enabled
                         ? R.string.ghostmode_camera_disabled
                         : R.string.ghostmode_camera_enabled;
-            } else {
+            } else if ("screenCapture".equals(control)) {
                 message = enabled
                         ? R.string.ghostmode_screen_capture_disabled
                         : R.string.ghostmode_screen_capture_enabled;
+            } else {
+                message = enabled
+                        ? R.string.ghostmode_usb_data_enabled
+                        : R.string.ghostmode_usb_data_disabled;
             }
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         } catch (RuntimeException failure) {
