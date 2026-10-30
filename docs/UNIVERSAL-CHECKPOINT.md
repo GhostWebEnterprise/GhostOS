@@ -77,20 +77,45 @@ Android 15 larry foundation branches exist. Observed `lineage-22.2` heads:
 
 Pin and validate the full dependency closure, not just these four trees.
 
+## Current Android 16 larry manifest — checked 2026-10-30
+
+The active `scripts/ghostos-build.sh` uses `manifests/ghostos-23.2.xml`
+(LineageOS `lineage-23.2`, Android 16). The separate `scripts/init-android17.sh`
+only initializes/syncs an AOSP Android 17 source tree; it does not yet configure
+or build the larry product. The current LineageOS branch heads observed through
+GitHub on 2026-10-30 are:
+
+| Manifest project | Observed `lineage-23.2` commit |
+| --- | --- |
+| `android_device_oneplus_larry` | `3a6d07128372207cf26dda1bf3fa0bde5f7b500b` |
+| `android_device_oneplus_sm6375-common` | `a9451bc04291f13dbb8c262d4d81d6db38796aaa` |
+| `android_kernel_oneplus_sm6375` | `5aee535b13d813b7ef8af9247f3fa0a3cd68047b` |
+
+The manifest still tracks branch names rather than pinning these commits; these
+SHAs are observations, not a resolved `repo manifest -r` build lock.
+
 ## Important compatibility findings
 
-- The [larry proprietary list](https://github.com/LineageOS/android_device_oneplus_larry/blob/lineage-22.2/proprietary-files.txt)
-  identifies **CPH2467_14.0.0.1800(EX01)** as its blob source. It does not establish
-  compatibility with OxygenOS 15 firmware. The phone's exact model, region,
-  full OxygenOS build and firmware package remain unknown.
+- The current [larry proprietary list](https://github.com/LineageOS/android_device_oneplus_larry/blob/lineage-23.2/proprietary-files.txt)
+  identifies **CPH2467_15.0.0.1910(EX01)** as the default blob source (unless an
+  entry is pinned). This supersedes the older `lineage-22.2` /
+  `CPH2467_14.0.0.1800(EX01)` reference below for the active Android 16 tree.
+  It still does not prove compatibility with the exact phone: the model,
+  region and installed OxygenOS build must match. The current manifest does
+  not fetch proprietary vendor blobs, and `scripts/ghostos-build.sh` does not
+  run the upstream `extract-files.py`. `device.mk` includes
+  `vendor/oneplus/larry/larry-vendor.mk` only if it exists. A larry image must
+  not be treated as hardware-ready until the matching stock firmware/device
+  dump is lawfully extracted and every required blob is verified and hashed.
 - The upstream common BoardConfig defines ARM64 plus ARM32 support, A/B OTA,
   dynamic partitions, separate vendor_boot and vendor_dlkm, and boot header v3.
   Preserve matching kernel, DTBO, module ABI, firmware and vendor HAL dependencies.
-- The inspected [common BoardConfig](https://github.com/LineageOS/android_device_oneplus_sm6375-common/blob/lineage-22.2/BoardConfigCommon.mk)
-  enables AVB but sets verification/hashtree-disabled flags and uses test keys.
-  It is not evidence of a secure production boot chain. Do not relock a device
-  using these experimental images. Production keys alone do not establish that
-  the bootloader supports a custom trust root or safe relocking.
+- The current [lineage-23.2 common BoardConfig](https://github.com/LineageOS/android_device_oneplus_sm6375-common/blob/lineage-23.2/BoardConfigCommon.mk)
+  enables AVB but sets both hashtree-disabled and verification-disabled flags,
+  and uses upstream test RSA-4096 keys. It is not evidence of a secure
+  production boot chain. Do not relock a device using these experimental
+  images. Production keys alone do not establish that the bootloader supports
+  a custom trust root or safe relocking.
 - GSI replaces the system side; it does not supply or fix the phone's vendor
   firmware, kernel or bootloader. Android version in the UI is not a vendor
   compatibility test. Check ABI/Binder, Treble, launch API/vendor API, VNDK
@@ -168,4 +193,4 @@ Useful primary references:
 [AOSP GSI](https://source.android.com/docs/core/tests/vts/gsi),
 [developer GSI compatibility](https://developer.android.com/topic/generic-system-image),
 [Android VNDK](https://source.android.com/docs/core/architecture/vndk),
-[larry upstream](https://github.com/LineageOS/android_device_oneplus_larry/tree/lineage-22.2).
+[larry upstream](https://github.com/LineageOS/android_device_oneplus_larry/tree/lineage-23.2).
