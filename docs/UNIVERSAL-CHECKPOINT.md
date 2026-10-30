@@ -24,9 +24,13 @@ booted, or verified. This is an incomplete development checkpoint, not a release
   charcoal theme, and links to existing Android privacy/security settings.
   It requests no permissions and does not implement new enforcement controls.
 
-These files are not wired into a synchronized Android checkout yet. They have
-not passed Soong, resource compilation, Java compilation, or runtime testing.
-The existing manifests remain unchanged. The LineageOS bootstrap script was subsequently fixed to initialize `repo` before creating local manifests; this does not validate an Android build.
+The build driver now stages `device/ghostos`, `vendor/ghostos`, and
+`packages/apps/GhostOSPrivacyCenter` into a separate synchronized Android
+checkout and selects `ghostos_larry-userdebug` rather than the upstream
+LineageOS product. Mock bootstrap CI verifies those copy paths and the selected
+product. This is staging/selection evidence only: it has not passed a real
+`repo sync`, Soong, resource compilation, Java compilation, or device runtime
+test. The existing upstream manifests remain unchanged.
 
 ## Repository evidence inspected
 
@@ -106,11 +110,12 @@ the earlier request as approval for an unspecified paid subscription or budget.
    Linux source checkout. Keep GSI AOSP and larry LineageOS checkouts separate;
    do not mix Android 15 and existing 23.2 manifests. Preserve unrelated local
    manifests.
-3. Add pinned manifests, source staging and target-specific build drivers.
-   GSI uses the generic_arm64 BoardConfig; larry uses upstream larry BoardConfig.
-   Verify product discovery, lunch release configuration and full dependency
-   resolution against the chosen source revisions. Do not invent a BoardConfig
-   with guessed partition geometry or pretend proprietary blobs are present.
+3. Complete pinned dependency manifests and validate the target-specific build
+   driver against the full source closure. The current driver stages the larry
+   product inputs and selects `ghostos_larry-userdebug`; it does not yet prove
+   product discovery or a full build. GSI uses the generic_arm64 BoardConfig;
+   larry uses upstream larry BoardConfig. Do not invent a BoardConfig with
+   guessed partition geometry or pretend proprietary blobs are present.
 4. Obtain exact phone/firmware evidence and use the upstream extraction tools
    for both larry and sm6375-common. Record lawful blob provenance and hashes.
    Resolve OxygenOS 15 firmware requirements before approving a hardware image.
