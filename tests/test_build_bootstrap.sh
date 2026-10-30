@@ -21,7 +21,10 @@ case "$1" in
   sync)
     test -f .repo/manifest.xml || { echo 'repo sync before repo init' >&2; exit 1; }
     mkdir -p build
-    printf 'lunch() { printf "lunch %s\\n" "$*" >> "$GHOSTOS_BUILD_LOG"; }\nm() { printf "m %s\\n" "$*" >> "$GHOSTOS_BUILD_LOG"; }\n' > build/envsetup.sh
+    cat > build/envsetup.sh <<'ENV'
+lunch() { printf 'lunch %s\n' "$*" >> "$GHOSTOS_BUILD_LOG"; }
+m() { printf 'm %s\n' "$*" >> "$GHOSTOS_BUILD_LOG"; }
+ENV
     ;;
   *) echo "unexpected repo command: $1" >&2; exit 1 ;;
 esac
@@ -35,7 +38,10 @@ run_case() {
   : > "$GHOSTOS_REPO_LOG"
   export GHOSTOS_BUILD_LOG="$WORK/$case_name.build.log"
   : > "$GHOSTOS_BUILD_LOG"
-  ANDROID_DIR="$checkout" DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/$case_name.out"
+  if ! ANDROID_DIR="$checkout" DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/$case_name.out" 2>&1; then
+    cat "$WORK/$case_name.out" >&2
+    exit 1
+  fi
   local count
   count="$(grep -c '^init ' "$GHOSTOS_REPO_LOG" || true)"
   test "$count" = "$expected_init" || {
