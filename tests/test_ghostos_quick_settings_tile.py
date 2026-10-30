@@ -58,7 +58,7 @@ class GhostModeQuickSettingsTileTests(unittest.TestCase):
         self.assertNotIn("Tile.STATE_ACTIVE", source)
         self.assertIn("ghostmode_tile_subtitle", source)
         self.assertIn("Setup required", strings)
-        self.assertIn("policy adapters are not connected", strings)
+        self.assertIn("remaining GhostMode controls are not connected", strings)
         self.assertIn("startActivityAndCollapse", source)
 
 

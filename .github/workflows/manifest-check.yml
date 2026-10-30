@@ -78,14 +78,19 @@ jobs:
                   public static final int ghostmode_tile_label = 11;
                   public static final int ghostmode_tile_subtitle = 12;
                   public static final int ghostmode_tile_description = 13;
+                  public static final int device_admin_description = 14;
+                  public static final int ghostmode_policy_ready = 15;
+                  public static final int ghostmode_device_owner_required = 16;
+                  public static final int ghostmode_admin_inactive = 17;
+                  public static final int ghostmode_policy_unavailable = 18;
               }
           }
           EOF_R
           javac -source 17 -target 17 -classpath "$android_jar" -d build/android-classes \
             build/android-stubs/org/ghostos/privacy/R.java \
-            packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/PrivacyActivity.java \
-            packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/GhostModeQuickSettingsTile.java
+            $(find packages/apps/GhostOSPrivacyCenter/src -type f -name '*.java' -print)
           test -f build/android-classes/org/ghostos/privacy/GhostModeQuickSettingsTile.class
+          test -f build/android-classes/org/ghostos/privacy/GhostModeDevicePolicyAdapter.class
 
       - name: Validate XML manifests
         run: |
@@ -93,6 +98,7 @@ jobs:
           xmllint --noout manifests/ghostos_larry.xml
           xmllint --noout packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml
           xmllint --noout packages/apps/GhostOSPrivacyCenter/res/values/strings.xml
+          xmllint --noout packages/apps/GhostOSPrivacyCenter/res/xml/device_admin.xml
 
       - name: Validate larry upstream foundations
         shell: bash
@@ -143,6 +149,9 @@ jobs:
 
       - name: Test GhostMode Quick Settings tile declaration and fail-closed state
         run: python3 -m unittest -v tests/test_ghostos_quick_settings_tile.py
+
+      - name: Test Android Device Owner policy adapter
+        run: python3 -m unittest -v tests/test_ghostmode_device_policy_adapter.py
 
       - name: Show supported devices
         run: |

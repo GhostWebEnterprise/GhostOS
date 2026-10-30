@@ -12,7 +12,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-/** No permissions, background services, telemetry, or hidden API access. */
+/** No automatic policy changes, background services, telemetry, or hidden API access. */
 public final class PrivacyActivity extends Activity {
     private LinearLayout content;
 
@@ -27,6 +27,7 @@ public final class PrivacyActivity extends Activity {
         setContentView(scroll);
         text(R.string.app_name, 28);
         text(R.string.intro, 17);
+        showPolicyReadiness();
         link(R.string.permissions, Settings.ACTION_PRIVACY_SETTINGS);
         link(R.string.location, Settings.ACTION_LOCATION_SOURCE_SETTINGS);
         link(R.string.vpn, Settings.ACTION_VPN_SETTINGS);
@@ -34,6 +35,26 @@ public final class PrivacyActivity extends Activity {
         link(R.string.apps, Settings.ACTION_MANAGE_APPLICATIONS_SETTINGS);
         link(R.string.security, Settings.ACTION_SECURITY_SETTINGS);
         text(R.string.scope, 15);
+    }
+
+    private void showPolicyReadiness() {
+        GhostModeDevicePolicyAdapter adapter = new GhostModeDevicePolicyAdapter(this);
+        int message;
+        switch (adapter.availability()) {
+            case READY:
+                message = R.string.ghostmode_policy_ready;
+                break;
+            case DEVICE_OWNER_REQUIRED:
+                message = R.string.ghostmode_device_owner_required;
+                break;
+            case ADMIN_INACTIVE:
+                message = R.string.ghostmode_admin_inactive;
+                break;
+            default:
+                message = R.string.ghostmode_policy_unavailable;
+                break;
+        }
+        text(message, 15);
     }
 
     private void text(int label, int size) {
