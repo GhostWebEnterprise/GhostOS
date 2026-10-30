@@ -126,10 +126,9 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         source_paths.extend(
             (ROOT / "packages/apps/GhostOSPrivacyCenter/src").rglob("*.java")
         )
-        combined = "
-".join(path.read_text(encoding="utf-8") for path in source_paths)
+        combined = "\n".join(path.read_text(encoding="utf-8") for path in source_paths)
         references = set(re.findall(r"@string/([A-Za-z0-9_]+)", combined))
-        references.update(re.findall(r"R.string.([A-Za-z0-9_]+)", combined))
+        references.update(re.findall(r"R\.string\.([A-Za-z0-9_]+)", combined))
         self.assertEqual(references - defined, set(), "Undefined Android string resources")
 
 
