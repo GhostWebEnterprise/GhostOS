@@ -46,6 +46,45 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libxml2-utils
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android API 36 platform
+        run: sdkmanager "platforms;android-36"
+
+      - name: Compile Privacy Center Android sources against API 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-36/android.jar"
+          test -f "$android_jar" || { echo "::error::Android API 36 android.jar is missing"; exit 1; }
+          mkdir -p build/android-stubs/org/ghostos/privacy build/android-classes
+          cat > build/android-stubs/org/ghostos/privacy/R.java <<'EOF_R'
+          package org.ghostos.privacy;
+          public final class R {
+              public static final class string {
+                  public static final int app_name = 1;
+                  public static final int intro = 2;
+                  public static final int permissions = 3;
+                  public static final int location = 4;
+                  public static final int vpn = 5;
+                  public static final int network = 6;
+                  public static final int apps = 7;
+                  public static final int security = 8;
+                  public static final int scope = 9;
+                  public static final int unavailable = 10;
+                  public static final int ghostmode_tile_label = 11;
+                  public static final int ghostmode_tile_subtitle = 12;
+                  public static final int ghostmode_tile_description = 13;
+              }
+          }
+          EOF_R
+          javac -source 17 -target 17 -classpath "$android_jar" -d build/android-classes \
+            build/android-stubs/org/ghostos/privacy/R.java \
+            packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/PrivacyActivity.java \
+            packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/GhostModeQuickSettingsTile.java
+          test -f build/android-classes/org/ghostos/privacy/GhostModeQuickSettingsTile.class
+
       - name: Validate XML manifests
         run: |
           xmllint --noout manifests/ghostos-23.2.xml
