@@ -4,6 +4,7 @@ package org.ghostos.privacy;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.os.Build;
 
 import java.util.Map;
 import java.util.Objects;
@@ -27,10 +28,15 @@ public final class GhostModeDevicePolicyAdapter {
     public static final class Snapshot {
         private final boolean cameraDisabled;
         private final boolean screenCaptureDisabled;
+        private final Boolean usbDataSignalingEnabled;
 
-        private Snapshot(boolean cameraDisabled, boolean screenCaptureDisabled) {
+        private Snapshot(
+                boolean cameraDisabled,
+                boolean screenCaptureDisabled,
+                Boolean usbDataSignalingEnabled) {
             this.cameraDisabled = cameraDisabled;
             this.screenCaptureDisabled = screenCaptureDisabled;
+            this.usbDataSignalingEnabled = usbDataSignalingEnabled;
         }
 
         public boolean cameraDisabled() {
@@ -39,6 +45,10 @@ public final class GhostModeDevicePolicyAdapter {
 
         public boolean screenCaptureDisabled() {
             return screenCaptureDisabled;
+        }
+
+        public Boolean usbDataSignalingEnabled() {
+            return usbDataSignalingEnabled;
         }
     }
 
@@ -69,10 +79,17 @@ public final class GhostModeDevicePolicyAdapter {
         requireReady();
         Objects.requireNonNull(requested, "requested");
         for (Map.Entry<String, Boolean> entry : requested.entrySet()) {
-            if (!"camera".equals(entry.getKey()) && !"screenCapture".equals(entry.getKey())) {
+            if (!"camera".equals(entry.getKey())
+                    && !"screenCapture".equals(entry.getKey())
+                    && !"usbDataSignaling".equals(entry.getKey())) {
                 throw new IllegalArgumentException("Unsupported Device Owner control: " + entry.getKey());
             }
             Objects.requireNonNull(entry.getValue(), "Null policy value: " + entry.getKey());
+        }
+
+        if (requested.containsKey("usbDataSignaling") && !usbDataSignalingSupported()) {
+            throw new UnsupportedOperationException(
+                    "USB data signaling is unavailable on this Android device");
         }
 
         Snapshot before = snapshot();
@@ -82,6 +99,9 @@ public final class GhostModeDevicePolicyAdapter {
             }
             if (requested.containsKey("screenCapture")) {
                 manager.setScreenCaptureDisabled(admin, requested.get("screenCapture"));
+            }
+            if (requested.containsKey("usbDataSignaling")) {
+                manager.setUsbDataSignalingEnabled(requested.get("usbDataSignaling"));
             }
             verify(requested);
             return before;
@@ -110,10 +130,33 @@ public final class GhostModeDevicePolicyAdapter {
         return manager.getScreenCaptureDisabled(admin);
     }
 
+    public boolean isUsbDataSignalingSupported() {
+        requireReady();
+        return usbDataSignalingSupported();
+    }
+
+    public boolean isUsbDataSignalingEnabled() {
+        requireReady();
+        if (!usbDataSignalingSupported()) {
+            throw new UnsupportedOperationException(
+                    "USB data signaling is unavailable on this Android device");
+        }
+        return manager.isUsbDataSignalingEnabled();
+    }
+
+    private boolean usbDataSignalingSupported() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                && manager.canUsbDataSignalingBeDisabled();
+    }
+
     private Snapshot snapshot() {
+        Boolean usbDataSignaling = usbDataSignalingSupported()
+                ? manager.isUsbDataSignalingEnabled()
+                : null;
         return new Snapshot(
                 manager.getCameraDisabled(admin),
-                manager.getScreenCaptureDisabled(admin));
+                manager.getScreenCaptureDisabled(admin),
+                usbDataSignaling);
     }
 
     private void verify(Map<String, Boolean> requested) {
@@ -124,6 +167,10 @@ public final class GhostModeDevicePolicyAdapter {
         if (requested.containsKey("screenCapture")
                 && manager.getScreenCaptureDisabled(admin) != requested.get("screenCapture")) {
             throw new IllegalStateException("Android did not apply the requested screen-capture policy");
+        }
+        if (requested.containsKey("usbDataSignaling")
+                && manager.isUsbDataSignalingEnabled() != requested.get("usbDataSignaling")) {
+            throw new IllegalStateException("Android did not apply the requested USB data policy");
         }
     }
 
@@ -143,11 +190,24 @@ public final class GhostModeDevicePolicyAdapter {
                 failure.addSuppressed(error);
             }
         }
+        if (snapshot.usbDataSignalingEnabled() != null) {
+            try {
+                manager.setUsbDataSignalingEnabled(snapshot.usbDataSignalingEnabled());
+            } catch (RuntimeException error) {
+                if (failure == null) {
+                    failure = error;
+                } else {
+                    failure.addSuppressed(error);
+                }
+            }
+        }
         if (failure != null) {
             throw failure;
         }
         if (manager.getCameraDisabled(admin) != snapshot.cameraDisabled()
-                || manager.getScreenCaptureDisabled(admin) != snapshot.screenCaptureDisabled()) {
+                || manager.getScreenCaptureDisabled(admin) != snapshot.screenCaptureDisabled()
+                || (snapshot.usbDataSignalingEnabled() != null
+                && manager.isUsbDataSignalingEnabled() != snapshot.usbDataSignalingEnabled())) {
             throw new IllegalStateException("Android policy rollback did not restore the previous state");
         }
     }
