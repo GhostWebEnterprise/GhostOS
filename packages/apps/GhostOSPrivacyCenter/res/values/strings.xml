@@ -27,5 +27,5 @@
     <string name="ghostmode_policy_rollback_incomplete">Policy change failed and rollback was incomplete. Verify Android policy state before relying on protection.</string>
     <string name="ghostmode_tile_label">GhostMode</string>
     <string name="ghostmode_tile_subtitle">Setup required</string>
-    <string name="ghostmode_tile_description">Opens GhostOS Privacy Center. Device Owner camera and screen-capture controls are available individually after provisioning. Remaining GhostMode controls are not connected or enforced yet. This tile is not an activation switch.</string>
+    <string name="ghostmode_tile_description">Opens GhostOS Privacy Center. Device Owner camera and screen-capture controls are available individually after provisioning. remaining GhostMode controls are not connected or enforced yet. This tile is not an activation switch.</string>
 </resources>
