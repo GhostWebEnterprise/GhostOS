@@ -10,4 +10,7 @@
     <string name="security">Screen lock and security</string>
     <string name="unavailable">This Settings page is unavailable on this build.</string>
     <string name="scope">Experimental AOSP-based build. GrapheneOS-inspired appearance does not provide GrapheneOS device hardening. Camera and microphone controls are available in Android Privacy settings and Quick Settings where supported.</string>
+    <string name="ghostmode_tile_label">GhostMode</string>
+    <string name="ghostmode_tile_subtitle">Setup required</string>
+    <string name="ghostmode_tile_description">Opens GhostOS Privacy Center. GhostMode policy adapters are not connected on this build.</string>
 </resources>

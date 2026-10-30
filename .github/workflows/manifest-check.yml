@@ -50,6 +50,8 @@ jobs:
         run: |
           xmllint --noout manifests/ghostos-23.2.xml
           xmllint --noout manifests/ghostos_larry.xml
+          xmllint --noout packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml
+          xmllint --noout packages/apps/GhostOSPrivacyCenter/res/values/strings.xml
 
       - name: Validate larry upstream foundations
         shell: bash
@@ -97,6 +99,9 @@ jobs:
 
       - name: Test GhostMode SystemUI integration
         run: python3 -m unittest -v ghostos.ghostmode.test_systemui
+
+      - name: Test GhostMode Quick Settings tile declaration and fail-closed state
+        run: python3 -m unittest -v tests/test_ghostos_quick_settings_tile.py
 
       - name: Show supported devices
         run: |
