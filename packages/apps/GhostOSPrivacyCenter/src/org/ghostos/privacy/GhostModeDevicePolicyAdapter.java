@@ -4,14 +4,18 @@ package org.ghostos.privacy;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.location.LocationManager;
 import android.os.Build;
+import android.os.Bundle;
+import android.os.UserManager;
 
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * Narrow Device Owner adapter for Android-enforced camera and screen-capture
- * restrictions. It never requests or applies policies during construction.
+ * Narrow Device Owner adapter for Android-enforced camera, screen-capture,
+ * microphone and location restrictions. It never applies policies during
+ * construction.
  *
  * The caller must explicitly invoke apply() after checking availability().
  * Unsupported GhostMode categories remain degraded and must not be reported
@@ -28,14 +32,20 @@ public final class GhostModeDevicePolicyAdapter {
     public static final class Snapshot {
         private final boolean cameraDisabled;
         private final boolean screenCaptureDisabled;
+        private final boolean microphoneMuted;
+        private final Boolean locationEnabled;
         private final Boolean usbDataSignalingEnabled;
 
         private Snapshot(
                 boolean cameraDisabled,
                 boolean screenCaptureDisabled,
+                boolean microphoneMuted,
+                Boolean locationEnabled,
                 Boolean usbDataSignalingEnabled) {
             this.cameraDisabled = cameraDisabled;
             this.screenCaptureDisabled = screenCaptureDisabled;
+            this.microphoneMuted = microphoneMuted;
+            this.locationEnabled = locationEnabled;
             this.usbDataSignalingEnabled = usbDataSignalingEnabled;
         }
 
@@ -47,6 +57,14 @@ public final class GhostModeDevicePolicyAdapter {
             return screenCaptureDisabled;
         }
 
+        public boolean microphoneMuted() {
+            return microphoneMuted;
+        }
+
+        public Boolean locationEnabled() {
+            return locationEnabled;
+        }
+
         public Boolean usbDataSignalingEnabled() {
             return usbDataSignalingEnabled;
         }
@@ -55,10 +73,12 @@ public final class GhostModeDevicePolicyAdapter {
     private final Context context;
     private final DevicePolicyManager manager;
     private final ComponentName admin;
+    private final LocationManager locationManager;
 
     public GhostModeDevicePolicyAdapter(Context context) {
         this.context = Objects.requireNonNull(context, "context").getApplicationContext();
         this.manager = this.context.getSystemService(DevicePolicyManager.class);
+        this.locationManager = this.context.getSystemService(LocationManager.class);
         this.admin = new ComponentName(this.context, GhostModeDeviceAdminReceiver.class);
     }
 
@@ -81,6 +101,8 @@ public final class GhostModeDevicePolicyAdapter {
         for (Map.Entry<String, Boolean> entry : requested.entrySet()) {
             if (!"camera".equals(entry.getKey())
                     && !"screenCapture".equals(entry.getKey())
+                    && !"microphoneMuted".equals(entry.getKey())
+                    && !"locationEnabled".equals(entry.getKey())
                     && !"usbDataSignaling".equals(entry.getKey())) {
                 throw new IllegalArgumentException("Unsupported Device Owner control: " + entry.getKey());
             }
@@ -91,6 +113,10 @@ public final class GhostModeDevicePolicyAdapter {
             throw new UnsupportedOperationException(
                     "USB data signaling is unavailable on this Android device");
         }
+        if (requested.containsKey("locationEnabled") && !locationControlSupported()) {
+            throw new UnsupportedOperationException(
+                    "Device Owner location control requires Android 11 or later");
+        }
 
         Snapshot before = snapshot();
         try {
@@ -99,6 +125,12 @@ public final class GhostModeDevicePolicyAdapter {
             }
             if (requested.containsKey("screenCapture")) {
                 manager.setScreenCaptureDisabled(admin, requested.get("screenCapture"));
+            }
+            if (requested.containsKey("microphoneMuted")) {
+                setMicrophoneMuted(requested.get("microphoneMuted"));
+            }
+            if (requested.containsKey("locationEnabled")) {
+                manager.setLocationEnabled(admin, requested.get("locationEnabled"));
             }
             if (requested.containsKey("usbDataSignaling")) {
                 manager.setUsbDataSignalingEnabled(requested.get("usbDataSignaling"));
@@ -130,6 +162,27 @@ public final class GhostModeDevicePolicyAdapter {
         return manager.getScreenCaptureDisabled(admin);
     }
 
+    /** Returns the microphone restriction set by this GhostOS device admin. */
+    public boolean isMicrophoneMuted() {
+        requireReady();
+        return manager.getUserRestrictions(admin)
+                .getBoolean(UserManager.DISALLOW_UNMUTE_MICROPHONE, false);
+    }
+
+    public boolean isLocationControlSupported() {
+        requireReady();
+        return locationControlSupported();
+    }
+
+    public boolean isLocationEnabled() {
+        requireReady();
+        if (!locationControlSupported()) {
+            throw new UnsupportedOperationException(
+                    "Device Owner location control requires Android 11 or later");
+        }
+        return locationManager.isLocationEnabled();
+    }
+
     public boolean isUsbDataSignalingSupported() {
         requireReady();
         return usbDataSignalingSupported();
@@ -144,18 +197,36 @@ public final class GhostModeDevicePolicyAdapter {
         return manager.isUsbDataSignalingEnabled();
     }
 
+    private void setMicrophoneMuted(boolean muted) {
+        if (muted) {
+            manager.addUserRestriction(admin, UserManager.DISALLOW_UNMUTE_MICROPHONE);
+        } else {
+            manager.clearUserRestriction(admin, UserManager.DISALLOW_UNMUTE_MICROPHONE);
+        }
+    }
+
+    private boolean locationControlSupported() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && locationManager != null;
+    }
+
     private boolean usbDataSignalingSupported() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                 && manager.canUsbDataSignalingBeDisabled();
     }
 
     private Snapshot snapshot() {
+        Bundle restrictions = manager.getUserRestrictions(admin);
+        Boolean locationEnabled = locationControlSupported()
+                ? locationManager.isLocationEnabled()
+                : null;
         Boolean usbDataSignaling = usbDataSignalingSupported()
                 ? manager.isUsbDataSignalingEnabled()
                 : null;
         return new Snapshot(
                 manager.getCameraDisabled(admin),
                 manager.getScreenCaptureDisabled(admin),
+                restrictions.getBoolean(UserManager.DISALLOW_UNMUTE_MICROPHONE, false),
+                locationEnabled,
                 usbDataSignaling);
     }
 
@@ -167,6 +238,14 @@ public final class GhostModeDevicePolicyAdapter {
         if (requested.containsKey("screenCapture")
                 && manager.getScreenCaptureDisabled(admin) != requested.get("screenCapture")) {
             throw new IllegalStateException("Android did not apply the requested screen-capture policy");
+        }
+        if (requested.containsKey("microphoneMuted")
+                && isMicrophoneMuted() != requested.get("microphoneMuted")) {
+            throw new IllegalStateException("Android did not apply the requested microphone policy");
+        }
+        if (requested.containsKey("locationEnabled")
+                && locationManager.isLocationEnabled() != requested.get("locationEnabled")) {
+            throw new IllegalStateException("Android did not apply the requested location policy");
         }
         if (requested.containsKey("usbDataSignaling")
                 && manager.isUsbDataSignalingEnabled() != requested.get("usbDataSignaling")) {
@@ -184,32 +263,49 @@ public final class GhostModeDevicePolicyAdapter {
         try {
             manager.setScreenCaptureDisabled(admin, snapshot.screenCaptureDisabled());
         } catch (RuntimeException error) {
-            if (failure == null) {
-                failure = error;
-            } else {
-                failure.addSuppressed(error);
+            failure = append(failure, error);
+        }
+        try {
+            setMicrophoneMuted(snapshot.microphoneMuted());
+        } catch (RuntimeException error) {
+            failure = append(failure, error);
+        }
+        if (snapshot.locationEnabled() != null) {
+            try {
+                manager.setLocationEnabled(admin, snapshot.locationEnabled());
+            } catch (RuntimeException error) {
+                failure = append(failure, error);
             }
         }
         if (snapshot.usbDataSignalingEnabled() != null) {
             try {
                 manager.setUsbDataSignalingEnabled(snapshot.usbDataSignalingEnabled());
             } catch (RuntimeException error) {
-                if (failure == null) {
-                    failure = error;
-                } else {
-                    failure.addSuppressed(error);
-                }
+                failure = append(failure, error);
             }
         }
         if (failure != null) {
             throw failure;
         }
+        Bundle restrictions = manager.getUserRestrictions(admin);
         if (manager.getCameraDisabled(admin) != snapshot.cameraDisabled()
                 || manager.getScreenCaptureDisabled(admin) != snapshot.screenCaptureDisabled()
+                || restrictions.getBoolean(UserManager.DISALLOW_UNMUTE_MICROPHONE, false)
+                != snapshot.microphoneMuted()
+                || (snapshot.locationEnabled() != null
+                && locationManager.isLocationEnabled() != snapshot.locationEnabled())
                 || (snapshot.usbDataSignalingEnabled() != null
                 && manager.isUsbDataSignalingEnabled() != snapshot.usbDataSignalingEnabled())) {
             throw new IllegalStateException("Android policy rollback did not restore the previous state");
         }
+    }
+
+    private static RuntimeException append(RuntimeException current, RuntimeException next) {
+        if (current == null) {
+            return next;
+        }
+        current.addSuppressed(next);
+        return current;
     }
 
     private void requireReady() {

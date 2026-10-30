@@ -66,6 +66,23 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("public void rollback(Snapshot snapshot)", source)
         self.assertIn("Unsupported Device Owner control", source)
 
+    def test_microphone_and_location_controls_use_supported_device_owner_apis(self):
+        source = (
+            ROOT
+            / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
+            "GhostModeDevicePolicyAdapter.java"
+        ).read_text(encoding="utf-8")
+        self.assertIn("UserManager.DISALLOW_UNMUTE_MICROPHONE", source)
+        self.assertIn("manager.addUserRestriction(admin", source)
+        self.assertIn("manager.clearUserRestriction(admin", source)
+        self.assertIn("manager.getUserRestrictions(admin)", source)
+        self.assertIn("manager.setLocationEnabled(admin", source)
+        self.assertIn("locationManager.isLocationEnabled()", source)
+        self.assertIn("Build.VERSION_CODES.R", source)
+        self.assertIn("microphoneMuted", source)
+        self.assertIn("locationEnabled", source)
+        self.assertIn("locationEnabled()", source)
+
     def test_privacy_center_applies_only_explicit_device_owner_switch_changes(self):
         activity = (
             ROOT
@@ -74,16 +91,18 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         on_create = activity.split("@Override protected void onResume()", 1)[0]
         self.assertNotIn("adapter.apply(", on_create)
-        self.assertIn('cameraSwitch = addPolicySwitch', activity)
-        self.assertIn('screenCaptureSwitch = addPolicySwitch', activity)
-        self.assertIn('usbDataSwitch = addPolicySwitch', activity)
-        self.assertIn('adapter.isUsbDataSignalingSupported()', activity)
-        self.assertIn('adapter.isUsbDataSignalingEnabled()', activity)
-        self.assertIn('policySwitch.setOnCheckedChangeListener', activity)
-        self.assertIn('bindPolicySwitch(policySwitch, control)', activity)
+        self.assertIn("cameraSwitch = addPolicySwitch", activity)
+        self.assertIn("screenCaptureSwitch = addPolicySwitch", activity)
+        self.assertIn("microphoneSwitch = addPolicySwitch", activity)
+        self.assertIn("locationSwitch = addPolicySwitch", activity)
+        self.assertIn("usbDataSwitch = addPolicySwitch", activity)
+        self.assertIn("adapter.isLocationControlSupported()", activity)
+        self.assertIn("adapter.isMicrophoneMuted()", activity)
+        self.assertIn("adapter.isLocationEnabled()", activity)
+        self.assertIn("policySwitch.setOnCheckedChangeListener", activity)
+        self.assertIn("bindPolicySwitch(policySwitch, control)", activity)
         self.assertIn("adapter.availability()", activity)
         self.assertIn("adapter.apply(Collections.singletonMap(control, enabled))", activity)
-        self.assertIn('usbDataSwitch.setVisibility(ready && usbSupported ? View.VISIBLE : View.GONE)', activity)
         self.assertIn("failure.getSuppressed().length > 0", activity)
         self.assertIn("onResume()", activity)
 
@@ -107,9 +126,10 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         source_paths.extend(
             (ROOT / "packages/apps/GhostOSPrivacyCenter/src").rglob("*.java")
         )
-        combined = "\n".join(path.read_text(encoding="utf-8") for path in source_paths)
+        combined = "
+".join(path.read_text(encoding="utf-8") for path in source_paths)
         references = set(re.findall(r"@string/([A-Za-z0-9_]+)", combined))
-        references.update(re.findall(r"R\.string\.([A-Za-z0-9_]+)", combined))
+        references.update(re.findall(r"R.string.([A-Za-z0-9_]+)", combined))
         self.assertEqual(references - defined, set(), "Undefined Android string resources")
 
 

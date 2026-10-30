@@ -23,6 +23,8 @@ public final class PrivacyActivity extends Activity {
     private TextView readiness;
     private Switch cameraSwitch;
     private Switch screenCaptureSwitch;
+    private Switch microphoneSwitch;
+    private Switch locationSwitch;
     private Switch usbDataSwitch;
 
     @Override public void onCreate(Bundle state) {
@@ -46,6 +48,10 @@ public final class PrivacyActivity extends Activity {
         cameraSwitch = addPolicySwitch(R.string.ghostmode_camera_control, "camera");
         screenCaptureSwitch = addPolicySwitch(
                 R.string.ghostmode_screen_capture_control, "screenCapture");
+        microphoneSwitch = addPolicySwitch(
+                R.string.ghostmode_microphone_control, "microphoneMuted");
+        locationSwitch = addPolicySwitch(
+                R.string.ghostmode_location_control, "locationEnabled");
         usbDataSwitch = addPolicySwitch(
                 R.string.ghostmode_usb_data_control, "usbDataSignaling");
         refreshPolicyControls();
@@ -89,36 +95,51 @@ public final class PrivacyActivity extends Activity {
         showPolicyReadiness(availability);
         boolean ready = availability == GhostModeDevicePolicyAdapter.Availability.READY;
         boolean usbSupported = false;
+        boolean locationSupported = false;
         if (ready) {
             try {
                 usbSupported = adapter.isUsbDataSignalingSupported();
             } catch (RuntimeException unsupported) {
                 usbSupported = false;
             }
+            try {
+                locationSupported = adapter.isLocationControlSupported();
+            } catch (RuntimeException unsupported) {
+                locationSupported = false;
+            }
         }
+
         cameraSwitch.setVisibility(ready ? View.VISIBLE : View.GONE);
         screenCaptureSwitch.setVisibility(ready ? View.VISIBLE : View.GONE);
+        microphoneSwitch.setVisibility(ready ? View.VISIBLE : View.GONE);
+        locationSwitch.setVisibility(ready && locationSupported ? View.VISIBLE : View.GONE);
         usbDataSwitch.setVisibility(ready && usbSupported ? View.VISIBLE : View.GONE);
         cameraSwitch.setEnabled(ready);
         screenCaptureSwitch.setEnabled(ready);
+        microphoneSwitch.setEnabled(ready);
+        locationSwitch.setEnabled(ready && locationSupported);
         usbDataSwitch.setEnabled(ready && usbSupported);
         if (!ready) {
             return;
         }
 
+        refreshSwitch(cameraSwitch, "camera", adapter::isCameraDisabled);
+        refreshSwitch(screenCaptureSwitch, "screenCapture", adapter::isScreenCaptureDisabled);
+        refreshSwitch(microphoneSwitch, "microphoneMuted", adapter::isMicrophoneMuted);
+        if (locationSupported) {
+            refreshSwitch(locationSwitch, "locationEnabled", adapter::isLocationEnabled);
+        }
+        if (usbSupported) {
+            refreshSwitch(usbDataSwitch, "usbDataSignaling", adapter::isUsbDataSignalingEnabled);
+        }
+    }
+
+    private void refreshSwitch(Switch policySwitch, String control, BooleanReader reader) {
         try {
-            setCheckedWithoutApplying(cameraSwitch, adapter.isCameraDisabled(), "camera");
-            setCheckedWithoutApplying(
-                    screenCaptureSwitch, adapter.isScreenCaptureDisabled(), "screenCapture");
-            if (usbSupported) {
-                setCheckedWithoutApplying(
-                        usbDataSwitch, adapter.isUsbDataSignalingEnabled(), "usbDataSignaling");
-            }
+            setCheckedWithoutApplying(policySwitch, reader.read(), control);
         } catch (RuntimeException unavailable) {
-            cameraSwitch.setVisibility(View.GONE);
-            screenCaptureSwitch.setVisibility(View.GONE);
-            usbDataSwitch.setVisibility(View.GONE);
-            readiness.setText(R.string.ghostmode_policy_unavailable);
+            policySwitch.setVisibility(View.GONE);
+            policySwitch.setEnabled(false);
         }
     }
 
@@ -151,6 +172,8 @@ public final class PrivacyActivity extends Activity {
     private void applyPolicy(String control, boolean enabled) {
         cameraSwitch.setEnabled(false);
         screenCaptureSwitch.setEnabled(false);
+        microphoneSwitch.setEnabled(false);
+        locationSwitch.setEnabled(false);
         usbDataSwitch.setEnabled(false);
         try {
             if (adapter.availability() != GhostModeDevicePolicyAdapter.Availability.READY) {
@@ -168,6 +191,14 @@ public final class PrivacyActivity extends Activity {
                 message = enabled
                         ? R.string.ghostmode_screen_capture_disabled
                         : R.string.ghostmode_screen_capture_enabled;
+            } else if ("microphoneMuted".equals(control)) {
+                message = enabled
+                        ? R.string.ghostmode_microphone_muted
+                        : R.string.ghostmode_microphone_unmuted;
+            } else if ("locationEnabled".equals(control)) {
+                message = enabled
+                        ? R.string.ghostmode_location_enabled
+                        : R.string.ghostmode_location_disabled;
             } else {
                 message = enabled
                         ? R.string.ghostmode_usb_data_enabled
@@ -205,5 +236,10 @@ public final class PrivacyActivity extends Activity {
             }
         });
         content.addView(button);
+    }
+
+    @FunctionalInterface
+    private interface BooleanReader {
+        boolean read();
     }
 }
