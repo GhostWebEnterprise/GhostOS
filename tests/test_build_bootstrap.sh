@@ -21,7 +21,7 @@ case "$1" in
   sync)
     test -f .repo/manifest.xml || { echo 'repo sync before repo init' >&2; exit 1; }
     mkdir -p build
-    printf 'breakfast() { :; }\nm() { :; }\n' > build/envsetup.sh
+    printf 'lunch() { printf "lunch %s\\n" "$*" >> "$GHOSTOS_BUILD_LOG"; }\nm() { printf "m %s\\n" "$*" >> "$GHOSTOS_BUILD_LOG"; }\n' > build/envsetup.sh
     ;;
   *) echo "unexpected repo command: $1" >&2; exit 1 ;;
 esac
@@ -33,6 +33,8 @@ export GHOSTOS_REPO_LOG="$WORK/repo.log"
 run_case() {
   local case_name="$1" expected_init="$2" checkout="$WORK/$1"
   : > "$GHOSTOS_REPO_LOG"
+  export GHOSTOS_BUILD_LOG="$WORK/$case_name.build.log"
+  : > "$GHOSTOS_BUILD_LOG"
   ANDROID_DIR="$checkout" DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/$case_name.out"
   local count
   count="$(grep -c '^init ' "$GHOSTOS_REPO_LOG" || true)"
@@ -42,6 +44,11 @@ run_case() {
   }
   grep -q '^sync ' "$GHOSTOS_REPO_LOG" || { echo "$case_name: repo sync not called" >&2; exit 1; }
   cmp "$ROOT/manifests/ghostos-23.2.xml" "$checkout/.repo/local_manifests/ghostos.xml"
+  cmp "$ROOT/device/ghostos/larry/ghostos_larry.mk" "$checkout/device/ghostos/larry/ghostos_larry.mk"
+  cmp "$ROOT/vendor/ghostos/config/common.mk" "$checkout/vendor/ghostos/config/common.mk"
+  cmp "$ROOT/packages/apps/GhostOSPrivacyCenter/Android.bp" "$checkout/packages/apps/GhostOSPrivacyCenter/Android.bp"
+  grep -Fxq 'lunch ghostos_larry-userdebug' "$GHOSTOS_BUILD_LOG"
+  grep -Fxq 'm bacon' "$GHOSTOS_BUILD_LOG"
 }
 
 run_case fresh 1
