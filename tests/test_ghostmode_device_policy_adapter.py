@@ -1,3 +1,4 @@
+import re
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -60,14 +61,20 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("public void rollback(Snapshot snapshot)", source)
         self.assertIn("Unsupported Device Owner control", source)
 
-    def test_privacy_center_reports_readiness_without_automatically_applying_policy(self):
+    def test_privacy_center_applies_only_explicit_device_owner_switch_changes(self):
         activity = (
             ROOT
             / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
             "PrivacyActivity.java"
         ).read_text(encoding="utf-8")
+        on_create = activity.split("@Override protected void onResume()", 1)[0]
+        self.assertNotIn("adapter.apply(", on_create)
+        self.assertIn("cameraSwitch.setOnCheckedChangeListener", activity)
+        self.assertIn("screenCaptureSwitch.setOnCheckedChangeListener", activity)
         self.assertIn("adapter.availability()", activity)
-        self.assertNotIn("adapter.apply(", activity)
+        self.assertIn("adapter.apply(Collections.singletonMap(control, enabled))", activity)
+        self.assertIn("failure.getSuppressed().length > 0", activity)
+        self.assertIn("onResume()", activity)
 
         tile = (
             ROOT
@@ -76,6 +83,23 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("Tile.STATE_INACTIVE", tile)
         self.assertNotIn("Tile.STATE_ACTIVE", tile)
+
+    def test_all_android_string_references_exist(self):
+        strings_path = ROOT / "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml"
+        strings = ET.parse(strings_path).getroot()
+        defined = {item.attrib["name"] for item in strings.findall("string")}
+
+        source_paths = [
+            ROOT / "packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml",
+            ROOT / "packages/apps/GhostOSPrivacyCenter/res/xml/device_admin.xml",
+        ]
+        source_paths.extend(
+            (ROOT / "packages/apps/GhostOSPrivacyCenter/src").rglob("*.java")
+        )
+        combined = "\n".join(path.read_text(encoding="utf-8") for path in source_paths)
+        references = set(re.findall(r"@string/([A-Za-z0-9_]+)", combined))
+        references.update(re.findall(r"R\.string\.([A-Za-z0-9_]+)", combined))
+        self.assertEqual(references - defined, set(), "Undefined Android string resources")
 
 
 if __name__ == "__main__":
