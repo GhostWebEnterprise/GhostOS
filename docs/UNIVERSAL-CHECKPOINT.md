@@ -29,8 +29,28 @@ The build driver now stages `device/ghostos`, `vendor/ghostos`, and
 checkout and selects `ghostos_larry-userdebug` rather than the upstream
 LineageOS product. Mock bootstrap CI verifies those copy paths and the selected
 product. This is staging/selection evidence only: it has not passed a real
-`repo sync`, Soong, resource compilation, Java compilation, or device runtime
-test. The existing upstream manifests remain unchanged.
+`repo sync`, Soong, Android resource compilation, or device runtime test. The
+Privacy Center and Quick Settings Java sources have now passed `javac` against
+the Android API 36 platform in GitHub Actions; this does not replace a Soong
+module/resource build. The existing upstream manifests remain unchanged.
+
+## CI verification update — 2026-10-30
+
+The first API-36 CI attempt failed before compilation because
+`android-actions/setup-android@v3` installs the removed SDK package `tools` by
+default. The workflow now explicitly installs only `platform-tools`, then
+installs `platforms;android-36` in its dedicated step. Both the push and PR
+runs passed on commit `a3feeaa063a09db212c218dddf8606d171ad06dd`:
+
+- [PR validation run 41028709151](https://github.com/GhostWebEnterprise/GhostOS/actions/runs/41028709151)
+- [Push validation run 41028702731](https://github.com/GhostWebEnterprise/GhostOS/actions/runs/41028702731)
+
+The successful jobs include Android SDK setup, API 36 platform installation,
+Java compilation of `PrivacyActivity.java` and `GhostModeQuickSettingsTile.java`,
+XML validation, upstream larry foundation checks, bootstrap tests, and all
+GhostMode manager/rollback/adapter/Privacy Center/SystemUI/Quick Settings tests.
+No AOSP `repo sync`, Soong product build, image build, flash, or device boot is
+claimed.
 
 ## Repository evidence inspected
 
