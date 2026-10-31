@@ -81,6 +81,16 @@ jobs:
           test -f build/android-classes/org/ghostos/privacy/GhostModeDevicePolicyAdapter.class
           test -f build/android-classes/org/ghostos/privacy/PrivacyActivity.class
 
+      - name: Keep GhostWeb VPN outside GhostOS product configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RniE 'VpnHood|ghost-web-vpn' \
+            device/ghostos vendor/ghostos packages/apps/GhostOSPrivacyCenter manifests; then
+            echo "::error::GhostWeb VPN must remain outside GhostOS product configuration" >&2
+            exit 1
+          fi
+
       - name: Validate XML manifests
         run: |
           xmllint --noout manifests/ghostos-23.2.xml
