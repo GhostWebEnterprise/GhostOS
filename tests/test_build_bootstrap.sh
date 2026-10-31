@@ -76,6 +76,7 @@ if ANDROID_DIR="$INSIDE" DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.s
   exit 1
 fi
 grep -q "must be outside the GhostOS repository" "$WORK/inside.out"
+rm -rf -- "$INSIDE"
 test ! -s "$GHOSTOS_REPO_LOG"
 
 : > "$GHOSTOS_REPO_LOG"

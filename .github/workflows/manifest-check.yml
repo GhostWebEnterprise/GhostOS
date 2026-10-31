@@ -37,14 +37,10 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install XML validator
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-utils
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
@@ -93,13 +89,22 @@ jobs:
 
       - name: Validate XML manifests
         run: |
-          xmllint --noout manifests/ghostos-23.2.xml
-          xmllint --noout manifests/ghostos-24.0.xml
-          xmllint --noout manifests/ghostos_larry.xml
-          xmllint --noout packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml
-          xmllint --noout packages/apps/GhostOSPrivacyCenter/res/values/strings.xml
-          xmllint --noout packages/apps/GhostOSPrivacyCenter/res/values/styles.xml
-          xmllint --noout packages/apps/GhostOSPrivacyCenter/res/xml/device_admin.xml
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+
+          paths = (
+              "manifests/ghostos-23.2.xml",
+              "manifests/ghostos-24.0.xml",
+              "manifests/ghostos_larry.xml",
+              "packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml",
+              "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml",
+              "packages/apps/GhostOSPrivacyCenter/res/values/styles.xml",
+              "packages/apps/GhostOSPrivacyCenter/res/xml/device_admin.xml",
+          )
+          for path in paths:
+              ET.parse(path)
+              print(f"Valid XML: {path}")
+          PY
 
       - name: Validate every pinned upstream project commit
         env:
