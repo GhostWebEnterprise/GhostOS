@@ -100,16 +100,50 @@ jobs:
           xmllint --noout packages/apps/GhostOSPrivacyCenter/res/values/styles.xml
           xmllint --noout packages/apps/GhostOSPrivacyCenter/res/xml/device_admin.xml
 
-      - name: Validate larry upstream foundations
+      - name: Validate every pinned upstream project commit
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          for repo in \
-            android_device_oneplus_larry \
-            android_device_oneplus_sm6375-common \
-            android_kernel_oneplus_sm6375; do
-            git ls-remote --exit-code --heads "https://github.com/LineageOS/${repo}.git" lineage-23.2 >/dev/null
-          done
+          python3 - <<'PY'
+          import re
+          import subprocess
+          import xml.etree.ElementTree as ET
+          from urllib.parse import urlparse
+
+          manifest = ET.parse("manifests/ghostos-23.2.xml").getroot()
+          remotes = {item.attrib["name"]: item.attrib for item in manifest.findall("remote")}
+          projects = manifest.findall("project")
+          if not projects:
+              raise SystemExit("No upstream projects are declared in the GhostOS manifest")
+
+          for project in projects:
+              name = project.attrib["name"]
+              remote_name = project.attrib["remote"]
+              remote = remotes.get(remote_name)
+              if remote is None or not remote.get("fetch"):
+                  raise SystemExit(f"Missing fetch URL for manifest remote {remote_name}")
+              revision = project.get("revision") or remote.get("revision")
+              if not revision:
+                  raise SystemExit(f"Missing revision for {name}")
+              owner = urlparse(remote["fetch"]).path.strip("/").split("/")[0]
+              if re.fullmatch(r"[0-9a-fA-F]{40}", revision):
+                  actual = subprocess.check_output(
+                      ["gh", "api", f"repos/{owner}/{name}/commits/{revision}", "--jq", ".sha"],
+                      text=True,
+                  ).strip()
+                  if actual.lower() != revision.lower():
+                      raise SystemExit(f"Pinned commit mismatch for {owner}/{name}: {actual}")
+              else:
+                  url = f"{remote['fetch'].rstrip('/')}/{name}.git"
+                  subprocess.run(
+                      ["git", "ls-remote", "--exit-code", "--heads", url, f"refs/heads/{revision}"],
+                      check=True,
+                      stdout=subprocess.DEVNULL,
+                  )
+              print(f"Verified {owner}/{name}@{revision}")
+          PY
 
       - name: Validate LineageOS build script syntax
         run: bash -n scripts/ghostos-build.sh
