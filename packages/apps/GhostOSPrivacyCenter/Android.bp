@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+android_app {
+    name: "GhostOSPrivacyCenter",
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
+    sdk_version: "current",
+    min_sdk_version: "29",
+    certificate: "testkey",
+}

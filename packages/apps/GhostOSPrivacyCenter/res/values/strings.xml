@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">GhostOS Privacy</string>
+    <string name="intro">Review and explicitly apply supported Android privacy controls. No changes are made until you change a control.</string>
+    <string name="permissions">Privacy and permissions</string>
+    <string name="location">Location access</string>
+    <string name="vpn">VPN and always-on VPN</string>
+    <string name="network">Network and Private DNS</string>
+    <string name="apps">App permissions and notifications</string>
+    <string name="security">Screen lock and security</string>
+    <string name="unavailable">This Settings page is unavailable on this build.</string>
+    <string name="scope">Experimental AOSP-based build. GrapheneOS-inspired appearance does not provide GrapheneOS device hardening. Per-app permissions and remaining privacy controls stay in Android Settings.</string>
+    <string name="device_admin_description">Allows GhostOS to apply explicitly selected camera, screen-capture, microphone, location and supported USB data restrictions when provisioned as Device Owner. No policy is applied automatically.</string>
+    <string name="ghostmode_policy_ready">Device Owner is active. Supported camera, screen-capture, microphone, location and USB data controls can be changed individually below. Full GhostMode remains inactive.</string>
+    <string name="ghostmode_device_owner_required">Device Owner provisioning is required before these Android-enforced controls can be changed. No policy is applied automatically.</string>
+    <string name="ghostmode_admin_inactive">The GhostMode device administrator is inactive. No policy was changed.</string>
+    <string name="ghostmode_policy_unavailable">Android DevicePolicyManager is unavailable or policy state could not be read. No protection is assumed.</string>
+    <string name="ghostmode_policy_scope">These are individual Device Owner controls only. Location control appears only on Android 11 or later; USB data control appears only when Android reports device support. Network, clipboard, per-app permissions and notification protections are not yet enforced by GhostMode.</string>
+    <string name="ghostmode_policy_controls_title">Supported Device Owner controls</string>
+    <string name="ghostmode_camera_control">Disable camera</string>
+    <string name="ghostmode_screen_capture_control">Block screen capture</string>
+    <string name="ghostmode_microphone_control">Mute microphone and block unmute</string>
+    <string name="ghostmode_microphone_muted">Microphone mute restriction applied.</string>
+    <string name="ghostmode_microphone_unmuted">Microphone mute restriction removed.</string>
+    <string name="ghostmode_location_control">Device location enabled</string>
+    <string name="ghostmode_location_enabled">Device location enabled.</string>
+    <string name="ghostmode_location_disabled">Device location disabled.</string>
+    <string name="ghostmode_camera_disabled">Camera restriction applied.</string>
+    <string name="ghostmode_camera_enabled">Camera restriction removed.</string>
+    <string name="ghostmode_screen_capture_disabled">Screen-capture restriction applied.</string>
+    <string name="ghostmode_screen_capture_enabled">Screen-capture restriction removed.</string>
+    <string name="ghostmode_usb_data_control">Disable USB data (charging remains available)</string>
+    <string name="ghostmode_usb_data_disabled">USB data signaling disabled; charging remains available.</string>
+    <string name="ghostmode_usb_data_enabled">USB data signaling enabled.</string>
+    <string name="ghostmode_policy_change_failed">Android rejected the change; the previous state was restored.</string>
+    <string name="ghostmode_policy_rollback_incomplete">Policy change failed and rollback was incomplete. Verify Android policy state before relying on protection.</string>
+    <string name="ghostmode_tile_label">GhostMode</string>
+    <string name="ghostmode_tile_subtitle">Setup required</string>
+    <string name="ghostmode_tile_description">Opens GhostOS Privacy Center. Supported Device Owner camera, microphone, location, screen-capture and USB data controls are available individually after provisioning. Remaining GhostMode controls are not connected or enforced yet. This tile is not an activation switch.</string>
+</resources>
