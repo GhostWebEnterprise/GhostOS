@@ -48,13 +48,13 @@ jobs:
           packages: platform-tools
 
       - name: Install Android 17 API 37 and build tools
-        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
+        run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0"
 
       - name: Link Privacy Center Android resources and compile sources against API 37
         shell: bash
         run: |
           set -euo pipefail
-          android_jar="$ANDROID_HOME/platforms/android-37/android.jar"
+          android_jar="$ANDROID_HOME/platforms/android-37.0/android.jar"
           aapt2="$ANDROID_HOME/build-tools/37.0.0/aapt2"
           test -f "$android_jar" || { echo "::error::Android API 37 android.jar is missing"; exit 1; }
           test -x "$aapt2" || { echo "::error::Android 17 build-tools aapt2 is missing"; exit 1; }
