@@ -77,7 +77,7 @@ Android 15 larry foundation branches exist. Observed `lineage-22.2` heads:
 
 Pin and validate the full dependency closure, not just these four trees.
 
-## Current Android 16 larry manifest — checked 2026-10-30
+## Current Android 16 larry manifest — checked 2026-10-31
 
 The active `scripts/ghostos-build.sh` uses `manifests/ghostos-23.2.xml`
 (LineageOS `lineage-23.2`, Android 16). The separate `scripts/init-android17.sh`
@@ -90,9 +90,12 @@ GitHub on 2026-10-30 are:
 | `android_device_oneplus_larry` | `3a6d07128372207cf26dda1bf3fa0bde5f7b500b` |
 | `android_device_oneplus_sm6375-common` | `a9451bc04291f13dbb8c262d4d81d6db38796aaa` |
 | `android_kernel_oneplus_sm6375` | `5aee535b13d813b7ef8af9247f3fa0a3cd68047b` |
+| `android_hardware_oplus` | `b1dc1db2df55601e4125abfdc3bc3f273f3ecb2e` |
+| `proprietary_vendor_oneplus_larry` (TheMuppets) | `6c1018818ebd3f0ada02709ee8c58e42121d9e7f` |
+| `proprietary_vendor_oneplus_sm6375-common` (TheMuppets) | `c1e5323598c20d241bc9d7c4c3762dd01d07d26d` |
 
-The manifest still tracks branch names rather than pinning these commits; these
-SHAs are observations, not a resolved `repo manifest -r` build lock.
+The manifest tracks branch names rather than pinning these commits; these SHAs
+are observations, not a resolved `repo manifest -r` build lock.
 
 ## Important compatibility findings
 
@@ -100,13 +103,15 @@ SHAs are observations, not a resolved `repo manifest -r` build lock.
   identifies **CPH2467_15.0.0.1910(EX01)** as the default blob source (unless an
   entry is pinned). This supersedes the older `lineage-22.2` /
   `CPH2467_14.0.0.1800(EX01)` reference below for the active Android 16 tree.
-  It still does not prove compatibility with the exact phone: the model,
-  region and installed OxygenOS build must match. The current manifest does
-  not fetch proprietary vendor blobs, and `scripts/ghostos-build.sh` does not
-  run the upstream `extract-files.py`. `device.mk` includes
-  `vendor/oneplus/larry/larry-vendor.mk` only if it exists. A larry image must
-  not be treated as hardware-ready until the matching stock firmware/device
-  dump is lawfully extracted and every required blob is verified and hashed.
+  The 2026-10-31 manifest correction now syncs `hardware/oplus`,
+  `vendor/oneplus/larry`, and `vendor/oneplus/sm6375-common` from their
+  `lineage-23.2` branches. A path audit matched all 1,066 larry and 1,101
+  SM6375-common proprietary-file entries to source/target paths in those
+  vendor trees. This is path-coverage only, not binary hash or firmware
+  provenance verification. The exact handset model, region and installed
+  OxygenOS build must still match; otherwise use the upstream extraction tools
+  on a lawful matching firmware/device dump and verify every required blob.
+  `scripts/ghostos-build.sh` still has not run a full `repo sync` or build.
 - The upstream common BoardConfig defines ARM64 plus ARM32 support, A/B OTA,
   dynamic partitions, separate vendor_boot and vendor_dlkm, and boot header v3.
   Preserve matching kernel, DTBO, module ABI, firmware and vendor HAL dependencies.
@@ -161,9 +166,11 @@ the earlier request as approval for an unspecified paid subscription or budget.
    product discovery or a full build. GSI uses the generic_arm64 BoardConfig;
    larry uses upstream larry BoardConfig. Do not invent a BoardConfig with
    guessed partition geometry or pretend proprietary blobs are present.
-4. Obtain exact phone/firmware evidence and use the upstream extraction tools
-   for both larry and sm6375-common. Record lawful blob provenance and hashes.
-   Resolve OxygenOS 15 firmware requirements before approving a hardware image.
+4. Confirm the exact phone model, region and installed OxygenOS 15 build against
+   the `CPH2467_15.0.0.1910(EX01)` source noted by upstream. Compare vendor blob
+   hashes/provenance; if the synced TheMuppets branches do not match, use the
+   upstream extraction tools on a lawful matching firmware/device dump. Do not
+   approve a hardware image from path coverage alone.
 5. Obtain an approved release-signed GhostWire APK with source revision,
    package ID, version, SHA-256, signer certificate fingerprint and redistribution
    license/source notices. Verify using apksigner/aapt2, import as a presigned
