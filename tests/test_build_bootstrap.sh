@@ -17,9 +17,15 @@ cat > "$WORK/bin/repo" <<'MOCK'
 set -euo pipefail
 printf '%s\n' "$*" >> "$GHOSTOS_REPO_LOG"
 case "$1" in
-  init) mkdir -p .repo; : > .repo/manifest.xml ;;
+  init)
+    [[ "$*" == *"-b lineage-24.0"* ]] || { echo "LineageOS 24.0 branch not selected" >&2; exit 1; }
+    [[ "$*" == *"--git-lfs"* ]] || { echo "Git LFS not enabled" >&2; exit 1; }
+    mkdir -p .repo
+    : > .repo/manifest.xml
+    ;;
   sync)
     test -f .repo/manifest.xml || { echo 'repo sync before repo init' >&2; exit 1; }
+    test -s .repo/local_manifests/ghostos.xml || { echo 'pinned larry manifest missing before repo sync' >&2; exit 1; }
     mkdir -p build
     cat > build/envsetup.sh <<'ENV'
 lunch() { printf 'lunch %s\n' "$*" >> "$GHOSTOS_BUILD_LOG"; }
@@ -34,7 +40,7 @@ export PATH="$WORK/bin:$PATH"
 export GHOSTOS_REPO_LOG="$WORK/repo.log"
 
 run_case() {
-  local case_name="$1" expected_init="$2" checkout="$WORK/$1"
+  local case_name="$1" checkout="$WORK/$1"
   : > "$GHOSTOS_REPO_LOG"
   export GHOSTOS_BUILD_LOG="$WORK/$case_name.build.log"
   : > "$GHOSTOS_BUILD_LOG"
@@ -42,14 +48,9 @@ run_case() {
     cat "$WORK/$case_name.out" >&2
     exit 1
   fi
-  local count
-  count="$(grep -c '^init ' "$GHOSTOS_REPO_LOG" || true)"
-  test "$count" = "$expected_init" || {
-    echo "$case_name: expected $expected_init repo init calls, found $count" >&2
-    exit 1
-  }
+  test "$(grep -c '^init ' "$GHOSTOS_REPO_LOG" || true)" = "1"
   grep -q '^sync ' "$GHOSTOS_REPO_LOG" || { echo "$case_name: repo sync not called" >&2; exit 1; }
-  cmp "$ROOT/manifests/ghostos-23.2.xml" "$checkout/.repo/local_manifests/ghostos.xml"
+  cmp "$ROOT/manifests/ghostos-24.0.xml" "$checkout/.repo/local_manifests/ghostos.xml"
   cmp "$ROOT/device/ghostos/larry/ghostos_larry.mk" "$checkout/device/ghostos/larry/ghostos_larry.mk"
   cmp "$ROOT/vendor/ghostos/config/common.mk" "$checkout/vendor/ghostos/config/common.mk"
   cmp "$ROOT/packages/apps/GhostOSPrivacyCenter/Android.bp" "$checkout/packages/apps/GhostOSPrivacyCenter/Android.bp"
@@ -57,14 +58,14 @@ run_case() {
   grep -Fxq 'm bacon' "$GHOSTOS_BUILD_LOG"
 }
 
-run_case fresh 1
+run_case fresh
 mkdir -p "$WORK/partial/.repo/local_manifests"
 printf '<manifest name="preserve"/>\n' > "$WORK/partial/.repo/local_manifests/keep.xml"
-run_case partial 1
+run_case partial
 printf '<manifest name="preserve"/>\n' | cmp - "$WORK/partial/.repo/local_manifests/keep.xml"
 mkdir -p "$WORK/existing/.repo"
 : > "$WORK/existing/.repo/manifest.xml"
-run_case existing 0
+run_case existing
 
 # The builder must refuse both an Android source tree inside GhostOS and an
 # Android target that contains the GhostOS checkout. No repo command may run.
@@ -85,4 +86,4 @@ fi
 grep -q "must not contain the GhostOS repository" "$WORK/ancestor.out"
 test ! -s "$GHOSTOS_REPO_LOG"
 
-echo "GhostOS bootstrap regression: 3 init cases and 2 source-path safety cases passed"
+echo "GhostOS Android 17 bootstrap regression: 3 init cases and 2 source-path safety cases passed"

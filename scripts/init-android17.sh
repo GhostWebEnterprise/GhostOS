@@ -4,8 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 GHOSTOS_ROOT="$(cd "$SCRIPT_DIR/.." && pwd -P)"
 ANDROID_DIR="${1:-${GHOSTOS_ANDROID17_DIR:-$GHOSTOS_ROOT/../ghostos-android17-larry}}"
+MANIFEST="$GHOSTOS_ROOT/manifests/ghostos-24.0.xml"
 
 command -v repo >/dev/null || { echo "repo is required" >&2; exit 1; }
+[[ -f "$MANIFEST" ]] || { echo "missing GhostOS Android 17 manifest: $MANIFEST" >&2; exit 1; }
 
 mkdir -p "$ANDROID_DIR"
 ANDROID_DIR="$(cd "$ANDROID_DIR" && pwd -P)"
@@ -25,18 +27,13 @@ case "$GHOSTOS_ROOT/" in
 esac
 
 cd "$ANDROID_DIR"
+# Reinitialize explicitly so an AOSP-only android17-release checkout cannot be
+# mistaken for the LineageOS 24.0 device build foundation.
+repo init -u https://github.com/LineageOS/android.git -b lineage-24.0 --git-lfs
+mkdir -p .repo/local_manifests
+cp "$MANIFEST" .repo/local_manifests/ghostos.xml
+repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune -j"${JOBS:-8}"
 
-# This is an AOSP Android 17 source bootstrap only. The current larry device,
-# common and kernel trees are pinned to LineageOS 23.2 (Android 16) in
-# manifests/ghostos_larry.xml. Do not mix those unported trees into the
-# android17-release manifest; adapt and validate an Android 17 device closure
-# separately before adding any local device manifest.
-repo init --partial-clone --no-use-superproject \
-  -u https://android.googlesource.com/platform/manifest \
-  -b android17-release
-
-repo sync -c --no-tags --optimized-fetch --prune -j"${JOBS:-8}"
-
-echo "GhostOS AOSP Android 17 source foundation synced in: $ANDROID_DIR"
-echo "No larry device manifest was applied: the current LineageOS 23.2 device trees target Android 16."
-echo "Next gate: port larry device/common/kernel trees to Android 17, validate vendor dependencies, then run lunch/build."
+echo "GhostOS LineageOS 24.0 / Android 17 larry foundation synced in: $ANDROID_DIR"
+echo "The six device/common/kernel/hardware/vendor projects are pinned by manifests/ghostos-24.0.xml."
+echo "Next gate: run lunch ghostos_larry-userdebug and the first full Soong/product build."

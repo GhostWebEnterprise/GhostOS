@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Offline regression for the AOSP-only Android 17 bootstrap.
+# Offline regression for the LineageOS 24.0 / Android 17 larry bootstrap.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -13,8 +13,16 @@ set -euo pipefail
 printf '%s\t%s\n' "$PWD" "$*" >> "$GHOSTOS_REPO_LOG"
 case "$1" in
   init)
-    [[ "$*" == *"-b android17-release"* ]] || {
-      echo "Android 17 branch not selected" >&2
+    [[ "$*" == *"https://github.com/LineageOS/android.git"* ]] || {
+      echo "LineageOS manifest URL not selected" >&2
+      exit 1
+    }
+    [[ "$*" == *"-b lineage-24.0"* ]] || {
+      echo "LineageOS 24.0 / Android 17 branch not selected" >&2
+      exit 1
+    }
+    [[ "$*" == *"--git-lfs"* ]] || {
+      echo "Git LFS was not enabled for vendor sources" >&2
       exit 1
     }
     mkdir -p .repo
@@ -25,8 +33,8 @@ case "$1" in
       echo "repo sync ran before repo init" >&2
       exit 1
     }
-    test ! -e .repo/local_manifests/ghostos_larry.xml || {
-      echo "Android 16 LineageOS larry manifest was mixed into Android 17" >&2
+    test -s .repo/local_manifests/ghostos.xml || {
+      echo "pinned GhostOS larry manifest was not applied before repo sync" >&2
       exit 1
     }
     ;;
@@ -52,7 +60,9 @@ test "$(wc -l < "$GHOSTOS_REPO_LOG")" -eq 2
 grep -F "$ANDROID_DIR"$'\t'"init " "$GHOSTOS_REPO_LOG" >/dev/null
 grep -F "$ANDROID_DIR"$'\t'"sync " "$GHOSTOS_REPO_LOG" >/dev/null
 test -f "$ANDROID_DIR/.repo/manifest.xml"
-test ! -e "$ANDROID_DIR/.repo/local_manifests/ghostos_larry.xml"
+cmp "$ROOT/manifests/ghostos-24.0.xml" "$ANDROID_DIR/.repo/local_manifests/ghostos.xml"
+grep -Fq 'revision="c61f542b529d561e8b4e1d2dcf33027e437c3740"' "$ANDROID_DIR/.repo/local_manifests/ghostos.xml"
+grep -Fq 'revision="16a0967e6b5a4a23aa35e1bf857e84c543733db7"' "$ANDROID_DIR/.repo/local_manifests/ghostos.xml"
 
 # A mistaken target inside the repository must fail before repo init/sync.
 INSIDE="$ROOT/.android17-bootstrap-test-target"
@@ -66,4 +76,4 @@ grep -q "must be outside the GhostOS repository" "$WORK/inside.log"
 rm -rf "$INSIDE"
 test "$(wc -l < "$GHOSTOS_REPO_LOG")" -eq 2
 
-echo "GhostOS Android 17 bootstrap regression: AOSP-only sync and path safety passed"
+echo "GhostOS LineageOS 24.0 / Android 17 bootstrap regression: pinned manifest and path safety passed"
