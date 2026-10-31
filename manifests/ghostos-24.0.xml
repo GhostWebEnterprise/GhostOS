@@ -12,5 +12,5 @@
   <project name="android_kernel_oneplus_sm6375" path="kernel/oneplus/sm6375" remote="lineage" revision="410239fbcdd647b66eca7011b9c3053e52cf1d9d" />
 
   <project name="proprietary_vendor_oneplus_larry" path="vendor/oneplus/larry" remote="themuppets" revision="491fcb0a609f4e165dfdac41cbff9630d871f226" />
-  <project name="proprietary_vendor_oneplus_sm6375-common" path="vendor/oneplus/sm6375-common" remote="themuppets" revision="306f82d86c7be9f899603b6e3b47a08544c6276" />
+  <project name="proprietary_vendor_oneplus_sm6375-common" path="vendor/oneplus/sm6375-common" remote="themuppets" revision="306f82d86c7be9f899603b6e3b47a08544c6276c" />
 </manifest>

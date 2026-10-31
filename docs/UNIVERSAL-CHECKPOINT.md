@@ -16,7 +16,7 @@ branch names.
 | LineageOS/android_hardware_oplus | c78b87c9efb89049b35a184d60095f26c7cb29aa |
 | LineageOS/android_kernel_oneplus_sm6375 | 410239fbcdd647b66eca7011b9c3053e52cf1d9d |
 | TheMuppets/proprietary_vendor_oneplus_larry | 491fcb0a609f4e165dfdac41cbff9630d871f226 |
-| TheMuppets/proprietary_vendor_oneplus_sm6375-common | 306f82d86c7be9f899603b6e3b47a08544c6276 |
+| TheMuppets/proprietary_vendor_oneplus_sm6375-common | 306f82d86c7be9f899603b6e3b47a08544c6276c |
 
 The larry, common and vendor branch heads report source firmware
 CPH2467_15.0.0.2000(EX01). The earlier 23.2 manifest used
