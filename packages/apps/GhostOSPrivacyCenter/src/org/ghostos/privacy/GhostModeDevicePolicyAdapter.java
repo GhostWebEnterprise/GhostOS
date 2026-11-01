@@ -36,7 +36,7 @@ public final class GhostModeDevicePolicyAdapter {
         private final Boolean locationEnabled;
         private final Boolean usbDataSignalingEnabled;
 
-        private Snapshot(
+        Snapshot(
                 boolean cameraDisabled,
                 boolean screenCaptureDisabled,
                 boolean microphoneMuted,
@@ -212,6 +212,12 @@ public final class GhostModeDevicePolicyAdapter {
     private boolean usbDataSignalingSupported() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
                 && manager.canUsbDataSignalingBeDisabled();
+    }
+
+    /** Captures the current reversible Device Owner state without applying policy. */
+    public Snapshot captureSnapshot() {
+        requireReady();
+        return snapshot();
     }
 
     private Snapshot snapshot() {
