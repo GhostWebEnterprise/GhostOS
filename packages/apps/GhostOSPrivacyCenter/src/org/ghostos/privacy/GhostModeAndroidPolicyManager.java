@@ -167,7 +167,12 @@ public final class GhostModeAndroidPolicyManager {
                 .putBoolean(KEY_RECOVERY_REQUIRED, false)
                 .putBoolean(KEY_CAMERA_DISABLED, snapshot.cameraDisabled())
                 .putBoolean(KEY_SCREEN_CAPTURE_DISABLED, snapshot.screenCaptureDisabled())
-                .putBoolean(KEY_MICROPHONE_MUTED, snapshot.microphoneMuted());
+                .putBoolean(KEY_MICROPHONE_MUTED, snapshot.microphoneMuted())
+                .remove(KEY_EXPECTED_CAMERA)
+                .remove(KEY_EXPECTED_SCREEN_CAPTURE)
+                .remove(KEY_EXPECTED_MICROPHONE)
+                .remove(KEY_EXPECTED_LOCATION)
+                .remove(KEY_EXPECTED_USB_DATA);
 
         if (snapshot.locationEnabled() == null) {
             editor.remove(KEY_LOCATION_ENABLED);
