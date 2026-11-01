@@ -76,6 +76,7 @@ jobs:
           test -f build/android-classes/org/ghostos/privacy/GhostModeQuickSettingsTile.class
           test -f build/android-classes/org/ghostos/privacy/GhostModeDevicePolicyAdapter.class
           test -f build/android-classes/org/ghostos/privacy/PrivacyActivity.class
+          test -f build/android-classes/org/ghostos/privacy/GhostModeAndroidPolicyManager.class
 
       - name: Keep GhostWeb VPN outside GhostOS product configuration
         shell: bash
