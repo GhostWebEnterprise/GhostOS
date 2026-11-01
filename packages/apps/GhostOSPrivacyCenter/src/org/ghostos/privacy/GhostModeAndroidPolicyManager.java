@@ -54,7 +54,7 @@ public final class GhostModeAndroidPolicyManager {
             return State.RECOVERY_REQUIRED;
         }
         if (preferences.getBoolean(KEY_ACTIVE, false)) {
-            if (adapter.availability() != GhostModeDevicePolicyAdapter.Availability.READY) {
+            if (!adapterReady()) {
                 return State.RECOVERY_REQUIRED;
             }
             try {
@@ -63,9 +63,7 @@ public final class GhostModeAndroidPolicyManager {
                 return State.RECOVERY_REQUIRED;
             }
         }
-        return adapter.availability() == GhostModeDevicePolicyAdapter.Availability.READY
-                ? State.INACTIVE
-                : State.UNAVAILABLE;
+        return adapterReady() ? State.INACTIVE : State.UNAVAILABLE;
     }
 
     public boolean hasSavedSnapshot() {
@@ -142,7 +140,7 @@ public final class GhostModeAndroidPolicyManager {
             markRecoveryRequired();
             throw new IllegalStateException("GhostMode rollback snapshot is incomplete");
         }
-        if (adapter.availability() != GhostModeDevicePolicyAdapter.Availability.READY) {
+        if (!adapterReady()) {
             markRecoveryRequired();
             throw new SecurityException(
                     "Device Owner access is unavailable; saved policy has not been restored");
@@ -270,6 +268,14 @@ public final class GhostModeAndroidPolicyManager {
 
     private void markRecoveryRequired() {
         preferences.edit().putBoolean(KEY_RECOVERY_REQUIRED, true).commit();
+    }
+
+    private boolean adapterReady() {
+        try {
+            return adapter.availability() == GhostModeDevicePolicyAdapter.Availability.READY;
+        } catch (RuntimeException unavailable) {
+            return false;
+        }
     }
 
     private boolean clearSnapshot() {
