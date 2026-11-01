@@ -14,22 +14,24 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Collections;
 
 /** Explicit Device Owner controls; unsupported GhostMode categories remain inactive. */
 public final class PrivacyActivity extends Activity {
     private LinearLayout content;
     private GhostModeDevicePolicyAdapter adapter;
+    private GhostModeAndroidPolicyManager policyManager;
     private TextView readiness;
     private Switch cameraSwitch;
     private Switch screenCaptureSwitch;
     private Switch microphoneSwitch;
     private Switch locationSwitch;
     private Switch usbDataSwitch;
+    private Button restoreButton;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         adapter = new GhostModeDevicePolicyAdapter(this);
+        policyManager = new GhostModeAndroidPolicyManager(this, adapter);
 
         ScrollView scroll = new ScrollView(this);
         content = new LinearLayout(this);
@@ -54,6 +56,11 @@ public final class PrivacyActivity extends Activity {
                 R.string.ghostmode_location_control, "locationEnabled");
         usbDataSwitch = addPolicySwitch(
                 R.string.ghostmode_usb_data_control, "usbDataSignaling");
+        restoreButton = new Button(this);
+        restoreButton.setText(R.string.ghostmode_restore_previous);
+        restoreButton.setAllCaps(false);
+        restoreButton.setOnClickListener(v -> restorePreviousPolicy());
+        content.addView(restoreButton);
         refreshPolicyControls();
 
         link(R.string.permissions, Settings.ACTION_PRIVACY_SETTINGS);
@@ -93,7 +100,15 @@ public final class PrivacyActivity extends Activity {
         }
 
         showPolicyReadiness(availability);
+        GhostModeAndroidPolicyManager.State managerState = policyManager.getState();
+        if (managerState == GhostModeAndroidPolicyManager.State.ACTIVE) {
+            readiness.setText(R.string.ghostmode_policy_active);
+        } else if (managerState == GhostModeAndroidPolicyManager.State.RECOVERY_REQUIRED) {
+            readiness.setText(R.string.ghostmode_recovery_required);
+        }
         boolean ready = availability == GhostModeDevicePolicyAdapter.Availability.READY;
+        restoreButton.setVisibility(policyManager.hasSavedSnapshot() ? View.VISIBLE : View.GONE);
+        restoreButton.setEnabled(ready);
         boolean usbSupported = false;
         boolean locationSupported = false;
         if (ready) {
@@ -181,7 +196,7 @@ public final class PrivacyActivity extends Activity {
                 return;
             }
 
-            adapter.apply(Collections.singletonMap(control, enabled));
+            policyManager.applyControl(control, enabled);
             int message;
             if ("camera".equals(control)) {
                 message = enabled
@@ -206,7 +221,25 @@ public final class PrivacyActivity extends Activity {
             }
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         } catch (RuntimeException failure) {
-            int message = failure.getSuppressed().length > 0
+            int message = policyManager.getState()
+                    == GhostModeAndroidPolicyManager.State.RECOVERY_REQUIRED
+                    ? R.string.ghostmode_policy_rollback_incomplete
+                    : R.string.ghostmode_policy_change_failed;
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+        } finally {
+            refreshPolicyControls();
+        }
+    }
+
+
+    private void restorePreviousPolicy() {
+        restoreButton.setEnabled(false);
+        try {
+            policyManager.restorePreviousPolicy();
+            Toast.makeText(this, R.string.ghostmode_policy_restored, Toast.LENGTH_SHORT).show();
+        } catch (RuntimeException failure) {
+            int message = policyManager.getState()
+                    == GhostModeAndroidPolicyManager.State.RECOVERY_REQUIRED
                     ? R.string.ghostmode_policy_rollback_incomplete
                     : R.string.ghostmode_policy_change_failed;
             Toast.makeText(this, message, Toast.LENGTH_LONG).show();
