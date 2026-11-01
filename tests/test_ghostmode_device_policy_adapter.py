@@ -14,6 +14,7 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             ROOT / "packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml"
         ).getroot()
         application = manifest.find("application")
+        self.assertEqual(application.attrib.get(ANDROID + "allowBackup"), "false")
         receiver = application.find("receiver")
         self.assertIsNotNone(receiver)
         self.assertEqual(
