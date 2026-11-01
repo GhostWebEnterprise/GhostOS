@@ -31,6 +31,11 @@ public final class GhostModeAndroidPolicyManager {
     private static final String KEY_MICROPHONE_MUTED = "microphoneMuted";
     private static final String KEY_LOCATION_ENABLED = "locationEnabled";
     private static final String KEY_USB_DATA_ENABLED = "usbDataSignalingEnabled";
+    private static final String KEY_EXPECTED_CAMERA = "expectedCameraDisabled";
+    private static final String KEY_EXPECTED_SCREEN_CAPTURE = "expectedScreenCaptureDisabled";
+    private static final String KEY_EXPECTED_MICROPHONE = "expectedMicrophoneMuted";
+    private static final String KEY_EXPECTED_LOCATION = "expectedLocationEnabled";
+    private static final String KEY_EXPECTED_USB_DATA = "expectedUsbDataSignalingEnabled";
 
     private final GhostModeDevicePolicyAdapter adapter;
     private final SharedPreferences preferences;
@@ -49,9 +54,14 @@ public final class GhostModeAndroidPolicyManager {
             return State.RECOVERY_REQUIRED;
         }
         if (preferences.getBoolean(KEY_ACTIVE, false)) {
-            return adapter.availability() == GhostModeDevicePolicyAdapter.Availability.READY
-                    ? State.ACTIVE
-                    : State.RECOVERY_REQUIRED;
+            if (adapter.availability() != GhostModeDevicePolicyAdapter.Availability.READY) {
+                return State.RECOVERY_REQUIRED;
+            }
+            try {
+                return verifyExpectedState() ? State.ACTIVE : State.RECOVERY_REQUIRED;
+            } catch (RuntimeException unavailable) {
+                return State.RECOVERY_REQUIRED;
+            }
         }
         return adapter.availability() == GhostModeDevicePolicyAdapter.Availability.READY
                 ? State.INACTIVE
@@ -74,6 +84,7 @@ public final class GhostModeAndroidPolicyManager {
         if (control.trim().isEmpty()) {
             throw new IllegalArgumentException("GhostMode control name is empty");
         }
+        String expectedKey = expectedKey(control);
         State current = getState();
         if (current == State.RECOVERY_REQUIRED) {
             throw new IllegalStateException(
@@ -99,7 +110,7 @@ public final class GhostModeAndroidPolicyManager {
                 }
                 throw failure;
             }
-            if (!markActive()) {
+            if (!markActive(expectedKey, enabled)) {
                 markRecoveryRequired();
                 throw new IllegalStateException(
                         "Policy was applied but its state could not be finalized; restore is required");
@@ -109,6 +120,11 @@ public final class GhostModeAndroidPolicyManager {
 
         try {
             adapter.apply(Collections.singletonMap(control, enabled));
+            if (!recordExpected(expectedKey, enabled)) {
+                markRecoveryRequired();
+                throw new IllegalStateException(
+                        "Policy was applied but its expected state could not be persisted");
+            }
         } catch (RuntimeException failure) {
             if (failure.getSuppressed().length > 0) {
                 markRecoveryRequired();
@@ -183,12 +199,73 @@ public final class GhostModeAndroidPolicyManager {
                 usbDataEnabled);
     }
 
-    private boolean markActive() {
+    private boolean markActive(String expectedKey, boolean enabled) {
         return preferences.edit()
                 .putBoolean(KEY_ACTIVE, true)
                 .putBoolean(KEY_PENDING, false)
                 .putBoolean(KEY_RECOVERY_REQUIRED, false)
+                .putBoolean(expectedKey, enabled)
                 .commit();
+    }
+
+    private boolean recordExpected(String expectedKey, boolean enabled) {
+        return preferences.edit().putBoolean(expectedKey, enabled).commit();
+    }
+
+    private String expectedKey(String control) {
+        switch (control) {
+            case "camera":
+                return KEY_EXPECTED_CAMERA;
+            case "screenCapture":
+                return KEY_EXPECTED_SCREEN_CAPTURE;
+            case "microphoneMuted":
+                return KEY_EXPECTED_MICROPHONE;
+            case "locationEnabled":
+                return KEY_EXPECTED_LOCATION;
+            case "usbDataSignaling":
+                return KEY_EXPECTED_USB_DATA;
+            default:
+                throw new IllegalArgumentException("Unsupported GhostMode Android control: " + control);
+        }
+    }
+
+    private boolean verifyExpectedState() {
+        boolean found = false;
+        if (preferences.contains(KEY_EXPECTED_CAMERA)) {
+            found = true;
+            if (adapter.isCameraDisabled() != preferences.getBoolean(KEY_EXPECTED_CAMERA, false)) {
+                return false;
+            }
+        }
+        if (preferences.contains(KEY_EXPECTED_SCREEN_CAPTURE)) {
+            found = true;
+            if (adapter.isScreenCaptureDisabled()
+                    != preferences.getBoolean(KEY_EXPECTED_SCREEN_CAPTURE, false)) {
+                return false;
+            }
+        }
+        if (preferences.contains(KEY_EXPECTED_MICROPHONE)) {
+            found = true;
+            if (adapter.isMicrophoneMuted()
+                    != preferences.getBoolean(KEY_EXPECTED_MICROPHONE, false)) {
+                return false;
+            }
+        }
+        if (preferences.contains(KEY_EXPECTED_LOCATION)) {
+            found = true;
+            if (adapter.isLocationEnabled()
+                    != preferences.getBoolean(KEY_EXPECTED_LOCATION, false)) {
+                return false;
+            }
+        }
+        if (preferences.contains(KEY_EXPECTED_USB_DATA)) {
+            found = true;
+            if (adapter.isUsbDataSignalingEnabled()
+                    != preferences.getBoolean(KEY_EXPECTED_USB_DATA, false)) {
+                return false;
+            }
+        }
+        return found;
     }
 
     private void markRecoveryRequired() {
