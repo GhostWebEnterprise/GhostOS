@@ -64,6 +64,7 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("Snapshot before = snapshot()", source)
         self.assertIn("restore(before)", source)
         self.assertIn("public void rollback(Snapshot snapshot)", source)
+        self.assertIn("public Snapshot captureSnapshot()", source)
         self.assertIn("Unsupported Device Owner control", source)
 
     def test_microphone_and_location_controls_use_supported_device_owner_apis(self):
@@ -102,8 +103,11 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("policySwitch.setOnCheckedChangeListener", activity)
         self.assertIn("bindPolicySwitch(policySwitch, control)", activity)
         self.assertIn("adapter.availability()", activity)
-        self.assertIn("adapter.apply(Collections.singletonMap(control, enabled))", activity)
-        self.assertIn("failure.getSuppressed().length > 0", activity)
+        self.assertIn("policyManager = new GhostModeAndroidPolicyManager(this, adapter)", activity)
+        self.assertIn("policyManager.applyControl(control, enabled)", activity)
+        self.assertIn("policyManager.restorePreviousPolicy()", activity)
+        self.assertIn("restoreButton", activity)
+        self.assertNotIn("adapter.apply(Collections.singletonMap(control, enabled))", activity)
         self.assertIn("onResume()", activity)
 
         tile = (
@@ -113,6 +117,24 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn("Tile.STATE_INACTIVE", tile)
         self.assertNotIn("Tile.STATE_ACTIVE", tile)
+
+
+    def test_android_policy_manager_persists_and_restores_original_device_state(self):
+        manager = (
+            ROOT
+            / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
+            "GhostModeAndroidPolicyManager.java"
+        ).read_text(encoding="utf-8")
+        self.assertIn("SharedPreferences", manager)
+        self.assertIn("adapter.captureSnapshot()", manager)
+        self.assertIn("persistSnapshot(baseline)", manager)
+        self.assertIn("adapter.apply(Collections.singletonMap(control, enabled))", manager)
+        self.assertIn("adapter.rollback(baseline)", manager)
+        self.assertIn("KEY_PENDING", manager)
+        self.assertIn("KEY_RECOVERY_REQUIRED", manager)
+        self.assertIn("clearSnapshot()", manager)
+        self.assertIn("commit()", manager)
+        self.assertNotIn("VpnHood", manager)
 
     def test_all_android_string_references_exist(self):
         strings_path = ROOT / "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml"
