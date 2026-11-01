@@ -108,6 +108,10 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("policyManager.applyControl(control, enabled)", activity)
         self.assertIn("policyManager.restorePreviousPolicy()", activity)
         self.assertIn("restoreButton", activity)
+        self.assertIn("boolean recoveryRequired = managerState", activity)
+        self.assertIn("boolean controlsReady = ready && !recoveryRequired", activity)
+        self.assertIn("cameraSwitch.setEnabled(controlsReady)", activity)
+        self.assertIn("restoreButton.setEnabled(ready && hasSavedSnapshot)", activity)
         self.assertNotIn("adapter.apply(Collections.singletonMap(control, enabled))", activity)
         self.assertIn("onResume()", activity)
 
