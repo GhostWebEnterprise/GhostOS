@@ -107,8 +107,13 @@ public final class PrivacyActivity extends Activity {
             readiness.setText(R.string.ghostmode_recovery_required);
         }
         boolean ready = availability == GhostModeDevicePolicyAdapter.Availability.READY;
-        restoreButton.setVisibility(policyManager.hasSavedSnapshot() ? View.VISIBLE : View.GONE);
-        restoreButton.setEnabled(ready);
+        boolean recoveryRequired = managerState
+                == GhostModeAndroidPolicyManager.State.RECOVERY_REQUIRED;
+        boolean controlsReady = ready && !recoveryRequired;
+        boolean hasSavedSnapshot = policyManager.hasSavedSnapshot();
+        restoreButton.setVisibility(hasSavedSnapshot ? View.VISIBLE : View.GONE);
+        // Keep recovery available while preventing further policy changes.
+        restoreButton.setEnabled(ready && hasSavedSnapshot);
         boolean usbSupported = false;
         boolean locationSupported = false;
         if (ready) {
@@ -129,11 +134,11 @@ public final class PrivacyActivity extends Activity {
         microphoneSwitch.setVisibility(ready ? View.VISIBLE : View.GONE);
         locationSwitch.setVisibility(ready && locationSupported ? View.VISIBLE : View.GONE);
         usbDataSwitch.setVisibility(ready && usbSupported ? View.VISIBLE : View.GONE);
-        cameraSwitch.setEnabled(ready);
-        screenCaptureSwitch.setEnabled(ready);
-        microphoneSwitch.setEnabled(ready);
-        locationSwitch.setEnabled(ready && locationSupported);
-        usbDataSwitch.setEnabled(ready && usbSupported);
+        cameraSwitch.setEnabled(controlsReady);
+        screenCaptureSwitch.setEnabled(controlsReady);
+        microphoneSwitch.setEnabled(controlsReady);
+        locationSwitch.setEnabled(controlsReady && locationSupported);
+        usbDataSwitch.setEnabled(controlsReady && usbSupported);
         if (!ready) {
             return;
         }
