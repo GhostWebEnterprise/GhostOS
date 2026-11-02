@@ -173,6 +173,9 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertLess(apply, record)
         self.assertLess(record, finish)
         self.assertIn("|| preferences.getBoolean(KEY_RECOVERY_REQUIRED, false)", active_change)
+        self.assertIn("boolean policyApplied = false;", active_change)
+        self.assertIn("policyApplied = true;", active_change)
+        self.assertIn("if (policyApplied", active_change)
         self.assertIn("private boolean beginPendingChange()", manager)
         self.assertIn("private boolean finishPendingChange()", manager)
 
