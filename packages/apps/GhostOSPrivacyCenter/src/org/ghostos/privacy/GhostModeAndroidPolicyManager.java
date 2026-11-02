@@ -31,11 +31,13 @@ public final class GhostModeAndroidPolicyManager {
     private static final String KEY_MICROPHONE_MUTED = "microphoneMuted";
     private static final String KEY_LOCATION_ENABLED = "locationEnabled";
     private static final String KEY_USB_DATA_ENABLED = "usbDataSignalingEnabled";
+    private static final String KEY_KEYGUARD_DISABLED_FEATURES = "keyguardDisabledFeatures";
     private static final String KEY_EXPECTED_CAMERA = "expectedCameraDisabled";
     private static final String KEY_EXPECTED_SCREEN_CAPTURE = "expectedScreenCaptureDisabled";
     private static final String KEY_EXPECTED_MICROPHONE = "expectedMicrophoneMuted";
     private static final String KEY_EXPECTED_LOCATION = "expectedLocationEnabled";
     private static final String KEY_EXPECTED_USB_DATA = "expectedUsbDataSignalingEnabled";
+    private static final String KEY_EXPECTED_NOTIFICATIONS = "expectedHideSensitiveOnLockscreen";
 
     private final GhostModeDevicePolicyAdapter adapter;
     private final SharedPreferences preferences;
@@ -188,11 +190,13 @@ public final class GhostModeAndroidPolicyManager {
                 .putBoolean(KEY_CAMERA_DISABLED, snapshot.cameraDisabled())
                 .putBoolean(KEY_SCREEN_CAPTURE_DISABLED, snapshot.screenCaptureDisabled())
                 .putBoolean(KEY_MICROPHONE_MUTED, snapshot.microphoneMuted())
+                .putInt(KEY_KEYGUARD_DISABLED_FEATURES, snapshot.keyguardDisabledFeatures())
                 .remove(KEY_EXPECTED_CAMERA)
                 .remove(KEY_EXPECTED_SCREEN_CAPTURE)
                 .remove(KEY_EXPECTED_MICROPHONE)
                 .remove(KEY_EXPECTED_LOCATION)
-                .remove(KEY_EXPECTED_USB_DATA);
+                .remove(KEY_EXPECTED_USB_DATA)
+                .remove(KEY_EXPECTED_NOTIFICATIONS);
 
         if (snapshot.locationEnabled() == null) {
             editor.remove(KEY_LOCATION_ENABLED);
@@ -219,7 +223,8 @@ public final class GhostModeAndroidPolicyManager {
                 preferences.getBoolean(KEY_SCREEN_CAPTURE_DISABLED, false),
                 preferences.getBoolean(KEY_MICROPHONE_MUTED, false),
                 locationEnabled,
-                usbDataEnabled);
+                usbDataEnabled,
+                preferences.getInt(KEY_KEYGUARD_DISABLED_FEATURES, 0));
     }
 
     private boolean markActive(String expectedKey, boolean enabled) {
@@ -255,6 +260,8 @@ public final class GhostModeAndroidPolicyManager {
                 return KEY_EXPECTED_LOCATION;
             case "usbDataSignaling":
                 return KEY_EXPECTED_USB_DATA;
+            case "hideSensitiveOnLockscreen":
+                return KEY_EXPECTED_NOTIFICATIONS;
             default:
                 throw new IllegalArgumentException("Unsupported GhostMode Android control: " + control);
         }
@@ -296,6 +303,13 @@ public final class GhostModeAndroidPolicyManager {
                 return false;
             }
         }
+        if (preferences.contains(KEY_EXPECTED_NOTIFICATIONS)) {
+            found = true;
+            if (adapter.isSensitiveNotificationsHidden()
+                    != preferences.getBoolean(KEY_EXPECTED_NOTIFICATIONS, false)) {
+                return false;
+            }
+        }
         return found;
     }
 
@@ -306,7 +320,8 @@ public final class GhostModeAndroidPolicyManager {
                 && (!preferences.contains(KEY_EXPECTED_LOCATION)
                 || preferences.contains(KEY_LOCATION_ENABLED))
                 && (!preferences.contains(KEY_EXPECTED_USB_DATA)
-                || preferences.contains(KEY_USB_DATA_ENABLED));
+                || preferences.contains(KEY_USB_DATA_ENABLED))
+                && preferences.contains(KEY_KEYGUARD_DISABLED_FEATURES);
     }
 
     private void markRecoveryRequired() {
