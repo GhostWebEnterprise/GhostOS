@@ -116,6 +116,13 @@ public final class GhostModeAndroidPolicyManager {
             return;
         }
 
+        // Journal every later policy mutation before touching Android. If the
+        // process dies between apply() and recordExpected(), the next launch
+        // must require restoration from the original baseline snapshot.
+        if (!beginPendingChange()) {
+            throw new IllegalStateException(
+                    "Could not persist pending policy change; no Android policy change was applied");
+        }
         try {
             adapter.apply(Collections.singletonMap(control, enabled));
             if (!recordExpected(expectedKey, enabled)) {
@@ -123,8 +130,16 @@ public final class GhostModeAndroidPolicyManager {
                 throw new IllegalStateException(
                         "Policy was applied but its expected state could not be persisted");
             }
+            if (!finishPendingChange()) {
+                markRecoveryRequired();
+                throw new IllegalStateException(
+                        "Policy was applied but its transaction could not be finalized; restore is required");
+            }
         } catch (RuntimeException failure) {
-            if (failure.getSuppressed().length > 0) {
+            if (failure.getSuppressed().length > 0
+                    || preferences.getBoolean(KEY_RECOVERY_REQUIRED, false)) {
+                markRecoveryRequired();
+            } else if (!finishPendingChange()) {
                 markRecoveryRequired();
             }
             throw failure;
@@ -211,6 +226,14 @@ public final class GhostModeAndroidPolicyManager {
                 .putBoolean(KEY_RECOVERY_REQUIRED, false)
                 .putBoolean(expectedKey, enabled)
                 .commit();
+    }
+
+    private boolean beginPendingChange() {
+        return preferences.edit().putBoolean(KEY_PENDING, true).commit();
+    }
+
+    private boolean finishPendingChange() {
+        return preferences.edit().putBoolean(KEY_PENDING, false).commit();
     }
 
     private boolean recordExpected(String expectedKey, boolean enabled) {
