@@ -123,8 +123,10 @@ public final class GhostModeAndroidPolicyManager {
             throw new IllegalStateException(
                     "Could not persist pending policy change; no Android policy change was applied");
         }
+        boolean policyApplied = false;
         try {
             adapter.apply(Collections.singletonMap(control, enabled));
+            policyApplied = true;
             if (!recordExpected(expectedKey, enabled)) {
                 markRecoveryRequired();
                 throw new IllegalStateException(
@@ -136,7 +138,8 @@ public final class GhostModeAndroidPolicyManager {
                         "Policy was applied but its transaction could not be finalized; restore is required");
             }
         } catch (RuntimeException failure) {
-            if (failure.getSuppressed().length > 0
+            if (policyApplied
+                    || failure.getSuppressed().length > 0
                     || preferences.getBoolean(KEY_RECOVERY_REQUIRED, false)) {
                 markRecoveryRequired();
             } else if (!finishPendingChange()) {
