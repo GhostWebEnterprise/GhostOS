@@ -158,8 +158,8 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
             "GhostModeAndroidPolicyManager.java"
         ).read_text(encoding="utf-8")
-        restore = manager.split("\\n    public void restorePreviousPolicy() {", 1)[1].split(
-            "\\n    private boolean persistSnapshot", 1
+        restore = manager.split("\n    public void restorePreviousPolicy() {", 1)[1].split(
+            "\n    private boolean persistSnapshot", 1
         )[0]
         load_index = restore.index("loadSnapshot()")
         for key in (
