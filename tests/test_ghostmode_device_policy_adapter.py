@@ -161,7 +161,7 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         restore = manager.split("\n    public void restorePreviousPolicy() {", 1)[1].split(
             "\n    private boolean persistSnapshot", 1
         )[0]
-        load_index = restore.index("loadSnapshot()")
+        load_index = restore.index("= loadSnapshot()")
         for key in (
             "KEY_CAMERA_DISABLED",
             "KEY_SCREEN_CAPTURE_DISABLED",
