@@ -158,30 +158,33 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
             "GhostModeAndroidPolicyManager.java"
         ).read_text(encoding="utf-8")
-        restore = manager.split("\n    public void restorePreviousPolicy() {", 1)[1].split(
-            "\n    private boolean persistSnapshot", 1
+        restore = manager.split("\\n    public void restorePreviousPolicy() {", 1)[1].split(
+            "\\n    private boolean persistSnapshot", 1
         )[0]
-        load_index = restore.index("= loadSnapshot()")
+        state = manager.split("\\n    public State getState() {", 1)[1].split(
+            "\\n    public boolean hasSavedSnapshot()", 1
+        )[0]
+        completeness = manager.split("private boolean hasCompleteSnapshot() {", 1)[1].split(
+            "\\n    private void markRecoveryRequired()", 1
+        )[0]
+
+        self.assertIn("if (!hasCompleteSnapshot())", restore)
+        self.assertLess(restore.index("if (!hasCompleteSnapshot())"), restore.index("= loadSnapshot()"))
+        self.assertIn("!hasCompleteSnapshot()", state)
+
         for key in (
             "KEY_CAMERA_DISABLED",
             "KEY_SCREEN_CAPTURE_DISABLED",
             "KEY_MICROPHONE_MUTED",
         ):
-            check = f"!preferences.contains({key})"
-            self.assertIn(check, restore)
-            self.assertLess(restore.index(check), load_index)
+            self.assertIn(f"preferences.contains({key})", completeness)
 
         for expected_key, snapshot_key in (
             ("KEY_EXPECTED_LOCATION", "KEY_LOCATION_ENABLED"),
             ("KEY_EXPECTED_USB_DATA", "KEY_USB_DATA_ENABLED"),
         ):
-            missing_optional_baseline = (
-                f"(preferences.contains({expected_key})"
-                + chr(10)
-                + f"                && !preferences.contains({snapshot_key}))"
-            )
-            self.assertIn(missing_optional_baseline, restore)
-            self.assertLess(restore.index(missing_optional_baseline), load_index)
+            self.assertIn(f"!preferences.contains({expected_key})", completeness)
+            self.assertIn(f"preferences.contains({snapshot_key})", completeness)
 
     def test_all_android_string_references_exist(self):
         strings_path = ROOT / "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml"
