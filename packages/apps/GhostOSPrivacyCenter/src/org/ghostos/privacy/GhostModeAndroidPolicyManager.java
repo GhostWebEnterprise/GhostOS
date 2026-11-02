@@ -136,7 +136,11 @@ public final class GhostModeAndroidPolicyManager {
         if (!hasSavedSnapshot()) {
             return;
         }
-        if (!preferences.contains(KEY_CAMERA_DISABLED)) {
+        // Never guess missing values: loadSnapshot() uses defaults for absent
+        // booleans, which could overwrite a user's pre-GhostMode device state.
+        if (!preferences.contains(KEY_CAMERA_DISABLED)
+                || !preferences.contains(KEY_SCREEN_CAPTURE_DISABLED)
+                || !preferences.contains(KEY_MICROPHONE_MUTED)) {
             markRecoveryRequired();
             throw new IllegalStateException("GhostMode rollback snapshot is incomplete");
         }
