@@ -35,7 +35,7 @@ public final class GhostModeDevicePolicyAdapter {
         private final boolean microphoneMuted;
         private final Boolean locationEnabled;
         private final Boolean usbDataSignalingEnabled;
-        private final int keyguardDisabledFeatures;
+        private final Integer keyguardDisabledFeatures;
 
         Snapshot(
                 boolean cameraDisabled,
@@ -43,7 +43,7 @@ public final class GhostModeDevicePolicyAdapter {
                 boolean microphoneMuted,
                 Boolean locationEnabled,
                 Boolean usbDataSignalingEnabled,
-                int keyguardDisabledFeatures) {
+                Integer keyguardDisabledFeatures) {
             this.cameraDisabled = cameraDisabled;
             this.screenCaptureDisabled = screenCaptureDisabled;
             this.microphoneMuted = microphoneMuted;
@@ -72,7 +72,7 @@ public final class GhostModeDevicePolicyAdapter {
             return usbDataSignalingEnabled;
         }
 
-        public int keyguardDisabledFeatures() {
+        public Integer keyguardDisabledFeatures() {
             return keyguardDisabledFeatures;
         }
     }
@@ -319,10 +319,12 @@ public final class GhostModeDevicePolicyAdapter {
                 failure = append(failure, error);
             }
         }
-        try {
-            manager.setKeyguardDisabledFeatures(admin, snapshot.keyguardDisabledFeatures());
-        } catch (RuntimeException error) {
-            failure = append(failure, error);
+        if (snapshot.keyguardDisabledFeatures() != null) {
+            try {
+                manager.setKeyguardDisabledFeatures(admin, snapshot.keyguardDisabledFeatures());
+            } catch (RuntimeException error) {
+                failure = append(failure, error);
+            }
         }
         if (failure != null) {
             throw failure;
@@ -336,7 +338,8 @@ public final class GhostModeDevicePolicyAdapter {
                 && locationManager.isLocationEnabled() != snapshot.locationEnabled())
                 || (snapshot.usbDataSignalingEnabled() != null
                 && manager.isUsbDataSignalingEnabled() != snapshot.usbDataSignalingEnabled())
-                || manager.getKeyguardDisabledFeatures(admin) != snapshot.keyguardDisabledFeatures()) {
+                || (snapshot.keyguardDisabledFeatures() != null
+                && manager.getKeyguardDisabledFeatures(admin) != snapshot.keyguardDisabledFeatures())) {
             throw new IllegalStateException("Android policy rollback did not restore the previous state");
         }
     }
