@@ -152,6 +152,25 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("commit()", manager)
         self.assertNotIn("VpnHood", manager)
 
+    def test_incomplete_rollback_snapshot_is_rejected_before_loading_defaults(self):
+        manager = (
+            ROOT
+            / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
+            "GhostModeAndroidPolicyManager.java"
+        ).read_text(encoding="utf-8")
+        restore = manager.split("public void restorePreviousPolicy()", 1)[1].split(
+            "private boolean persistSnapshot", 1
+        )[0]
+        load_index = restore.index("loadSnapshot()")
+        for key in (
+            "KEY_CAMERA_DISABLED",
+            "KEY_SCREEN_CAPTURE_DISABLED",
+            "KEY_MICROPHONE_MUTED",
+        ):
+            check = f"!preferences.contains({key})"
+            self.assertIn(check, restore)
+            self.assertLess(restore.index(check), load_index)
+
     def test_all_android_string_references_exist(self):
         strings_path = ROOT / "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml"
         strings = ET.parse(strings_path).getroot()
