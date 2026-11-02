@@ -26,6 +26,7 @@ public final class PrivacyActivity extends Activity {
     private Switch microphoneSwitch;
     private Switch locationSwitch;
     private Switch usbDataSwitch;
+    private Switch notificationsSwitch;
     private Button restoreButton;
 
     @Override public void onCreate(Bundle state) {
@@ -56,6 +57,8 @@ public final class PrivacyActivity extends Activity {
                 R.string.ghostmode_location_control, "locationEnabled");
         usbDataSwitch = addPolicySwitch(
                 R.string.ghostmode_usb_data_control, "usbDataSignaling");
+        notificationsSwitch = addPolicySwitch(
+                R.string.ghostmode_notifications_control, "hideSensitiveOnLockscreen");
         restoreButton = new Button(this);
         restoreButton.setText(R.string.ghostmode_restore_previous);
         restoreButton.setAllCaps(false);
@@ -134,11 +137,13 @@ public final class PrivacyActivity extends Activity {
         microphoneSwitch.setVisibility(ready ? View.VISIBLE : View.GONE);
         locationSwitch.setVisibility(ready && locationSupported ? View.VISIBLE : View.GONE);
         usbDataSwitch.setVisibility(ready && usbSupported ? View.VISIBLE : View.GONE);
+        notificationsSwitch.setVisibility(ready ? View.VISIBLE : View.GONE);
         cameraSwitch.setEnabled(controlsReady);
         screenCaptureSwitch.setEnabled(controlsReady);
         microphoneSwitch.setEnabled(controlsReady);
         locationSwitch.setEnabled(controlsReady && locationSupported);
         usbDataSwitch.setEnabled(controlsReady && usbSupported);
+        notificationsSwitch.setEnabled(controlsReady);
         if (!ready) {
             return;
         }
@@ -146,6 +151,10 @@ public final class PrivacyActivity extends Activity {
         refreshSwitch(cameraSwitch, "camera", adapter::isCameraDisabled);
         refreshSwitch(screenCaptureSwitch, "screenCapture", adapter::isScreenCaptureDisabled);
         refreshSwitch(microphoneSwitch, "microphoneMuted", adapter::isMicrophoneMuted);
+        refreshSwitch(
+                notificationsSwitch,
+                "hideSensitiveOnLockscreen",
+                adapter::isSensitiveNotificationsHidden);
         if (locationSupported) {
             refreshSwitch(locationSwitch, "locationEnabled", adapter::isLocationEnabled);
         }
@@ -195,6 +204,7 @@ public final class PrivacyActivity extends Activity {
         microphoneSwitch.setEnabled(false);
         locationSwitch.setEnabled(false);
         usbDataSwitch.setEnabled(false);
+        notificationsSwitch.setEnabled(false);
         try {
             if (adapter.availability() != GhostModeDevicePolicyAdapter.Availability.READY) {
                 Toast.makeText(this, R.string.ghostmode_policy_unavailable, Toast.LENGTH_LONG).show();
@@ -219,10 +229,14 @@ public final class PrivacyActivity extends Activity {
                 message = enabled
                         ? R.string.ghostmode_location_enabled
                         : R.string.ghostmode_location_disabled;
-            } else {
+            } else if ("usbDataSignaling".equals(control)) {
                 message = enabled
                         ? R.string.ghostmode_usb_data_enabled
                         : R.string.ghostmode_usb_data_disabled;
+            } else {
+                message = enabled
+                        ? R.string.ghostmode_notifications_hidden
+                        : R.string.ghostmode_notifications_shown;
             }
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
         } catch (RuntimeException failure) {
