@@ -11,8 +11,9 @@ import java.util.Objects;
  * Coordinates explicit Device Owner controls and persists their original state
  * so the Privacy Center can restore it after Activity or process recreation.
  *
- * This is not the full cross-adapter GhostMode preset service. Unsupported
- * network, sensor, clipboard and notification policies remain inactive.
+ * This is not the full cross-adapter GhostMode preset service. Network, sensor,
+ * clipboard and full notification policies remain inactive; secure keyguard
+ * notification redaction is supported as an explicit Device Owner control.
  */
 public final class GhostModeAndroidPolicyManager {
     public enum State {
