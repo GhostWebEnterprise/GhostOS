@@ -158,14 +158,14 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
             "GhostModeAndroidPolicyManager.java"
         ).read_text(encoding="utf-8")
-        restore = manager.split("\\n    public void restorePreviousPolicy() {", 1)[1].split(
-            "\\n    private boolean persistSnapshot", 1
+        restore = manager.split(chr(10) + "    public void restorePreviousPolicy() {", 1)[1].split(
+            chr(10) + "    private boolean persistSnapshot", 1
         )[0]
-        state = manager.split("\\n    public State getState() {", 1)[1].split(
-            "\\n    public boolean hasSavedSnapshot()", 1
+        state = manager.split(chr(10) + "    public State getState() {", 1)[1].split(
+            chr(10) + "    public boolean hasSavedSnapshot()", 1
         )[0]
         completeness = manager.split("private boolean hasCompleteSnapshot() {", 1)[1].split(
-            "\\n    private void markRecoveryRequired()", 1
+            chr(10) + "    private void markRecoveryRequired()", 1
         )[0]
 
         self.assertIn("if (!hasCompleteSnapshot())", restore)
