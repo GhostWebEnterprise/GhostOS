@@ -14,7 +14,7 @@ import java.util.Objects;
 
 /**
  * Narrow Device Owner adapter for Android-enforced camera, screen-capture,
- * microphone and location restrictions. It never applies policies during
+ * microphone, location and secure-lock-screen notification restrictions. It never applies policies during
  * construction.
  *
  * The caller must explicitly invoke apply() after checking availability().
@@ -35,18 +35,21 @@ public final class GhostModeDevicePolicyAdapter {
         private final boolean microphoneMuted;
         private final Boolean locationEnabled;
         private final Boolean usbDataSignalingEnabled;
+        private final int keyguardDisabledFeatures;
 
         Snapshot(
                 boolean cameraDisabled,
                 boolean screenCaptureDisabled,
                 boolean microphoneMuted,
                 Boolean locationEnabled,
-                Boolean usbDataSignalingEnabled) {
+                Boolean usbDataSignalingEnabled,
+                int keyguardDisabledFeatures) {
             this.cameraDisabled = cameraDisabled;
             this.screenCaptureDisabled = screenCaptureDisabled;
             this.microphoneMuted = microphoneMuted;
             this.locationEnabled = locationEnabled;
             this.usbDataSignalingEnabled = usbDataSignalingEnabled;
+            this.keyguardDisabledFeatures = keyguardDisabledFeatures;
         }
 
         public boolean cameraDisabled() {
@@ -67,6 +70,10 @@ public final class GhostModeDevicePolicyAdapter {
 
         public Boolean usbDataSignalingEnabled() {
             return usbDataSignalingEnabled;
+        }
+
+        public int keyguardDisabledFeatures() {
+            return keyguardDisabledFeatures;
         }
     }
 
@@ -103,7 +110,8 @@ public final class GhostModeDevicePolicyAdapter {
                     && !"screenCapture".equals(entry.getKey())
                     && !"microphoneMuted".equals(entry.getKey())
                     && !"locationEnabled".equals(entry.getKey())
-                    && !"usbDataSignaling".equals(entry.getKey())) {
+                    && !"usbDataSignaling".equals(entry.getKey())
+                    && !"hideSensitiveOnLockscreen".equals(entry.getKey())) {
                 throw new IllegalArgumentException("Unsupported Device Owner control: " + entry.getKey());
             }
             Objects.requireNonNull(entry.getValue(), "Null policy value: " + entry.getKey());
@@ -134,6 +142,14 @@ public final class GhostModeDevicePolicyAdapter {
             }
             if (requested.containsKey("usbDataSignaling")) {
                 manager.setUsbDataSignalingEnabled(requested.get("usbDataSignaling"));
+            }
+            if (requested.containsKey("hideSensitiveOnLockscreen")) {
+                int current = manager.getKeyguardDisabledFeatures(admin);
+                int redaction = DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS;
+                int updated = requested.get("hideSensitiveOnLockscreen")
+                        ? current | redaction
+                        : current & ~redaction;
+                manager.setKeyguardDisabledFeatures(admin, updated);
             }
             verify(requested);
             return before;
@@ -197,6 +213,13 @@ public final class GhostModeDevicePolicyAdapter {
         return manager.isUsbDataSignalingEnabled();
     }
 
+    /** True when Android only allows redacted notifications on the secure keyguard. */
+    public boolean isSensitiveNotificationsHidden() {
+        requireReady();
+        return (manager.getKeyguardDisabledFeatures(admin)
+                & DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS) != 0;
+    }
+
     private void setMicrophoneMuted(boolean muted) {
         if (muted) {
             manager.addUserRestriction(admin, UserManager.DISALLOW_UNMUTE_MICROPHONE);
@@ -233,7 +256,8 @@ public final class GhostModeDevicePolicyAdapter {
                 manager.getScreenCaptureDisabled(admin),
                 restrictions.getBoolean(UserManager.DISALLOW_UNMUTE_MICROPHONE, false),
                 locationEnabled,
-                usbDataSignaling);
+                usbDataSignaling,
+                manager.getKeyguardDisabledFeatures(admin));
     }
 
     private void verify(Map<String, Boolean> requested) {
@@ -256,6 +280,11 @@ public final class GhostModeDevicePolicyAdapter {
         if (requested.containsKey("usbDataSignaling")
                 && manager.isUsbDataSignalingEnabled() != requested.get("usbDataSignaling")) {
             throw new IllegalStateException("Android did not apply the requested USB data policy");
+        }
+        if (requested.containsKey("hideSensitiveOnLockscreen")
+                && isSensitiveNotificationsHidden() != requested.get("hideSensitiveOnLockscreen")) {
+            throw new IllegalStateException(
+                    "Android did not apply the requested lock-screen notification policy");
         }
     }
 
@@ -290,6 +319,11 @@ public final class GhostModeDevicePolicyAdapter {
                 failure = append(failure, error);
             }
         }
+        try {
+            manager.setKeyguardDisabledFeatures(admin, snapshot.keyguardDisabledFeatures());
+        } catch (RuntimeException error) {
+            failure = append(failure, error);
+        }
         if (failure != null) {
             throw failure;
         }
@@ -301,7 +335,8 @@ public final class GhostModeDevicePolicyAdapter {
                 || (snapshot.locationEnabled() != null
                 && locationManager.isLocationEnabled() != snapshot.locationEnabled())
                 || (snapshot.usbDataSignalingEnabled() != null
-                && manager.isUsbDataSignalingEnabled() != snapshot.usbDataSignalingEnabled())) {
+                && manager.isUsbDataSignalingEnabled() != snapshot.usbDataSignalingEnabled())
+                || manager.getKeyguardDisabledFeatures(admin) != snapshot.keyguardDisabledFeatures()) {
             throw new IllegalStateException("Android policy rollback did not restore the previous state");
         }
     }
