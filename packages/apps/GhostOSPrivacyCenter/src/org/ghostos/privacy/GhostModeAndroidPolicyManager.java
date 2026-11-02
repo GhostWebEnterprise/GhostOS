@@ -140,7 +140,11 @@ public final class GhostModeAndroidPolicyManager {
         // booleans, which could overwrite a user's pre-GhostMode device state.
         if (!preferences.contains(KEY_CAMERA_DISABLED)
                 || !preferences.contains(KEY_SCREEN_CAPTURE_DISABLED)
-                || !preferences.contains(KEY_MICROPHONE_MUTED)) {
+                || !preferences.contains(KEY_MICROPHONE_MUTED)
+                || (preferences.contains(KEY_EXPECTED_LOCATION)
+                && !preferences.contains(KEY_LOCATION_ENABLED))
+                || (preferences.contains(KEY_EXPECTED_USB_DATA)
+                && !preferences.contains(KEY_USB_DATA_ENABLED))) {
             markRecoveryRequired();
             throw new IllegalStateException("GhostMode rollback snapshot is incomplete");
         }
