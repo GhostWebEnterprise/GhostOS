@@ -10,8 +10,8 @@
     <string name="security">Screen lock and security</string>
     <string name="unavailable">This Settings page is unavailable on this build.</string>
     <string name="scope">Experimental AOSP-based build. GrapheneOS-inspired appearance does not provide GrapheneOS device hardening. Per-app permissions and remaining privacy controls stay in Android Settings.</string>
-    <string name="device_admin_description">Allows GhostOS to apply explicitly selected camera, screen-capture, microphone, location and supported USB data restrictions when provisioned as Device Owner. No policy is applied automatically.</string>
-    <string name="ghostmode_policy_ready">Device Owner is active. Supported camera, screen-capture, microphone, location and USB data controls can be changed individually below. Full GhostMode remains inactive.</string>
+    <string name="device_admin_description">Allows GhostOS to apply explicitly selected camera, screen-capture, microphone, location, supported USB data and secure lock-screen notification restrictions when provisioned as Device Owner. No policy is applied automatically.</string>
+    <string name="ghostmode_policy_ready">Device Owner is active. Supported camera, screen-capture, microphone, location, USB data and secure lock-screen notification controls can be changed individually below. Full GhostMode remains inactive.</string>
     <string name="ghostmode_device_owner_required">Device Owner provisioning is required before these Android-enforced controls can be changed. No policy is applied automatically.</string>
     <string name="ghostmode_admin_inactive">The GhostMode device administrator is inactive. No policy was changed.</string>
     <string name="ghostmode_policy_unavailable">Android DevicePolicyManager is unavailable or policy state could not be read. No protection is assumed.</string>
@@ -19,7 +19,7 @@
     <string name="ghostmode_recovery_required">GhostMode recovery is required. Restore the saved device settings before relying on protection.</string>
     <string name="ghostmode_restore_previous">Restore previous device settings</string>
     <string name="ghostmode_policy_restored">Previous device settings restored.</string>
-    <string name="ghostmode_policy_scope">These are individual Device Owner controls only. Location control appears only on Android 11 or later; USB data control appears only when Android reports device support. Network, clipboard, per-app permissions and notification protections are not yet enforced by GhostMode.</string>
+    <string name="ghostmode_policy_scope">These are individual Device Owner controls only. Location control appears only on Android 11 or later; USB data control appears only when Android reports device support. Lock-screen notification redaction applies only on secure keyguard screens. Network, clipboard, sensor permissions and full preset orchestration remain unimplemented.</string>
     <string name="ghostmode_policy_controls_title">Supported Device Owner controls</string>
     <string name="ghostmode_camera_control">Disable camera</string>
     <string name="ghostmode_screen_capture_control">Block screen capture</string>
@@ -36,9 +36,12 @@
     <string name="ghostmode_usb_data_control">Disable USB data (charging remains available)</string>
     <string name="ghostmode_usb_data_disabled">USB data signaling disabled; charging remains available.</string>
     <string name="ghostmode_usb_data_enabled">USB data signaling enabled.</string>
+    <string name="ghostmode_notifications_control">Redact sensitive notifications on secure lock screen</string>
+    <string name="ghostmode_notifications_hidden">Android now limits secure lock-screen notifications to redacted content.</string>
+    <string name="ghostmode_notifications_shown">Android lock-screen notification redaction restriction removed.</string>
     <string name="ghostmode_policy_change_failed">Android rejected the change; the previous state was restored.</string>
     <string name="ghostmode_policy_rollback_incomplete">Policy change failed and rollback was incomplete. Verify Android policy state before relying on protection.</string>
     <string name="ghostmode_tile_label">GhostMode</string>
     <string name="ghostmode_tile_subtitle">Setup required</string>
-    <string name="ghostmode_tile_description">Opens GhostOS Privacy Center. Supported Device Owner camera, microphone, location, screen-capture and USB data controls are available individually after provisioning. Remaining GhostMode controls are not connected or enforced yet. This tile is not an activation switch.</string>
+    <string name="ghostmode_tile_description">Opens GhostOS Privacy Center. Supported Device Owner camera, microphone, location, screen-capture, USB data and secure lock-screen notification controls are available individually after provisioning. Network, sensor and clipboard policies are not fully connected. This tile is not an activation switch.</string>
 </resources>
