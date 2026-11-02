@@ -40,12 +40,12 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         ]
         self.assertIn("android.app.action.DEVICE_ADMIN_ENABLED", actions)
 
-    def test_admin_metadata_declares_only_the_camera_policy(self):
+    def test_admin_metadata_declares_camera_and_keyguard_policies(self):
         policy = ET.parse(
             ROOT / "packages/apps/GhostOSPrivacyCenter/res/xml/device_admin.xml"
         ).getroot()
         declared = [child.tag for child in policy.find("uses-policies")]
-        self.assertEqual(declared, ["disable-camera"])
+        self.assertEqual(declared, ["disable-camera", "disable-keyguard-features"])
 
     def test_adapter_is_device_owner_gated_and_has_snapshot_rollback(self):
         source = (
@@ -60,6 +60,12 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("canUsbDataSignalingBeDisabled", source)
         self.assertIn("setUsbDataSignalingEnabled", source)
         self.assertIn("isUsbDataSignalingEnabled", source)
+        self.assertIn("KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS", source)
+        self.assertIn("setKeyguardDisabledFeatures", source)
+        self.assertIn("getKeyguardDisabledFeatures", source)
+        self.assertIn('"hideSensitiveOnLockscreen"', source)
+        self.assertIn("current | redaction", source)
+        self.assertIn("current & ~redaction", source)
         self.assertIn("Build.VERSION_CODES.S", source)
         self.assertIn('"usbDataSignaling"', source)
         self.assertIn("Snapshot before = snapshot()", source)
@@ -98,6 +104,8 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("microphoneSwitch = addPolicySwitch", activity)
         self.assertIn("locationSwitch = addPolicySwitch", activity)
         self.assertIn("usbDataSwitch = addPolicySwitch", activity)
+        self.assertIn("notificationsSwitch = addPolicySwitch", activity)
+        self.assertIn("adapter::isSensitiveNotificationsHidden", activity)
         self.assertIn("adapter.isLocationControlSupported()", activity)
         self.assertIn("adapter::isMicrophoneMuted", activity)
         self.assertIn("adapter::isLocationEnabled", activity)
@@ -143,6 +151,9 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("adapter.isMicrophoneMuted()", manager)
         self.assertIn("adapter.isLocationEnabled()", manager)
         self.assertIn("adapter.isUsbDataSignalingEnabled()", manager)
+        self.assertIn("adapter.isSensitiveNotificationsHidden()", manager)
+        self.assertIn("KEY_KEYGUARD_DISABLED_FEATURES", manager)
+        self.assertIn("KEY_EXPECTED_NOTIFICATIONS", manager)
         self.assertIn("private boolean adapterReady()", manager)
         self.assertIn("recordExpected(expectedKey, enabled)", manager)
         self.assertIn(".remove(KEY_EXPECTED_CAMERA)", manager)
@@ -203,6 +214,7 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             "KEY_CAMERA_DISABLED",
             "KEY_SCREEN_CAPTURE_DISABLED",
             "KEY_MICROPHONE_MUTED",
+            "KEY_KEYGUARD_DISABLED_FEATURES",
         ):
             self.assertIn(f"preferences.contains({key})", completeness)
 
