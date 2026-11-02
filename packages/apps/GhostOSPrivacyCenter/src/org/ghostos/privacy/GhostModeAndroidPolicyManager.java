@@ -218,13 +218,16 @@ public final class GhostModeAndroidPolicyManager {
         Boolean usbDataEnabled = preferences.contains(KEY_USB_DATA_ENABLED)
                 ? preferences.getBoolean(KEY_USB_DATA_ENABLED, false)
                 : null;
+        Integer keyguardDisabledFeatures = preferences.contains(KEY_KEYGUARD_DISABLED_FEATURES)
+                ? preferences.getInt(KEY_KEYGUARD_DISABLED_FEATURES, 0)
+                : null;
         return new GhostModeDevicePolicyAdapter.Snapshot(
                 preferences.getBoolean(KEY_CAMERA_DISABLED, false),
                 preferences.getBoolean(KEY_SCREEN_CAPTURE_DISABLED, false),
                 preferences.getBoolean(KEY_MICROPHONE_MUTED, false),
                 locationEnabled,
                 usbDataEnabled,
-                preferences.getInt(KEY_KEYGUARD_DISABLED_FEATURES, 0));
+                keyguardDisabledFeatures);
     }
 
     private boolean markActive(String expectedKey, boolean enabled) {
@@ -321,7 +324,8 @@ public final class GhostModeAndroidPolicyManager {
                 || preferences.contains(KEY_LOCATION_ENABLED))
                 && (!preferences.contains(KEY_EXPECTED_USB_DATA)
                 || preferences.contains(KEY_USB_DATA_ENABLED))
-                && preferences.contains(KEY_KEYGUARD_DISABLED_FEATURES);
+                && (!preferences.contains(KEY_EXPECTED_NOTIFICATIONS)
+                || preferences.contains(KEY_KEYGUARD_DISABLED_FEATURES));
     }
 
     private void markRecoveryRequired() {
