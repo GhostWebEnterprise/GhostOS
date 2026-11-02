@@ -152,6 +152,30 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("commit()", manager)
         self.assertNotIn("VpnHood", manager)
 
+    def test_subsequent_policy_changes_are_journaled_before_android_mutation(self):
+        manager = (
+            ROOT
+            / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
+            "GhostModeAndroidPolicyManager.java"
+        ).read_text(encoding="utf-8")
+        active_change = manager.split(
+            "            return;\n        }\n\n", 1
+        )[1].split("\n    }\n\n    /** Restores", 1)[0]
+
+        begin = active_change.index("if (!beginPendingChange())")
+        apply = active_change.index(
+            "adapter.apply(Collections.singletonMap(control, enabled))"
+        )
+        record = active_change.index("recordExpected(expectedKey, enabled)")
+        finish = active_change.index("if (!finishPendingChange())")
+
+        self.assertLess(begin, apply)
+        self.assertLess(apply, record)
+        self.assertLess(record, finish)
+        self.assertIn("|| preferences.getBoolean(KEY_RECOVERY_REQUIRED, false)", active_change)
+        self.assertIn("private boolean beginPendingChange()", manager)
+        self.assertIn("private boolean finishPendingChange()", manager)
+
     def test_incomplete_rollback_snapshot_is_rejected_before_loading_defaults(self):
         manager = (
             ROOT
