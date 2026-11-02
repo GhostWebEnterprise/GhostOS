@@ -171,6 +171,17 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             self.assertIn(check, restore)
             self.assertLess(restore.index(check), load_index)
 
+        for expected_key, snapshot_key in (
+            ("KEY_EXPECTED_LOCATION", "KEY_LOCATION_ENABLED"),
+            ("KEY_EXPECTED_USB_DATA", "KEY_USB_DATA_ENABLED"),
+        ):
+            missing_optional_baseline = (
+                f"(preferences.contains({expected_key})\\n"
+                f"                && !preferences.contains({snapshot_key}))"
+            )
+            self.assertIn(missing_optional_baseline, restore)
+            self.assertLess(restore.index(missing_optional_baseline), load_index)
+
     def test_all_android_string_references_exist(self):
         strings_path = ROOT / "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml"
         strings = ET.parse(strings_path).getroot()
