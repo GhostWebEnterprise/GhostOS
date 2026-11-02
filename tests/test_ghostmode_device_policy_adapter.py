@@ -176,8 +176,9 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             ("KEY_EXPECTED_USB_DATA", "KEY_USB_DATA_ENABLED"),
         ):
             missing_optional_baseline = (
-                f"(preferences.contains({expected_key})\\n"
-                f"                && !preferences.contains({snapshot_key}))"
+                f"(preferences.contains({expected_key})"
+                + chr(10)
+                + f"                && !preferences.contains({snapshot_key}))"
             )
             self.assertIn(missing_optional_baseline, restore)
             self.assertLess(restore.index(missing_optional_baseline), load_index)
