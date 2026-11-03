@@ -34,6 +34,7 @@ mkdir -p .repo/local_manifests
 cp "$MANIFEST" .repo/local_manifests/ghostos.xml
 repo sync -c --no-clone-bundle --no-tags --optimized-fetch --prune -j"${JOBS:-8}"
 
-echo "GhostOS LineageOS 24.0 / Android 17 larry foundation synced in: $ANDROID_DIR"
+echo "repo init/sync commands returned successfully in: $ANDROID_DIR"
+echo "This confirms command completion only; it does not verify project worktrees or run a product build."
 echo "The six device/common/kernel/hardware/vendor projects are pinned by manifests/ghostos-24.0.xml."
 echo "Next gate: run lunch ghostos_larry-userdebug and the first full Soong/product build."
