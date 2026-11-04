@@ -73,6 +73,11 @@ if bash "$ROOT/scripts/init-android17.sh" "$INSIDE" > "$WORK/inside.log" 2>&1; t
   exit 1
 fi
 grep -q "must be outside the GhostOS repository" "$WORK/inside.log"
+if [[ -e "$INSIDE" ]]; then
+  echo "Rejected in-repository Android target was created before the safety check" >&2
+  rm -rf "$INSIDE"
+  exit 1
+fi
 rm -rf "$INSIDE"
 test "$(wc -l < "$GHOSTOS_REPO_LOG")" -eq 2
 

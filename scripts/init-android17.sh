@@ -9,8 +9,10 @@ MANIFEST="$GHOSTOS_ROOT/manifests/ghostos-24.0.xml"
 command -v repo >/dev/null || { echo "repo is required" >&2; exit 1; }
 [[ -f "$MANIFEST" ]] || { echo "missing GhostOS Android 17 manifest: $MANIFEST" >&2; exit 1; }
 
-mkdir -p "$ANDROID_DIR"
-ANDROID_DIR="$(cd "$ANDROID_DIR" && pwd -P)"
+# Resolve existing symlinks and missing path components before creating the target.
+# This lets the safety checks reject an in-repository path without leaving a
+# directory behind in the GhostOS checkout.
+ANDROID_DIR="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$ANDROID_DIR")"
 
 # Never initialize a full Android source tree inside (or over) the GhostOS repo.
 case "$ANDROID_DIR/" in
@@ -25,6 +27,9 @@ case "$GHOSTOS_ROOT/" in
     exit 1
     ;;
 esac
+
+mkdir -p "$ANDROID_DIR"
+ANDROID_DIR="$(cd "$ANDROID_DIR" && pwd -P)"
 
 cd "$ANDROID_DIR"
 # Reinitialize explicitly so an AOSP-only android17-release checkout cannot be

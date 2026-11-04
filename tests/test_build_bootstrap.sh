@@ -76,6 +76,10 @@ if ANDROID_DIR="$INSIDE" DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.s
   exit 1
 fi
 grep -q "must be outside the GhostOS repository" "$WORK/inside.out"
+if [[ -e "$INSIDE" ]]; then
+  echo "Rejected in-repository Android target was created before the safety check" >&2
+  exit 1
+fi
 rm -rf -- "$INSIDE"
 test ! -s "$GHOSTOS_REPO_LOG"
 
