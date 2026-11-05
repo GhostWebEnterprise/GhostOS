@@ -91,4 +91,14 @@ fi
 grep -q "must not contain the GhostOS repository" "$WORK/ancestor.out"
 test ! -s "$GHOSTOS_REPO_LOG"
 
-echo "GhostOS Android 17 bootstrap regression: 3 init cases and 2 source-path safety cases passed"
+# A filesystem-root target would otherwise pass both prefix checks; reject it
+# before creating files or invoking repo init/sync.
+: > "$GHOSTOS_REPO_LOG"
+if ANDROID_DIR="/" DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/root.out" 2>&1; then
+  echo "Filesystem-root Android source directory was unexpectedly accepted" >&2
+  exit 1
+fi
+grep -q "must not be the filesystem root" "$WORK/root.out"
+test ! -s "$GHOSTOS_REPO_LOG"
+
+echo "GhostOS Android 17 bootstrap regression: 3 init cases and 3 source-path safety cases passed"
