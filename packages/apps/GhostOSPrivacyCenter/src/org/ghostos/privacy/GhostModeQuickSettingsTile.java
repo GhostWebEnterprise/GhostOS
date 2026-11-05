@@ -9,17 +9,17 @@ import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
 /**
- * Quick Settings entry point for GhostOS Privacy Center.
+ * Non-toggleable Quick Settings entry point for GhostOS Privacy Center.
  *
- * This is deliberately a non-toggleable shortcut until real Android policy
- * backends are wired. It always advertises INACTIVE and explains that setup
- * is required; it never claims that GhostMode protections are applied.
+ * The tile reflects only the Device Owner policy state independently verified
+ * by GhostModeAndroidPolicyManager. It never applies policy itself; clicking
+ * opens the Privacy Center for explicit controls and recovery.
  */
 public final class GhostModeQuickSettingsTile extends TileService {
     @Override
     public void onStartListening() {
         super.onStartListening();
-        publishSetupRequiredState();
+        publishVerifiedState();
     }
 
     @Override
@@ -41,15 +41,37 @@ public final class GhostModeQuickSettingsTile extends TileService {
         }
     }
 
-    private void publishSetupRequiredState() {
+    private void publishVerifiedState() {
         Tile tile = getQsTile();
         if (tile == null) {
             return;
         }
 
+        String subtitle;
         tile.setState(Tile.STATE_INACTIVE);
+        try {
+            GhostModeDevicePolicyAdapter adapter = new GhostModeDevicePolicyAdapter(this);
+            GhostModeAndroidPolicyManager manager =
+                    new GhostModeAndroidPolicyManager(this, adapter);
+            GhostModeAndroidPolicyManager.State state = manager.getState();
+
+            if (state == GhostModeAndroidPolicyManager.State.ACTIVE) {
+                tile.setState(Tile.STATE_ACTIVE);
+                subtitle = getString(R.string.ghostmode_tile_active_subtitle);
+            } else if (state == GhostModeAndroidPolicyManager.State.RECOVERY_REQUIRED) {
+                subtitle = getString(R.string.ghostmode_tile_recovery_subtitle);
+            } else if (state == GhostModeAndroidPolicyManager.State.UNAVAILABLE) {
+                subtitle = getString(R.string.ghostmode_tile_unavailable_subtitle);
+            } else {
+                subtitle = getString(R.string.ghostmode_tile_subtitle);
+            }
+        } catch (RuntimeException unavailable) {
+            // Keep the shortcut clickable and never claim protection on read failure.
+            subtitle = getString(R.string.ghostmode_tile_unavailable_subtitle);
+        }
+
         tile.setLabel(getString(R.string.ghostmode_tile_label));
-        tile.setSubtitle(getString(R.string.ghostmode_tile_subtitle));
+        tile.setSubtitle(subtitle);
         tile.setContentDescription(getString(R.string.ghostmode_tile_description));
         tile.setIcon(Icon.createWithResource(this, android.R.drawable.ic_lock_lock));
         tile.updateTile();
