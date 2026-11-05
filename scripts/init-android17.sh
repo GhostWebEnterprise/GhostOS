@@ -14,6 +14,12 @@ command -v repo >/dev/null || { echo "repo is required" >&2; exit 1; }
 # directory behind in the GhostOS checkout.
 ANDROID_DIR="$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$ANDROID_DIR")"
 
+# The root directory is not a valid Android source checkout target.
+if [[ "$ANDROID_DIR" == "/" ]]; then
+  echo "Android source directory must not be the filesystem root: $ANDROID_DIR" >&2
+  exit 1
+fi
+
 # Never initialize a full Android source tree inside (or over) the GhostOS repo.
 case "$ANDROID_DIR/" in
   "$GHOSTOS_ROOT/"*)
