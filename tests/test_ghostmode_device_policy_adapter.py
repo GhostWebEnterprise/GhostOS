@@ -130,7 +130,10 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             "GhostModeQuickSettingsTile.java"
         ).read_text(encoding="utf-8")
         self.assertIn("Tile.STATE_INACTIVE", tile)
-        self.assertNotIn("Tile.STATE_ACTIVE", tile)
+        self.assertIn("manager.getState()", tile)
+        self.assertIn("GhostModeAndroidPolicyManager.State.ACTIVE", tile)
+        self.assertIn("tile.setState(Tile.STATE_ACTIVE)", tile)
+        self.assertNotIn("applyControl(", tile)
 
 
     def test_android_policy_manager_persists_and_restores_original_device_state(self):
