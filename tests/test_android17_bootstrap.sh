@@ -81,4 +81,12 @@ fi
 rm -rf "$INSIDE"
 test "$(wc -l < "$GHOSTOS_REPO_LOG")" -eq 2
 
+# Reject / before creating files or invoking repo init/sync.
+if bash "$ROOT/scripts/init-android17.sh" "/" > "$WORK/root.log" 2>&1; then
+  echo "Android 17 bootstrap unexpectedly accepted the filesystem root" >&2
+  exit 1
+fi
+grep -q "must not be the filesystem root" "$WORK/root.log"
+test "$(wc -l < "$GHOSTOS_REPO_LOG")" -eq 2
+
 echo "GhostOS LineageOS 24.0 / Android 17 bootstrap regression: pinned manifest and path safety passed"
