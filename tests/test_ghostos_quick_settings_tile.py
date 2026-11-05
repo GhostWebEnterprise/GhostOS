@@ -43,7 +43,7 @@ class GhostModeQuickSettingsTileTests(unittest.TestCase):
             "false",
         )
 
-    def test_tile_never_claims_ghostmode_is_active(self):
+    def test_tile_reflects_only_verified_policy_state_without_mutating_policy(self):
         source = (
             ROOT
             / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
@@ -54,12 +54,24 @@ class GhostModeQuickSettingsTileTests(unittest.TestCase):
             / "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml"
         ).read_text(encoding="utf-8")
 
+        self.assertIn("new GhostModeDevicePolicyAdapter(this)", source)
+        self.assertIn("new GhostModeAndroidPolicyManager(this, adapter)", source)
+        self.assertIn("manager.getState()", source)
+        self.assertIn("GhostModeAndroidPolicyManager.State.ACTIVE", source)
+        self.assertIn("GhostModeAndroidPolicyManager.State.RECOVERY_REQUIRED", source)
+        self.assertIn("GhostModeAndroidPolicyManager.State.UNAVAILABLE", source)
+        self.assertIn("tile.setState(Tile.STATE_ACTIVE)", source)
         self.assertIn("Tile.STATE_INACTIVE", source)
-        self.assertNotIn("Tile.STATE_ACTIVE", source)
-        self.assertIn("ghostmode_tile_subtitle", source)
-        self.assertIn("Setup required", strings)
-        self.assertIn("Remaining GhostMode controls are not connected", strings)
+        self.assertNotIn("applyControl(", source)
+        self.assertIn("ghostmode_tile_active_subtitle", source)
+        self.assertIn("ghostmode_tile_recovery_subtitle", source)
+        self.assertIn("ghostmode_tile_unavailable_subtitle", source)
         self.assertIn("startActivityAndCollapse", source)
+
+        self.assertIn("Setup required", strings)
+        self.assertIn("Controls active", strings)
+        self.assertIn("Recovery required", strings)
+        self.assertIn("Device Owner required", strings)
 
 
 if __name__ == "__main__":
