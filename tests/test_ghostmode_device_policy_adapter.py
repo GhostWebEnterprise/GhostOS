@@ -114,7 +114,7 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             activity,
         )
         self.assertIn(
-            "message = enabled\\n                        ? R.string.ghostmode_usb_data_disabled\\n                        : R.string.ghostmode_usb_data_enabled;",
+            "message = enabled\n                        ? R.string.ghostmode_usb_data_disabled\n                        : R.string.ghostmode_usb_data_enabled;",
             activity,
         )
         self.assertIn("notificationsSwitch = addPolicySwitch", activity)
@@ -126,7 +126,7 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("bindPolicySwitch(policySwitch, control)", activity)
         self.assertIn("adapter.availability()", activity)
         self.assertIn("policyManager = new GhostModeAndroidPolicyManager(this, adapter)", activity)
-        self.assertIn("policyManager.applyControl(control, enabled)", activity)
+        self.assertIn("policyManager.applyControl(control, policyEnabled)", activity)
         self.assertIn("policyManager.restorePreviousPolicy()", activity)
         self.assertIn("restoreButton", activity)
         self.assertIn("boolean recoveryRequired = managerState", activity)
