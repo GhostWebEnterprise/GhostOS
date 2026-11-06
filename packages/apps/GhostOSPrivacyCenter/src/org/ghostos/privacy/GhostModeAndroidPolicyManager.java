@@ -325,8 +325,7 @@ public final class GhostModeAndroidPolicyManager {
                 || preferences.contains(KEY_LOCATION_ENABLED))
                 && (!preferences.contains(KEY_EXPECTED_USB_DATA)
                 || preferences.contains(KEY_USB_DATA_ENABLED))
-                && (!preferences.contains(KEY_EXPECTED_NOTIFICATIONS)
-                || preferences.contains(KEY_KEYGUARD_DISABLED_FEATURES));
+                && preferences.contains(KEY_KEYGUARD_DISABLED_FEATURES);
     }
 
     private void markRecoveryRequired() {
