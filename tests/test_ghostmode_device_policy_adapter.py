@@ -105,6 +105,18 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("microphoneSwitch = addPolicySwitch", activity)
         self.assertIn("locationSwitch = addPolicySwitch", activity)
         self.assertIn("usbDataSwitch = addPolicySwitch", activity)
+        self.assertIn(
+            'refreshSwitch(usbDataSwitch, "usbDataSignaling", () -> !adapter.isUsbDataSignalingEnabled())',
+            activity,
+        )
+        self.assertIn(
+            'boolean policyEnabled = "usbDataSignaling".equals(control) ? !enabled : enabled;',
+            activity,
+        )
+        self.assertIn(
+            "message = enabled\\n                        ? R.string.ghostmode_usb_data_disabled\\n                        : R.string.ghostmode_usb_data_enabled;",
+            activity,
+        )
         self.assertIn("notificationsSwitch = addPolicySwitch", activity)
         self.assertIn("adapter::isSensitiveNotificationsHidden", activity)
         self.assertIn("adapter.isLocationControlSupported()", activity)
