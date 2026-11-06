@@ -9,7 +9,7 @@
 
 ## Phase 2 — Android service
 
-Create a privileged GhostMode manager in the GhostOS framework layer. The service owns policy transitions; UI surfaces request transitions rather than directly modifying low-level settings.
+Full cross-adapter preset orchestration remains a framework-layer task. The current Privacy Center now uses `GhostModeAndroidPolicyManager` for explicit Device Owner controls: it persists the original snapshot before the first change, retains it across Activity/process recreation, refuses new changes while recovery is pending, and restores the saved state through the Device Owner adapter. It also supports explicit redaction of sensitive notifications on secure keyguard screens through `KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS`, preserving unrelated keyguard flags in the rollback snapshot. This is not global notification muting or full preset activation; network, sensor permissions, clipboard and full notification policy remain degraded, and Quick Settings remains a non-toggleable shortcut: it shows ACTIVE only when the Android Device Owner policy state and saved expected state verify, otherwise it stays inactive with setup, recovery or unavailable status and opens the Privacy Center for explicit action.
 
 Required interfaces:
 
