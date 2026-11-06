@@ -158,7 +158,7 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("adapter.isSensitiveNotificationsHidden()", manager)
         self.assertIn("KEY_KEYGUARD_DISABLED_FEATURES", manager)
         self.assertIn("KEY_EXPECTED_NOTIFICATIONS", manager)
-        self.assertIn("!preferences.contains(KEY_EXPECTED_NOTIFICATIONS)", manager)
+        self.assertIn("preferences.contains(KEY_KEYGUARD_DISABLED_FEATURES)", manager)
         self.assertIn("private boolean adapterReady()", manager)
         self.assertIn("recordExpected(expectedKey, enabled)", manager)
         self.assertIn(".remove(KEY_EXPECTED_CAMERA)", manager)
