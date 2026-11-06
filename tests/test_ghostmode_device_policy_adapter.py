@@ -223,6 +223,20 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         ):
             self.assertIn(f"preferences.contains({key})", completeness)
 
+        self.assertIn(
+            "&& preferences.contains(KEY_KEYGUARD_DISABLED_FEATURES)",
+            completeness,
+        )
+        self.assertNotIn("!preferences.contains(KEY_EXPECTED_NOTIFICATIONS)", completeness)
+
+        persist = manager.split("private boolean persistSnapshot(", 1)[1].split(
+            "private GhostModeDevicePolicyAdapter.Snapshot loadSnapshot", 1
+        )[0]
+        self.assertIn(
+            ".putInt(KEY_KEYGUARD_DISABLED_FEATURES, snapshot.keyguardDisabledFeatures())",
+            persist,
+        )
+
         for expected_key, snapshot_key in (
             ("KEY_EXPECTED_LOCATION", "KEY_LOCATION_ENABLED"),
             ("KEY_EXPECTED_USB_DATA", "KEY_USB_DATA_ENABLED"),
