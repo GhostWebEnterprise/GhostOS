@@ -159,7 +159,7 @@ public final class PrivacyActivity extends Activity {
             refreshSwitch(locationSwitch, "locationEnabled", adapter::isLocationEnabled);
         }
         if (usbSupported) {
-            refreshSwitch(usbDataSwitch, "usbDataSignaling", adapter::isUsbDataSignalingEnabled);
+            refreshSwitch(usbDataSwitch, "usbDataSignaling", () -> !adapter.isUsbDataSignalingEnabled());
         }
     }
 
@@ -211,7 +211,8 @@ public final class PrivacyActivity extends Activity {
                 return;
             }
 
-            policyManager.applyControl(control, enabled);
+            boolean policyEnabled = "usbDataSignaling".equals(control) ? !enabled : enabled;
+            policyManager.applyControl(control, policyEnabled);
             int message;
             if ("camera".equals(control)) {
                 message = enabled
@@ -231,8 +232,8 @@ public final class PrivacyActivity extends Activity {
                         : R.string.ghostmode_location_disabled;
             } else if ("usbDataSignaling".equals(control)) {
                 message = enabled
-                        ? R.string.ghostmode_usb_data_enabled
-                        : R.string.ghostmode_usb_data_disabled;
+                        ? R.string.ghostmode_usb_data_disabled
+                        : R.string.ghostmode_usb_data_enabled;
             } else {
                 message = enabled
                         ? R.string.ghostmode_notifications_hidden
