@@ -29,6 +29,20 @@ class GhostModeManager:
         self._recovery_required = False
 
     @staticmethod
+    def _policy_sections(policy: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+        """Validate and copy policy sections, excluding preset display metadata."""
+        sections: dict[str, dict[str, Any]] = {}
+        for name, value in policy.items():
+            if name in {"id", "name", "description"}:
+                continue
+            if not isinstance(value, Mapping):
+                raise PolicyError(f"policy section {name} must be an object")
+            if not value:
+                raise PolicyError(f"policy section {name} must not be empty")
+            sections[name] = copy.deepcopy(dict(value))
+        return sections
+
+    @staticmethod
     def _validate_presets(raw: Any) -> dict[str, dict[str, Any]]:
         if not isinstance(raw, dict):
             raise PolicyError("preset document must be an object")
@@ -45,6 +59,8 @@ class GhostModeManager:
             key = name.strip().lower()
             if key in result:
                 raise PolicyError(f"duplicate preset: {name}")
+            if not GhostModeManager._policy_sections(preset):
+                raise PolicyError("each preset requires at least one policy section")
             result[key] = copy.deepcopy(preset)
         return result
 
@@ -64,6 +80,7 @@ class GhostModeManager:
         effective = copy.deepcopy(self._presets[key])
         if overrides:
             self._deep_merge(effective, overrides)
+        self._policy_sections(effective)
         return effective
 
     def _adapter_policies(self, policy: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -74,11 +91,7 @@ class GhostModeManager:
         clipboard under privacy, and USB/notifications under device. Existing
         direct adapter sections remain supported for focused host tests.
         """
-        sections = {
-            name: value
-            for name, value in policy.items()
-            if isinstance(value, dict) and value
-        }
+        sections = self._policy_sections(policy)
         if "privacy" in sections and any(name in sections for name in ("sensors", "clipboard")):
             raise AdapterError("ambiguous GhostMode privacy sections")
         if "device" in sections and any(name in sections for name in ("usb", "notifications")):
