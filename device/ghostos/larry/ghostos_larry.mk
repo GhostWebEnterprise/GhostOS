@@ -1,12 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
-# Product composition based on LineageOS lineage_larry.mk (2023 LineageOS).
-# Hardware policy belongs to the pinned upstream device/common/kernel trees.
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
-TARGET_SUPPORTS_OMX_SERVICE := false
-$(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
-$(call inherit-product, vendor/lineage/config/common_full_phone.mk)
-$(call inherit-product, device/oneplus/larry/device.mk)
+# Reuse the exact product composition and build-property overrides from the
+# pinned LineageOS larry device tree. Override only GhostOS product identity.
+$(call inherit-product, device/oneplus/larry/lineage_larry.mk)
 $(call inherit-product, vendor/ghostos/config/common.mk)
+
+# Device identifier. Keep these after all inherited product definitions.
 PRODUCT_NAME := ghostos_larry
 PRODUCT_DEVICE := larry
 PRODUCT_BRAND := oneplus
