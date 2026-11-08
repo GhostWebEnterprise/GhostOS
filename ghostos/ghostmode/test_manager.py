@@ -37,6 +37,35 @@ class GhostModeManagerTest(unittest.TestCase):
         self.assertFalse(preview["network"]["blockLan"])
         self.assertTrue(manager.preview_policy("private")["network"]["blockLan"])
 
+    def test_non_object_preset_policy_section_is_rejected(self):
+        self.path.write_text(
+            '{"schemaVersion":1,"presets":[{"id":"bad","network":"direct"}]}',
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(PolicyError, "policy section network must be an object"):
+            GhostModeManager(self.path, {"network": Adapter()})
+
+    def test_empty_preset_policy_section_is_rejected(self):
+        self.path.write_text(
+            '{"schemaVersion":1,"presets":[{"id":"bad","network":{}}]}',
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(PolicyError, "policy section network must not be empty"):
+            GhostModeManager(self.path, {"network": Adapter()})
+
+    def test_override_cannot_replace_policy_section_with_scalar(self):
+        network = Adapter()
+        usb = Adapter()
+        manager = GhostModeManager(self.path, {"network": network, "usb": usb})
+
+        with self.assertRaisesRegex(PolicyError, "policy section network must be an object"):
+            manager.activate("standard", {"network": "direct"})
+
+        self.assertEqual(network.applied, [])
+        self.assertEqual(usb.applied, [])
+        self.assertIsNone(manager.get_active_policy())
+        self.assertFalse(manager.get_recovery_required())
+
     def test_repository_presets_route_to_available_android_adapter_contracts(self):
         presets_path = Path(__file__).with_name("presets.json")
         network = Adapter()
