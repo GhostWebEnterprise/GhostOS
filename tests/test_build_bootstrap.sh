@@ -39,6 +39,14 @@ chmod +x "$WORK/bin/repo"
 export PATH="$WORK/bin:$PATH"
 export GHOSTOS_REPO_LOG="$WORK/repo.log"
 
+# Keep GhostOS product identity while inheriting all pinned upstream larry
+# device composition and firmware-derived build-property overrides.
+grep -Fq 'inherit-product, device/oneplus/larry/lineage_larry.mk' \
+  "$ROOT/device/ghostos/larry/ghostos_larry.mk" || {
+  echo "GhostOS larry product must inherit the pinned upstream lineage_larry.mk" >&2
+  exit 1
+}
+
 run_case() {
   local case_name="$1" checkout="$WORK/$1"
   : > "$GHOSTOS_REPO_LOG"
