@@ -2,7 +2,7 @@
 
 Android 17 is the GhostOS target, but it is a separate bring-up gate from the repository's LineageOS 23.2 / Android 16 reference baseline.
 
-**Status boundary:** the LineageOS 23.2 manifest is a tracked reference baseline, not proof of a bootable larry build. The LineageOS 24.0 / Android 17 manifest contains candidate pinned source revisions, but a full source sync and product build have not been verified. No Android 17 bootability or device compatibility is claimed.
+**Status boundary:** the LineageOS 23.2 manifest is a tracked reference baseline, not proof of a bootable larry build. The candidate LineageOS 24.0 / Android 17 manifest and pinned source revisions are tracked in [the larry bring-up PR](https://github.com/GhostWebEnterprise/GhostOS/pull/9), but a full source sync and product build have not been verified. No Android 17 bootability or device compatibility is claimed.
 
 ## Migration gates
 
@@ -17,7 +17,7 @@ Android 17 is the GhostOS target, but it is a separate bring-up gate from the re
 9. Run device smoke tests and relevant CTS/VTS validation.
 10. Only then label Android 17 support as bootable.
 
-No Android 17 source revision is invented here. Candidate revisions are recorded in `manifests/ghostos-24.0.xml`; their integration remains unverified until the full sync and product build succeed.
+No Android 17 source revision is invented here. The candidate revisions in the larry bring-up PR must be reviewed against a successful full sync and product build before they are treated as an integrated foundation.
 
 ## Evidence still required
 
