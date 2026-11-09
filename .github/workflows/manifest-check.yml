@@ -5,11 +5,13 @@ on:
     paths:
       - 'manifests/**'
       - 'scripts/**'
+      - 'docs/ANDROID-17-PORT.md'
       - '.github/workflows/manifest-check.yml'
   pull_request:
     paths:
       - 'manifests/**'
       - 'scripts/**'
+      - 'docs/ANDROID-17-PORT.md'
       - '.github/workflows/manifest-check.yml'
   workflow_dispatch:
 
