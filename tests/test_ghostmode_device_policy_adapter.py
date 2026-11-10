@@ -92,6 +92,22 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
         self.assertIn("locationEnabled", source)
         self.assertIn("locationEnabled()", source)
 
+    def test_microphone_policy_copy_describes_unmute_restriction_not_mute(self):
+        strings_path = ROOT / "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml"
+        strings = ET.parse(strings_path).getroot()
+        values = {item.attrib["name"]: item.text or "" for item in strings.findall("string")}
+
+        self.assertEqual(values["ghostmode_microphone_control"], "Prevent microphone unmute")
+        self.assertIn("does not mute an active microphone", values["ghostmode_microphone_muted"])
+        self.assertIn("Microphone unmute restriction removed", values["ghostmode_microphone_unmuted"])
+
+        adapter = (
+            ROOT
+            / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
+            "GhostModeDevicePolicyAdapter.java"
+        ).read_text(encoding="utf-8")
+        self.assertIn("does not itself mute an active microphone", adapter)
+
     def test_privacy_center_applies_only_explicit_device_owner_switch_changes(self):
         activity = (
             ROOT
