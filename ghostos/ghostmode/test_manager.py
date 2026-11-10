@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -89,6 +90,57 @@ class GhostModeManagerTest(unittest.TestCase):
             "notifications": policy["notifications"],
         }])
         manager.deactivate()
+        self.assertIsNone(manager.get_active_policy())
+
+    def write_versioned_preset(self, preset):
+        self.path.write_text(
+            json.dumps({"schemaVersion": 1, "presets": [preset]}),
+            encoding="utf-8",
+        )
+
+    def test_versioned_schema_rejects_unknown_policy_section(self):
+        self.write_versioned_preset({
+            "id": "bad",
+            "network": {"route": "direct"},
+            "bluetooth": {"enabled": True},
+        })
+        with self.assertRaisesRegex(PolicyError, "unsupported policy section"):
+            GhostModeManager(self.path)
+
+    def test_versioned_schema_rejects_unknown_enum_value(self):
+        self.write_versioned_preset({
+            "id": "bad",
+            "network": {"route": "vpn"},
+        })
+        with self.assertRaisesRegex(PolicyError, "invalid value for network.route"):
+            GhostModeManager(self.path)
+
+    def test_versioned_schema_requires_exact_boolean_values(self):
+        self.write_versioned_preset({
+            "id": "bad",
+            "network": {"route": "direct", "blockLan": "false"},
+        })
+        with self.assertRaisesRegex(PolicyError, "invalid value for network.blockLan"):
+            GhostModeManager(self.path)
+
+    def test_versioned_schema_bounds_clipboard_expiry(self):
+        self.write_versioned_preset({
+            "id": "bad",
+            "clipboard": {"autoClearSeconds": 86401},
+        })
+        with self.assertRaisesRegex(PolicyError, "invalid value for clipboard.autoClearSeconds"):
+            GhostModeManager(self.path)
+
+    def test_invalid_override_is_rejected_before_adapter_mutation(self):
+        network = Adapter()
+        usb = Adapter()
+        manager = GhostModeManager(self.path, {"network": network, "usb": usb})
+
+        with self.assertRaisesRegex(PolicyError, "invalid value for network.blockLan"):
+            manager.activate("standard", {"network": {"blockLan": "false"}})
+
+        self.assertEqual(network.applied, [])
+        self.assertEqual(usb.applied, [])
         self.assertIsNone(manager.get_active_policy())
 
     def test_unknown_preset_is_rejected(self):

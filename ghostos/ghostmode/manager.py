@@ -20,9 +20,39 @@ class AdapterError(RuntimeError):
 
 
 class GhostModeManager:
+    _POLICY_SCHEMA_V1 = {
+        "network": {
+            "route": ("enum", frozenset({"direct", "tor", "user_selected"})),
+            "killSwitch": ("bool", None),
+            "blockTrackers": ("bool", None),
+            "blockLan": ("bool", None),
+        },
+        "sensors": {
+            "backgroundCamera": ("bool", None),
+            "backgroundMicrophone": ("bool", None),
+            "backgroundLocation": ("enum", frozenset({"deny", "approximate", "user_selected"})),
+        },
+        "clipboard": {
+            "notifyReads": ("bool", None),
+            "autoClearSeconds": ("seconds", None),
+        },
+        "usb": {
+            "lockedMode": ("enum", frozenset({"charge_only", "user_selected"})),
+        },
+        "notifications": {
+            "hideSensitiveOnLockscreen": ("bool", None),
+        },
+    }
+
     def __init__(self, presets_path: str | Path, adapters: Mapping[str, Any] | None = None):
         raw = json.loads(Path(presets_path).read_text(encoding="utf-8"))
-        self._presets = self._validate_presets(raw)
+        if not isinstance(raw, dict):
+            raise PolicyError("preset document must be an object")
+        schema_version = raw.get("schemaVersion")
+        if "schemaVersion" in raw and (type(schema_version) is not int or schema_version != 1):
+            raise PolicyError("unsupported preset schemaVersion")
+        self._strict_schema = schema_version == 1
+        self._presets = self._validate_presets(raw, strict_schema=self._strict_schema)
         self._adapters = dict(adapters or {})
         self._active: dict[str, Any] | None = None
         self._applied: list[tuple[Any, Any]] = []
@@ -42,8 +72,34 @@ class GhostModeManager:
             sections[name] = copy.deepcopy(dict(value))
         return sections
 
+    @classmethod
+    def _validate_schema_v1(cls, policy: Mapping[str, Any]) -> None:
+        """Validate the versioned public preset schema before any adapter runs."""
+        sections = cls._policy_sections(policy)
+        for section_name, section in sections.items():
+            schema = cls._POLICY_SCHEMA_V1.get(section_name)
+            if schema is None:
+                raise PolicyError(f"unsupported policy section in schema v1: {section_name}")
+            for field, value in section.items():
+                rule = schema.get(field)
+                if rule is None:
+                    raise PolicyError(f"unsupported {section_name} policy field: {field}")
+                kind, choices = rule
+                if kind == "bool":
+                    valid = type(value) is bool
+                elif kind == "enum":
+                    valid = isinstance(value, str) and value in choices
+                elif kind == "seconds":
+                    valid = type(value) is int and 1 <= value <= 86400
+                else:
+                    valid = False
+                if not valid:
+                    raise PolicyError(f"invalid value for {section_name}.{field}")
+
     @staticmethod
-    def _validate_presets(raw: Any) -> dict[str, dict[str, Any]]:
+    def _validate_presets(
+        raw: Any, strict_schema: bool = False
+    ) -> dict[str, dict[str, Any]]:
         if not isinstance(raw, dict):
             raise PolicyError("preset document must be an object")
         presets = raw.get("presets")
@@ -61,6 +117,8 @@ class GhostModeManager:
                 raise PolicyError(f"duplicate preset: {name}")
             if not GhostModeManager._policy_sections(preset):
                 raise PolicyError("each preset requires at least one policy section")
+            if strict_schema:
+                GhostModeManager._validate_schema_v1(preset)
             result[key] = copy.deepcopy(preset)
         return result
 
@@ -80,7 +138,10 @@ class GhostModeManager:
         effective = copy.deepcopy(self._presets[key])
         if overrides:
             self._deep_merge(effective, overrides)
-        self._policy_sections(effective)
+        if self._strict_schema:
+            self._validate_schema_v1(effective)
+        else:
+            self._policy_sections(effective)
         return effective
 
     def _adapter_policies(self, policy: Mapping[str, Any]) -> dict[str, dict[str, Any]]:

@@ -6,6 +6,9 @@
 - Effective-policy model: preset + user overrides + device capabilities.
 - Reversible state snapshot contract.
 - Capability/degraded-state reporting.
+- Version 1 presets use an allow-listed policy schema with strict enum, boolean
+  and bounded clipboard-expiry validation. User overrides are validated before
+  any platform adapter can mutate device state.
 
 ## Phase 2 — Android service
 
