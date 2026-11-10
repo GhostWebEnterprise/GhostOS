@@ -70,7 +70,7 @@ jobs:
             build/ghostos-privacy-resources.zip
           test -f build/android-generated/org/ghostos/privacy/R.java \
             || { echo "::error::aapt2 did not generate the Privacy Center R.java"; exit 1; }
-          javac -source 17 -target 17 -classpath "$android_jar" -d build/android-classes \
+          javac --release 17 -classpath "$android_jar" -d build/android-classes \
             build/android-generated/org/ghostos/privacy/R.java \
             $(find packages/apps/GhostOSPrivacyCenter/src -type f -name '*.java' -print)
           test -f build/android-classes/org/ghostos/privacy/GhostModeQuickSettingsTile.class
