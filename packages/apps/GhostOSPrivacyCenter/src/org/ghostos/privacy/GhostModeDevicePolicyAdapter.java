@@ -178,7 +178,10 @@ public final class GhostModeDevicePolicyAdapter {
         return manager.getScreenCaptureDisabled(admin);
     }
 
-    /** Returns the microphone restriction set by this GhostOS device admin. */
+    /**
+     * Returns whether Android blocks the user from unmuting a muted microphone.
+     * This restriction does not itself mute an active microphone.
+     */
     public boolean isMicrophoneMuted() {
         requireReady();
         return manager.getUserRestrictions(admin)
@@ -220,6 +223,7 @@ public final class GhostModeDevicePolicyAdapter {
                 & DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS) != 0;
     }
 
+    /** Applies the unmute restriction only; it does not mute an active microphone. */
     private void setMicrophoneMuted(boolean muted) {
         if (muted) {
             manager.addUserRestriction(admin, UserManager.DISALLOW_UNMUTE_MICROPHONE);
