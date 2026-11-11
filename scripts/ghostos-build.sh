@@ -32,6 +32,9 @@ cp "$MANIFEST" ".repo/local_manifests/ghostos.xml"
 echo "==> Syncing GhostOS device foundation"
 repo sync -c --no-clone-bundle --no-tags -j"$JOBS"
 
+# Overlay GhostOS-owned apps only after the upstream device tree is synced.
+DEVICE="$DEVICE" ANDROID_DIR="$ANDROID_DIR" "$ROOT/scripts/integrate-ghostos-apps.sh" "$ANDROID_DIR"
+
 echo "==> Preparing $DEVICE"
 source build/envsetup.sh
 breakfast "$DEVICE"
