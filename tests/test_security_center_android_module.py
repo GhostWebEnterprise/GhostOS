@@ -22,6 +22,8 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertIn("NetworkCapabilities.TRANSPORT_VPN", source)
         self.assertIn("provider unverified", source)
         self.assertIn("Settings.ACTION_VPN_SETTINGS", source)
+        self.assertIn('getLaunchIntentForPackage("ch.protonvpn.android")', source)
+        self.assertIn("https://github.com/ProtonVPN/android-app/releases", source)
         self.assertNotIn("VpnService", source)
 
     def test_product_config_installs_security_center(self):
