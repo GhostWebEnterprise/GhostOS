@@ -69,6 +69,7 @@ public final class MainActivity extends Activity {
         root.addView(intro, introParams);
 
         addCard(root, "NETWORK PROTECTION", vpnStatus(), "VPN status is based on Android network capabilities. Provider identity is not inferred from app installation or launch.");
+        addCard(root, "VPN LOCKDOWN", "Always-on / lockdown: not verified", "Configure these OS-managed settings in Android VPN settings. Lockdown can block all network traffic when the VPN is unavailable.");
         addCard(root, "DEVICE INTEGRITY", "Verified Boot: not yet verified", "A trusted boot-state / AVB attestation provider is not connected to this UI yet.");
         addCard(root, "SECURITY UPDATES", "Security patch: " + safe(Build.VERSION.SECURITY_PATCH), "Android release: " + safe(Build.VERSION.RELEASE) + "  ·  Device: " + safe(Build.DEVICE));
         addCard(root, "SCREEN LOCK", screenLockStatus(), "Read from Android KeyguardManager. This does not verify every lock-screen policy.");
