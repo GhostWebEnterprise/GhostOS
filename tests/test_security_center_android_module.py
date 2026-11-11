@@ -11,10 +11,12 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertIn('name: "GhostOSSecurityCenter"', bp)
         self.assertIn('system_ext_specific: true', bp)
 
-    def test_manifest_declares_only_required_network_permission(self):
+    def test_manifest_declares_required_permission_and_narrow_package_visibility(self):
         manifest = (APP / "AndroidManifest.xml").read_text(encoding="utf-8")
         self.assertIn('package="org.ghostos.securitycenter"', manifest)
         self.assertIn('android.permission.ACCESS_NETWORK_STATE', manifest)
+        self.assertIn('<package android:name="ch.protonvpn.android" />', manifest)
+        self.assertNotIn('QUERY_ALL_PACKAGES', manifest)
         self.assertNotIn('BIND_VPN_SERVICE', manifest)
 
     def test_vpn_state_is_platform_observed_and_provider_unverified(self):
