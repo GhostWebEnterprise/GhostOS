@@ -29,6 +29,7 @@ on:
       - 'vendor/**'
       - 'tests/**'
       - 'docs/GHOSTMODE-IMPLEMENTATION.md'
+      - 'docs/SECURITY-CENTER.md'
       - '.github/workflows/manifest-check.yml'
   workflow_dispatch:
 
