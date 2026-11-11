@@ -66,7 +66,10 @@ class GhostModeQuickSettingsTileTests(unittest.TestCase):
         self.assertIn("ghostmode_tile_active_subtitle", source)
         self.assertIn("ghostmode_tile_recovery_subtitle", source)
         self.assertIn("ghostmode_tile_unavailable_subtitle", source)
-        self.assertIn("startActivityAndCollapse", source)
+        self.assertIn("startActivityAndCollapse(pendingIntent)", source)
+        self.assertIn("@SuppressWarnings(\"deprecation\")", source)
+        self.assertIn("startActivityAndCollapseLegacy(intent)", source)
+        self.assertIn("startActivityAndCollapse(intent)", source)
 
         self.assertIn("Setup required", strings)
         self.assertIn("Restrictions active", strings)
