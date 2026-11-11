@@ -61,7 +61,10 @@ public final class GhostModeAndroidPolicyManager {
                 return State.RECOVERY_REQUIRED;
             }
             try {
-                return verifyExpectedState() ? State.ACTIVE : State.RECOVERY_REQUIRED;
+                if (!verifyExpectedState()) {
+                    return State.RECOVERY_REQUIRED;
+                }
+                return hasAnyEnforcedControl() ? State.ACTIVE : State.INACTIVE;
             } catch (RuntimeException unavailable) {
                 return State.RECOVERY_REQUIRED;
             }
@@ -315,6 +318,25 @@ public final class GhostModeAndroidPolicyManager {
             }
         }
         return found;
+    }
+
+    /**
+     * ACTIVE means at least one selected control currently enforces a restriction.
+     * Explicitly allowing a capability must not be presented as active protection.
+     */
+    private boolean hasAnyEnforcedControl() {
+        return (preferences.contains(KEY_EXPECTED_CAMERA)
+                && preferences.getBoolean(KEY_EXPECTED_CAMERA, false))
+                || (preferences.contains(KEY_EXPECTED_SCREEN_CAPTURE)
+                && preferences.getBoolean(KEY_EXPECTED_SCREEN_CAPTURE, false))
+                || (preferences.contains(KEY_EXPECTED_MICROPHONE)
+                && preferences.getBoolean(KEY_EXPECTED_MICROPHONE, false))
+                || (preferences.contains(KEY_EXPECTED_LOCATION)
+                && !preferences.getBoolean(KEY_EXPECTED_LOCATION, true))
+                || (preferences.contains(KEY_EXPECTED_USB_DATA)
+                && !preferences.getBoolean(KEY_EXPECTED_USB_DATA, true))
+                || (preferences.contains(KEY_EXPECTED_NOTIFICATIONS)
+                && preferences.getBoolean(KEY_EXPECTED_NOTIFICATIONS, false));
     }
 
     private boolean hasCompleteSnapshot() {
