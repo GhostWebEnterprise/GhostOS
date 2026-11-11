@@ -33,7 +33,11 @@ echo "==> Syncing GhostOS device foundation"
 repo sync -c --no-clone-bundle --no-tags -j"$JOBS"
 
 # Overlay GhostOS-owned apps only after the upstream device tree is synced.
-DEVICE="$DEVICE" ANDROID_DIR="$ANDROID_DIR" bash "$ROOT/scripts/integrate-ghostos-apps.sh" "$ANDROID_DIR"
+if [[ "$DEVICE" == "larry" ]]; then
+  DEVICE="$DEVICE" ANDROID_DIR="$ANDROID_DIR" bash "$ROOT/scripts/integrate-ghostos-apps.sh" "$ANDROID_DIR"
+else
+  echo "==> Skipping larry-only GhostOS app overlay for $DEVICE"
+fi
 
 echo "==> Preparing $DEVICE"
 source build/envsetup.sh
