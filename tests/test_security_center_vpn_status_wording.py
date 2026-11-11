@@ -20,7 +20,7 @@ class SecurityCenterVpnStatusWordingTests(unittest.TestCase):
             source,
         )
         self.assertIn(
-            "does not prove the default route, all-app coverage or lockdown is active",
+            "does not prove all-app coverage, provider identity or lockdown is active",
             source,
         )
         self.assertNotIn(
