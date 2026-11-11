@@ -68,7 +68,7 @@ public final class MainActivity extends Activity {
         introParams.bottomMargin = dp(22);
         root.addView(intro, introParams);
 
-        addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport does not prove the default route, all-app coverage or lockdown is active. Provider identity is also unverified.");
+        addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport does not prove all-app coverage, provider identity or lockdown is active.");
         addCard(root, "VPN LOCKDOWN", "Always-on / lockdown: not verified", "Configure these OS-managed settings in Android VPN settings. Lockdown can block all network traffic when the VPN is unavailable.");
         addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Read-only boot properties. Unknown means the platform did not expose enough evidence.");
         addCard(root, "SELINUX", selinuxStatus(), "Read from the Android SELinux framework API.");
