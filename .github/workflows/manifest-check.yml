@@ -10,8 +10,11 @@ on:
       - 'manifests/**'
       - 'scripts/**'
       - 'ghostos/ghostmode/**'
+      - 'ghostos/security_center/**'
+      - 'tests/test_security_center.py'
       - 'tests/**'
       - 'docs/GHOSTMODE-IMPLEMENTATION.md'
+      - 'docs/SECURITY-CENTER.md'
       - '.github/workflows/manifest-check.yml'
   pull_request:
     branches:
