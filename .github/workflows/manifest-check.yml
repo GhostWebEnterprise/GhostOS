@@ -83,6 +83,9 @@ jobs:
       - name: Test GhostMode SystemUI integration
         run: python3 -m unittest -v ghostos.ghostmode.test_systemui
 
+      - name: Test GhostOS Security Center status model
+        run: python3 -m unittest -v tests.test_security_center
+
       - name: Show supported devices
         run: |
           grep -E 'android_device_oneplus_(larry|oscaro)' manifests/ghostos-23.2.xml
