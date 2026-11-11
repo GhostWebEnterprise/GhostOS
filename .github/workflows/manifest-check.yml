@@ -98,6 +98,9 @@ jobs:
             -d build/security-center/classes \
             $(find packages/apps/GhostOSSecurityCenter/src -type f -name '*.java' -print)
           test -f build/security-center/classes/org/ghostos/securitycenter/MainActivity.class
+      - name: Test Security Center VPN status wording
+        run: python3 -m unittest -v tests/test_security_center_vpn_status_wording.py
+
       - name: Keep GhostWeb VPN outside GhostOS product configuration
         shell: bash
         run: |
