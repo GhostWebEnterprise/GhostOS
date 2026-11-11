@@ -69,7 +69,7 @@ class GhostModeQuickSettingsTileTests(unittest.TestCase):
         self.assertIn("startActivityAndCollapse", source)
 
         self.assertIn("Setup required", strings)
-        self.assertIn("Controls active", strings)
+        self.assertIn("Restrictions active", strings)
         self.assertIn("Recovery required", strings)
         self.assertIn("Device Owner required", strings)
 
