@@ -1,10 +1,10 @@
 # GhostOS Security Center Android app
 
-This is the first native Android UI shell for the GhostOS Security Center. It uses public Android APIs only and is deliberately conservative:
+This is the first native Android UI shell for the GhostOS Security Center. It uses public Android APIs for network, lock and settings observations, plus guarded platform-only probes for boot properties and SELinux. Platform-only probes may be inaccessible at runtime and must then remain unknown:
 
-- VPN transport is read from Android NetworkCapabilities; an active tunnel is labelled provider-unverified unless a trusted platform identity provider is added.
+- VPN transport is read from Android NetworkCapabilities. A detected VPN transport does not prove default-route selection, all-app coverage or lockdown; provider identity remains unverified unless a trusted platform identity provider is added.
 - Proton VPN is not bundled or controlled by this app. The button opens Android's VPN settings.
-- Verified Boot state is read from Android boot properties; SELinux mode is read from the platform API. Both remain unknown when the platform does not expose reliable values.
+- Verified Boot state is read through a guarded platform-property probe; SELinux mode uses a guarded platform API probe. Both remain unknown when access is restricted or evidence is unavailable.
 - Detailed permission auditing remains unverified until its framework/Auditor provider is implemented.
 - Screen-lock and ADB state are read from Android public APIs.
 
