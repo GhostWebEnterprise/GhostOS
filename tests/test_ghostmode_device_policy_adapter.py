@@ -274,6 +274,43 @@ class GhostModeDevicePolicyAdapterTests(unittest.TestCase):
             self.assertIn(f"!preferences.contains({expected_key})", completeness)
             self.assertIn(f"preferences.contains({snapshot_key})", completeness)
 
+    def test_active_state_requires_at_least_one_enforced_restriction(self):
+        manager = (
+            ROOT
+            / "packages/apps/GhostOSPrivacyCenter/src/org/ghostos/privacy/"
+            "GhostModeAndroidPolicyManager.java"
+        ).read_text(encoding="utf-8")
+        state = manager.split("public State getState() {", 1)[1].split(
+            "public boolean hasSavedSnapshot()", 1
+        )[0]
+        self.assertIn("if (!verifyExpectedState())", state)
+        self.assertIn(
+            "return hasAnyEnforcedControl() ? State.ACTIVE : State.INACTIVE;",
+            state,
+        )
+
+        enforced = manager.split("private boolean hasAnyEnforcedControl() {", 1)[1].split(
+            "private boolean hasCompleteSnapshot()", 1
+        )[0]
+        for expression in (
+            "preferences.getBoolean(KEY_EXPECTED_CAMERA, false)",
+            "preferences.getBoolean(KEY_EXPECTED_SCREEN_CAPTURE, false)",
+            "preferences.getBoolean(KEY_EXPECTED_MICROPHONE, false)",
+            "!preferences.getBoolean(KEY_EXPECTED_LOCATION, true)",
+            "!preferences.getBoolean(KEY_EXPECTED_USB_DATA, true)",
+            "preferences.getBoolean(KEY_EXPECTED_NOTIFICATIONS, false)",
+        ):
+            self.assertIn(expression, enforced)
+
+        strings_path = ROOT / "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml"
+        strings = ET.parse(strings_path).getroot()
+        values = {item.attrib["name"]: item.text or "" for item in strings.findall("string")}
+        self.assertIn(
+            "One or more selected Device Owner restrictions are applied",
+            values["ghostmode_policy_active"],
+        )
+        self.assertEqual(values["ghostmode_tile_active_subtitle"], "Restrictions active")
+
     def test_all_android_string_references_exist(self):
         strings_path = ROOT / "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml"
         strings = ET.parse(strings_path).getroot()
