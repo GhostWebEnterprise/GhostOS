@@ -45,7 +45,7 @@ Kill switch  permissions      profile hooks
 - No preset wipes user data.
 - No preset changes credentials, disables emergency calling, or intentionally prevents device recovery.
 - Destructive duress actions are outside GhostMode and must never be enabled implicitly.
-- Unavailable Tor or other supported routing capabilities must be visible; GhostMode must not claim protected routing when the requested route is unavailable. The GhostWeb VPN product is not part of GhostOS.
+- Unavailable Tor or other supported routing capabilities must be visible; GhostMode must not claim protected routing when the requested route is unavailable. GhostOS contains no first-party VPN client or VPN infrastructure.
 - Device-specific hooks must be capability checked.
 - Security-sensitive state transitions must be auditable locally without recording message content, browsing content, secrets, or clipboard contents.
 
