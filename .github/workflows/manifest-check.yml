@@ -17,10 +17,13 @@ on:
       - 'device/ghostos/**'
       - 'vendor/ghostos/**'
       - 'packages/apps/GhostOSPrivacyCenter/**'
+      - 'packages/apps/GhostOSSecurityCenter/**'
+      - 'packages/apps/GhostOSSecurityCenter/**'
       - '.github/workflows/manifest-check.yml'
   pull_request:
     branches:
       - main
+      - 'feature/universal-gsi-larry'
     paths:
       - 'manifests/**'
       - 'scripts/**'
@@ -78,12 +81,29 @@ jobs:
           test -f build/android-classes/org/ghostos/privacy/PrivacyActivity.class
           test -f build/android-classes/org/ghostos/privacy/GhostModeAndroidPolicyManager.class
 
+      - name: Compile Security Center against Android 17 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar=\"$ANDROID_HOME/platforms/android-37.0/android.jar\"
+          aapt2=\"$ANDROID_HOME/build-tools/37.0.0/aapt2\"
+          test -f \"$android_jar\"
+          test -x \"$aapt2\"
+          mkdir -p build/security-center/classes
+          \"$aapt2\" link -o build/security-center/manifest-check.apk \\
+            --manifest packages/apps/GhostOSSecurityCenter/AndroidManifest.xml \\
+            -I \"$android_jar\" --min-sdk-version 31 --target-sdk-version 37
+          javac --release 17 -classpath \"$android_jar\" \\
+            -d build/security-center/classes \\
+            $(find packages/apps/GhostOSSecurityCenter/src -type f -name '*.java' -print)
+          test -f build/security-center/classes/org/ghostos/securitycenter/MainActivity.class
+
       - name: Keep GhostWeb VPN outside GhostOS product configuration
         shell: bash
         run: |
           set -euo pipefail
           if grep -RniE 'VpnHood|ghost-web-vpn' \
-            device/ghostos vendor/ghostos packages/apps/GhostOSPrivacyCenter manifests; then
+            device/ghostos vendor/ghostos packages/apps/GhostOSPrivacyCenter packages/apps/GhostOSSecurityCenter manifests; then
             echo "::error::GhostWeb VPN must remain outside GhostOS product configuration" >&2
             exit 1
           fi
