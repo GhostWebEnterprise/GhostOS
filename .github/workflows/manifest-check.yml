@@ -6,6 +6,7 @@ on:
       - main
       - 'feature/ghostmode-*'
       - 'feature/universal-gsi-larry'
+      - 'feat/security-center-android17-larry'
       - 'fix/ghostmode-*'
     paths:
       - 'manifests/**'
