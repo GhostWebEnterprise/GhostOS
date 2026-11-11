@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.ghostos.securitycenter">
 
+    <queries>
+        <package android:name="ch.protonvpn.android" />
+    </queries>
+
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
