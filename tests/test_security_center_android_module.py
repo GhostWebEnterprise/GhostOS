@@ -27,6 +27,11 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertIn('getLaunchIntentForPackage("ch.protonvpn.android")', source)
         self.assertIn("https://github.com/ProtonVPN/android-app/releases", source)
         self.assertNotIn("VpnService", source)
+        for java_file in APP.rglob("*.java"):
+            module_source = java_file.read_text(encoding="utf-8")
+            self.assertNotIn("VpnService", module_source)
+            self.assertNotIn("VpnHood", module_source)
+            self.assertNotIn("ghost-web-vpn", module_source)
 
     def test_product_config_installs_security_center(self):
         config = (ROOT / "vendor/ghostos/config.mk").read_text(encoding="utf-8")
