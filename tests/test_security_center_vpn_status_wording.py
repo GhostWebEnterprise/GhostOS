@@ -6,10 +6,17 @@ SOURCE = ROOT / "packages/apps/GhostOSSecurityCenter/src/org/ghostos/securitycen
 
 
 class SecurityCenterVpnStatusWordingTests(unittest.TestCase):
-    def test_vpn_transport_is_not_reported_as_device_wide_protection(self):
+    def test_vpn_status_reports_only_the_active_default_network(self):
         source = SOURCE.read_text(encoding="utf-8")
+        self.assertIn("manager.getActiveNetwork()", source)
+        self.assertIn("manager.getNetworkCapabilities(activeNetwork)", source)
+        self.assertNotIn("manager.getAllNetworks()", source)
         self.assertIn(
-            'return "VPN transport detected · provider/coverage unverified";',
+            'return "Default network uses VPN transport · provider/coverage unverified";',
+            source,
+        )
+        self.assertIn(
+            'return "Default network does not report VPN transport";',
             source,
         )
         self.assertIn(
