@@ -103,7 +103,7 @@ public final class MainActivity extends Activity {
                 }
             }
             return "No active VPN transport detected";
-        } catch (SecurityException | RuntimeException error) {
+        } catch (RuntimeException error) {
             return "VPN status: unavailable";
         }
     }
