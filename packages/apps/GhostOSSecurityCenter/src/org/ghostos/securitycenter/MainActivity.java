@@ -12,6 +12,8 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.os.Build;
+import android.os.SELinux;
+import android.os.SystemProperties;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -70,7 +72,8 @@ public final class MainActivity extends Activity {
 
         addCard(root, "NETWORK PROTECTION", vpnStatus(), "VPN status is based on Android network capabilities. Provider identity is not inferred from app installation or launch.");
         addCard(root, "VPN LOCKDOWN", "Always-on / lockdown: not verified", "Configure these OS-managed settings in Android VPN settings. Lockdown can block all network traffic when the VPN is unavailable.");
-        addCard(root, "DEVICE INTEGRITY", "Verified Boot: not yet verified", "A trusted boot-state / AVB attestation provider is not connected to this UI yet.");
+        addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Read-only boot properties. Unknown means the platform did not expose enough evidence.");
+        addCard(root, "SELINUX", selinuxStatus(), "Read from the Android SELinux framework API.");
         addCard(root, "SECURITY UPDATES", "Security patch: " + safe(Build.VERSION.SECURITY_PATCH), "Android release: " + safe(Build.VERSION.RELEASE) + "  ·  Device: " + safe(Build.DEVICE));
         addCard(root, "SCREEN LOCK", screenLockStatus(), "Read from Android KeyguardManager. This does not verify every lock-screen policy.");
         addCard(root, "DEBUGGING", adbStatus(), "Read from Android global settings. Additional developer options are not assessed here.");
@@ -116,6 +119,29 @@ public final class MainActivity extends Activity {
             return "No active VPN transport detected";
         } catch (RuntimeException error) {
             return "VPN status: unavailable";
+        }
+    }
+
+    private String bootIntegrityStatus() {
+        try {
+            String state = SystemProperties.get("ro.boot.verifiedbootstate", "unknown");
+            String locked = SystemProperties.get("ro.boot.flash.locked", "unknown");
+            if ("red".equals(state)) return "Verified Boot: red · verification failure";
+            if ("orange".equals(state) || "0".equals(locked)) return "Verified Boot: unlocked";
+            if ("green".equals(state) && "1".equals(locked)) return "Verified Boot: green · bootloader locked";
+            if ("yellow".equals(state) && "1".equals(locked)) return "Verified Boot: yellow · custom trust root";
+            return "Verified Boot: unknown";
+        } catch (RuntimeException error) {
+            return "Verified Boot: unknown";
+        }
+    }
+
+    private String selinuxStatus() {
+        try {
+            if (!SELinux.isSELinuxEnabled()) return "SELinux: disabled";
+            return SELinux.isSELinuxEnforced() ? "SELinux: enforcing" : "SELinux: permissive";
+        } catch (RuntimeException error) {
+            return "SELinux: unknown";
         }
     }
 
