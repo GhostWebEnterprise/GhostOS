@@ -10,6 +10,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -74,6 +75,16 @@ public final class MainActivity extends Activity {
         addCard(root, "DEBUGGING", adbStatus(), "Read from Android global settings. Additional developer options are not assessed here.");
         addCard(root, "PRIVACY & PERMISSIONS", "Permission audit: not yet connected", "Camera, microphone, location and clipboard events require framework-backed providers before they can be reported.");
 
+        Button protonVpn = new Button(this);
+        protonVpn.setText("Open Proton VPN");
+        protonVpn.setAllCaps(false);
+        protonVpn.setTextColor(PRIMARY);
+        protonVpn.setBackground(tint(SURFACE, 18));
+        LinearLayout.LayoutParams protonParams = params(-1, dp(50));
+        protonParams.bottomMargin = dp(8);
+        root.addView(protonVpn, protonParams);
+        protonVpn.setOnClickListener(v -> openProtonVpn());
+
         Button vpnSettings = new Button(this);
         vpnSettings.setText("Open Android VPN settings");
         vpnSettings.setAllCaps(false);
@@ -123,6 +134,21 @@ public final class MainActivity extends Activity {
             return enabled == 1 ? "USB debugging: enabled" : "USB debugging: disabled";
         } catch (RuntimeException error) {
             return "USB debugging: unknown";
+        }
+    }
+
+    private void openProtonVpn() {
+        try {
+            Intent launch = getPackageManager().getLaunchIntentForPackage("ch.protonvpn.android");
+            if (launch != null) {
+                startActivity(launch);
+            } else {
+                Intent releases = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://github.com/ProtonVPN/android-app/releases"));
+                startActivity(releases);
+            }
+        } catch (RuntimeException error) {
+            // Do not claim Proton VPN is installed or connected when launch is unavailable.
         }
     }
 
