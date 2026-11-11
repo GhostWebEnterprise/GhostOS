@@ -8,4 +8,4 @@ This is the first native Android UI shell for the GhostOS Security Center. It us
 - Detailed permission auditing remains unverified until its framework/Auditor provider is implemented.
 - Screen-lock and ADB state are read from Android public APIs.
 
-The Soong module is intended for the system_ext partition. It is not yet included in a device product package list, compiled in an AOSP build, or tested on larry.
+The Soong module is declared for the system_ext partition and is included in `vendor/ghostos/config/common.mk` as `GhostOSSecurityCenter`. CI links its manifest/resources and compiles the Java sources against the Android 17 SDK, but a full AOSP/Soong product build, image inspection, and physical Larry device test have not yet been completed.
