@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - 'feature/ghostmode-*'
+      - 'feat/proton-vpn-security-center'
       - 'fix/ghostmode-*'
     paths:
       - 'manifests/**'
@@ -40,6 +41,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Install Android 17 API 37 and build tools
+        run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0"
+
+      - name: Compile Security Center against Android 17 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-37.0/android.jar"
+          aapt2="$ANDROID_HOME/build-tools/37.0.0/aapt2"
+          test -f "$android_jar" || { echo "::error::Android API 37 android.jar is missing"; exit 1; }
+          test -x "$aapt2" || { echo "::error::Android 17 aapt2 is missing"; exit 1; }
+          mkdir -p build/security-center/classes
+          "$aapt2" link -o build/security-center/manifest-check.apk \
+            --manifest packages/apps/GhostOSSecurityCenter/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 31 --target-sdk-version 37
+          javac --release 17 -classpath "$android_jar" \
+            -d build/security-center/classes \
+            $(find packages/apps/GhostOSSecurityCenter/src -type f -name '*.java' -print)
+          test -f build/security-center/classes/org/ghostos/securitycenter/MainActivity.class
       - name: Install XML validator
         run: |
           sudo apt-get update
