@@ -23,8 +23,8 @@ import android.widget.TextView;
 
 /**
  * First Android UI shell for GhostOS Security Center.
- * Every status shown here is either read from a public Android API or explicitly
- * labelled unknown/unverified. This app does not control or embed a VPN client.
+ * Every status shown here is read from a public Android API or a guarded platform
+ * probe, or explicitly labelled unknown/unverified. This app does not control or embed a VPN client.
  */
 public final class MainActivity extends Activity {
     private static final int BACKGROUND = Color.rgb(10, 14, 24);
@@ -68,7 +68,7 @@ public final class MainActivity extends Activity {
         introParams.bottomMargin = dp(22);
         root.addView(intro, introParams);
 
-        addCard(root, "NETWORK PROTECTION", vpnStatus(), "VPN status is based on Android network capabilities. Provider identity is not inferred from app installation or launch.");
+        addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport does not prove the default route, all-app coverage or lockdown is active. Provider identity is also unverified.");
         addCard(root, "VPN LOCKDOWN", "Always-on / lockdown: not verified", "Configure these OS-managed settings in Android VPN settings. Lockdown can block all network traffic when the VPN is unavailable.");
         addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Read-only boot properties. Unknown means the platform did not expose enough evidence.");
         addCard(root, "SELINUX", selinuxStatus(), "Read from the Android SELinux framework API.");
@@ -111,7 +111,7 @@ public final class MainActivity extends Activity {
             for (Network network : manager.getAllNetworks()) {
                 NetworkCapabilities caps = manager.getNetworkCapabilities(network);
                 if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                    return "VPN active · provider unverified";
+                    return "VPN transport detected · provider/coverage unverified";
                 }
             }
             return "No active VPN transport detected";
