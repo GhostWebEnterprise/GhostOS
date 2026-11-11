@@ -99,6 +99,9 @@ jobs:
       - name: Test Security Center Android module contract
         run: python3 -m unittest -v tests.test_security_center_android_module
 
+      - name: Test GhostOS larry app integration script
+        run: python3 -m unittest -v tests.test_ghostos_integration_script
+
       - name: Show supported devices
         run: |
           grep -E 'android_device_oneplus_(larry|oscaro)' manifests/ghostos-23.2.xml
