@@ -37,8 +37,14 @@ public final class GhostModeQuickSettingsTile extends TileService {
             );
             startActivityAndCollapse(pendingIntent);
         } else {
-            startActivityAndCollapse(intent);
+            startActivityAndCollapseLegacy(intent);
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private void startActivityAndCollapseLegacy(Intent intent) {
+        // Android versions below API 34 expose only the deprecated Intent overload.
+        startActivityAndCollapse(intent);
     }
 
     private void publishVerifiedState() {
