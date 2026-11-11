@@ -20,6 +20,8 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
     def test_vpn_state_is_platform_observed_and_provider_unverified(self):
         source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
         self.assertIn("NetworkCapabilities.TRANSPORT_VPN", source)
+        self.assertIn("SystemProperties.get(\"ro.boot.verifiedbootstate\"", source)
+        self.assertIn("SELinux.isSELinuxEnforced()", source)
         self.assertIn("provider unverified", source)
         self.assertIn("Settings.ACTION_VPN_SETTINGS", source)
         self.assertIn('getLaunchIntentForPackage("ch.protonvpn.android")', source)
