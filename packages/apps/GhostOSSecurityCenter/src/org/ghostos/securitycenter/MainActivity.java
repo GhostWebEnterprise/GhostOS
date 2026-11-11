@@ -2,7 +2,6 @@ package org.ghostos.securitycenter;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
-import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -130,7 +129,7 @@ public final class MainActivity extends Activity {
     private void openVpnSettings() {
         try {
             startActivity(new Intent(Settings.ACTION_VPN_SETTINGS));
-        } catch (ActivityNotFoundException | SecurityException error) {
+        } catch (RuntimeException error) {
             // Keep the app usable if the device build does not expose this settings page.
         }
     }
