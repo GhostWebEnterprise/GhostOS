@@ -24,8 +24,8 @@
     <string name="ghostmode_camera_control">Disable camera</string>
     <string name="ghostmode_screen_capture_control">Block screen capture</string>
     <string name="ghostmode_microphone_control">Prevent microphone unmute</string>
-    <string name="ghostmode_microphone_muted">Microphone unmute restriction applied. This does not mute an active microphone.</string>
-    <string name="ghostmode_microphone_unmuted">Microphone unmute restriction removed.</string>
+    <string name="ghostmode_microphone_muted">Microphone mute restriction applied. Android mutes the microphone and blocks user unmute.</string>
+    <string name="ghostmode_microphone_unmuted">Microphone mute restriction removed; Android allows the user to unmute again.</string>
     <string name="ghostmode_location_control">Device location enabled</string>
     <string name="ghostmode_location_enabled">Device location enabled.</string>
     <string name="ghostmode_location_disabled">Device location disabled.</string>

@@ -179,8 +179,8 @@ public final class GhostModeDevicePolicyAdapter {
     }
 
     /**
-     * Returns whether Android blocks the user from unmuting a muted microphone.
-     * This restriction does not itself mute an active microphone.
+     * Returns whether the Android Device Owner microphone mute restriction is active.
+     * When set, Android mutes the microphone and blocks user unmute.
      */
     public boolean isMicrophoneMuted() {
         requireReady();
@@ -223,7 +223,7 @@ public final class GhostModeDevicePolicyAdapter {
                 & DevicePolicyManager.KEYGUARD_DISABLE_UNREDACTED_NOTIFICATIONS) != 0;
     }
 
-    /** Applies the unmute restriction only; it does not mute an active microphone. */
+    /** Applies Android's microphone mute restriction and prevents user unmute. */
     private void setMicrophoneMuted(boolean muted) {
         if (muted) {
             manager.addUserRestriction(admin, UserManager.DISALLOW_UNMUTE_MICROPHONE);
