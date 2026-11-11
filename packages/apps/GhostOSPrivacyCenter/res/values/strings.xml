@@ -15,7 +15,7 @@
     <string name="ghostmode_device_owner_required">Device Owner provisioning is required before these Android-enforced controls can be changed. No policy is applied automatically.</string>
     <string name="ghostmode_admin_inactive">The GhostMode device administrator is inactive. No policy was changed.</string>
     <string name="ghostmode_policy_unavailable">Android DevicePolicyManager is unavailable or policy state could not be read. No protection is assumed.</string>
-    <string name="ghostmode_policy_active">Explicit GhostMode device controls are applied. The original device settings are saved and can be restored below.</string>
+    <string name="ghostmode_policy_active">One or more selected Device Owner restrictions are applied. Other controls and full GhostMode preset orchestration remain inactive. The original device settings are saved and can be restored below.</string>
     <string name="ghostmode_recovery_required">GhostMode recovery is required. Restore the saved device settings before relying on protection.</string>
     <string name="ghostmode_restore_previous">Restore previous device settings</string>
     <string name="ghostmode_policy_restored">Previous device settings restored.</string>
@@ -43,7 +43,7 @@
     <string name="ghostmode_policy_rollback_incomplete">Policy change failed and rollback was incomplete. Verify Android policy state before relying on protection.</string>
     <string name="ghostmode_tile_label">GhostMode</string>
     <string name="ghostmode_tile_subtitle">Setup required</string>
-    <string name="ghostmode_tile_active_subtitle">Controls active</string>
+    <string name="ghostmode_tile_active_subtitle">Restrictions active</string>
     <string name="ghostmode_tile_recovery_subtitle">Recovery required</string>
     <string name="ghostmode_tile_unavailable_subtitle">Device Owner required</string>
     <string name="ghostmode_tile_description">Opens GhostOS Privacy Center. Supported Device Owner camera, microphone-unmute, location, screen-capture, USB data and secure lock-screen notification controls are available individually after provisioning. Remaining GhostMode controls are not connected or enforced yet; network, sensor and clipboard policies are not fully integrated. This tile is not an activation switch.</string>
