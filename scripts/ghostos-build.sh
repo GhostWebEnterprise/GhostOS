@@ -20,7 +20,7 @@ usage() {
   echo "Usage: DEVICE=larry JOBS=<n> $0"
   echo
   echo "This bootstrap uses LineageOS 24.0 / Android 17 (AOSP android-17.0.0_r1)."
-  echo "It stages the GhostOS larry product, vendor config and Privacy Center."
+  echo "It stages the GhostOS larry product, vendor config, Privacy Center and Security Center."
   echo "The current upstream vendor tree is based on CPH2467_15.0.0.2000(EX01)."
   echo "AVB in the upstream device foundation is experimental; this is not a release build."
 }
@@ -70,17 +70,19 @@ echo "==> Syncing pinned GhostOS larry Android 17 foundation"
 repo sync -c --no-clone-bundle --no-tags -j"$JOBS"
 
 echo "==> Staging GhostOS Android product inputs"
-for source in "$ROOT/device/ghostos" "$ROOT/vendor/ghostos" "$ROOT/packages/apps/GhostOSPrivacyCenter"; do
+for source in "$ROOT/device/ghostos" "$ROOT/vendor/ghostos" "$ROOT/packages/apps/GhostOSPrivacyCenter" "$ROOT/packages/apps/GhostOSSecurityCenter"; do
   [[ -d "$source" ]] || { echo "ERROR: missing GhostOS source directory: $source" >&2; exit 1; }
 done
 mkdir -p "$ANDROID_DIR/device/ghostos" "$ANDROID_DIR/vendor/ghostos" "$ANDROID_DIR/packages/apps"
 cp -a "$ROOT/device/ghostos/." "$ANDROID_DIR/device/ghostos/"
 cp -a "$ROOT/vendor/ghostos/." "$ANDROID_DIR/vendor/ghostos/"
 cp -a "$ROOT/packages/apps/GhostOSPrivacyCenter" "$ANDROID_DIR/packages/apps/"
+cp -a "$ROOT/packages/apps/GhostOSSecurityCenter" "$ANDROID_DIR/packages/apps/"
 test -f "$ANDROID_DIR/device/ghostos/larry/AndroidProducts.mk"
 test -f "$ANDROID_DIR/device/ghostos/larry/ghostos_larry.mk"
 test -f "$ANDROID_DIR/vendor/ghostos/config/common.mk"
 test -f "$ANDROID_DIR/packages/apps/GhostOSPrivacyCenter/Android.bp"
+test -f "$ANDROID_DIR/packages/apps/GhostOSSecurityCenter/Android.bp"
 
 echo "==> Selecting GhostOS product $PRODUCT-userdebug"
 source build/envsetup.sh
