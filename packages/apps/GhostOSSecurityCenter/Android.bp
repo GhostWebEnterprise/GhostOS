@@ -1,0 +1,9 @@
+android_app {
+    name: "GhostOSSecurityCenter",
+    srcs: ["src/**/*.java"],
+    manifest: "AndroidManifest.xml",
+    sdk_version: "current",
+    min_sdk_version: "31",
+    certificate: "platform",
+    system_ext_specific: true,
+}
