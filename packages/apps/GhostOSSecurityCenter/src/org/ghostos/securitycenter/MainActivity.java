@@ -12,8 +12,6 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
 import android.os.Build;
-import android.os.SELinux;
-import android.os.SystemProperties;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -124,8 +122,8 @@ public final class MainActivity extends Activity {
 
     private String bootIntegrityStatus() {
         try {
-            String state = SystemProperties.get("ro.boot.verifiedbootstate", "unknown");
-            String locked = SystemProperties.get("ro.boot.flash.locked", "unknown");
+            String state = readSystemProperty("ro.boot.verifiedbootstate", "unknown");
+            String locked = readSystemProperty("ro.boot.flash.locked", "unknown");
             if ("red".equals(state)) return "Verified Boot: red · verification failure";
             if ("orange".equals(state) || "0".equals(locked)) return "Verified Boot: unlocked";
             if ("green".equals(state) && "1".equals(locked)) return "Verified Boot: green · bootloader locked";
@@ -138,10 +136,37 @@ public final class MainActivity extends Activity {
 
     private String selinuxStatus() {
         try {
-            if (!SELinux.isSELinuxEnabled()) return "SELinux: disabled";
-            return SELinux.isSELinuxEnforced() ? "SELinux: enforcing" : "SELinux: permissive";
+            Boolean enabled = readSelinuxFlag("isSELinuxEnabled");
+            if (enabled == null) return "SELinux: unknown";
+            if (!enabled) return "SELinux: disabled";
+            Boolean enforced = readSelinuxFlag("isSELinuxEnforced");
+            if (enforced == null) return "SELinux: unknown";
+            return enforced ? "SELinux: enforcing" : "SELinux: permissive";
         } catch (RuntimeException error) {
             return "SELinux: unknown";
+        }
+    }
+
+    // Platform-only APIs are guarded so SDK-only CI compilation remains possible.
+    // Runtime access may be restricted; unavailable evidence is always shown as unknown.
+    private String readSystemProperty(String key, String fallback) {
+        try {
+            Class<?> properties = Class.forName("android.os.SystemProperties");
+            Object value = properties.getMethod("get", String.class, String.class)
+                    .invoke(null, key, fallback);
+            return value instanceof String ? (String) value : fallback;
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            return fallback;
+        }
+    }
+
+    private Boolean readSelinuxFlag(String methodName) {
+        try {
+            Class<?> selinux = Class.forName("android.os.SELinux");
+            Object value = selinux.getMethod(methodName).invoke(null);
+            return value instanceof Boolean ? (Boolean) value : null;
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            return null;
         }
     }
 
