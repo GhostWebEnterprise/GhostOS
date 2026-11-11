@@ -25,7 +25,7 @@ Transitions must be serialized, locally audited, and rollback reversible when an
 
 ## Phase 3 — policy adapters
 
-- Network: firewall, optional Tor routing, kill switch for supported local policies, LAN policy. GhostWeb VPN is explicitly out of scope. Proton VPN is supported only as an external, separately signed Android app; GhostOS must not embed or fork its client.
+- Network: firewall, optional Tor routing, kill switch for supported local policies, LAN policy. Proton VPN is supported only as an external, separately signed Android app; GhostOS must not embed or fork its client.
 - Privacy: background camera/microphone/location, clipboard notification and expiry.
 - Device: USB locked-mode and sensitive lock-screen notifications.
 - Profiles: optional profile switching/isolation hooks after the profile layer exists.
