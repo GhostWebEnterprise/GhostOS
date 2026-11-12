@@ -33,6 +33,8 @@ public final class MainActivity extends Activity {
     private static final int ACCENT = Color.rgb(111, 170, 255);
     private static final int PRIMARY = Color.rgb(241, 245, 252);
     private static final int MUTED = Color.rgb(164, 178, 199);
+    private static final String SETTING_ALWAYS_ON_VPN_APP = "always_on_vpn_app";
+    private static final String SETTING_ALWAYS_ON_VPN_LOCKDOWN = "always_on_vpn_lockdown";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +72,7 @@ public final class MainActivity extends Activity {
         root.addView(intro, introParams);
 
         addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport on the default network does not prove all-app coverage, provider identity or lockdown is active.");
-        addCard(root, "VPN LOCKDOWN", "Always-on / lockdown: not verified", "Configure these OS-managed settings in Android VPN settings. Lockdown can block all network traffic when the VPN is unavailable.");
+        addCard(root, "VPN LOCKDOWN", vpnLockdownStatus(), "Read-only Android Settings.Secure configuration. This does not prove VPN connectivity, provider identity, all-app coverage or lockdown allowlist contents.");
         addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Read-only boot properties. Unknown means the platform did not expose enough evidence.");
         addCard(root, "DEVICE CAPABILITIES", deviceCapabilitiesStatus(), "Read-only PackageManager feature flags. Presence does not prove runtime health or secure configuration.");
         addCard(root, "SELINUX", selinuxStatus(), "Read from the Android SELinux framework API.");
@@ -154,6 +156,32 @@ public final class MainActivity extends Activity {
         if (!manager.hasSystemFeature(feature)) return;
         if (reported.length() > 0) reported.append(" · ");
         reported.append(label);
+    }
+
+    private String vpnLockdownStatus() {
+        try {
+            String packageName = Settings.Secure.getString(
+                    getContentResolver(), SETTING_ALWAYS_ON_VPN_APP);
+            String lockdown = Settings.Secure.getString(
+                    getContentResolver(), SETTING_ALWAYS_ON_VPN_LOCKDOWN);
+
+            if (packageName == null || packageName.isEmpty()) {
+                if ("1".equals(lockdown)) {
+                    return "Lockdown setting present · always-on package unknown";
+                }
+                if ("0".equals(lockdown)) return "Always-on VPN package: not configured";
+                return "Always-on VPN / lockdown: unknown";
+            }
+            if ("1".equals(lockdown)) {
+                return "Always-on VPN configured · lockdown setting enabled";
+            }
+            if ("0".equals(lockdown)) {
+                return "Always-on VPN configured · lockdown disabled";
+            }
+            return "Always-on VPN configured · lockdown unknown";
+        } catch (RuntimeException error) {
+            return "Always-on VPN / lockdown: unknown";
+        }
     }
 
     private String bootIntegrityStatus() {

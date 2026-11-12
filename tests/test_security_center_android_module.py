@@ -38,6 +38,16 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
             self.assertIn("PackageManager." + feature, source)
         self.assertIn("Presence does not prove runtime health or secure configuration", source)
 
+    def test_vpn_lockdown_is_read_only_platform_configuration(self):
+        source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
+        self.assertIn("Settings.Secure.getString(", source)
+        self.assertIn("SETTING_ALWAYS_ON_VPN_APP", source)
+        self.assertIn("SETTING_ALWAYS_ON_VPN_LOCKDOWN", source)
+        self.assertIn('"1".equals(lockdown)', source)
+        self.assertIn('"0".equals(lockdown)', source)
+        self.assertIn("lockdown allowlist contents", source)
+        self.assertNotIn("setAlwaysOnVpnPackage(", source)
+
     def test_vpn_state_is_platform_observed_and_provider_unverified(self):
         source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
         self.assertIn("NetworkCapabilities.TRANSPORT_VPN", source)
