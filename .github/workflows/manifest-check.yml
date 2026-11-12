@@ -124,6 +124,8 @@ jobs:
 
       - name: Test Security Center Android module contract
         run: python3 -m unittest -v tests.test_security_center_android_module
+      - name: Test Security Center VPN default-network evidence
+        run: python3 -m unittest -v tests.test_security_center_vpn_status_wording
 
       - name: Test GhostOS larry app integration script
         run: python3 -m unittest -v tests.test_ghostos_integration_script
