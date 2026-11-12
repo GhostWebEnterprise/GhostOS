@@ -26,7 +26,7 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertIn('readSelinuxFlag("isSELinuxEnforced")', source)
         self.assertIn('Class.forName("android.os.SystemProperties")', source)
         self.assertIn('Class.forName("android.os.SELinux")', source)
-        self.assertIn("provider unverified", source)
+        self.assertIn("provider/coverage unverified", source)
         self.assertIn("Settings.ACTION_VPN_SETTINGS", source)
         self.assertIn('getLaunchIntentForPackage("ch.protonvpn.android")', source)
         self.assertIn("https://github.com/ProtonVPN/android-app/releases", source)
