@@ -68,7 +68,7 @@ public final class MainActivity extends Activity {
         introParams.bottomMargin = dp(22);
         root.addView(intro, introParams);
 
-        addCard(root, "NETWORK PROTECTION", vpnStatus(), "VPN status is based on Android network capabilities. Provider identity is not inferred from app installation or launch.");
+        addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport on the default network does not prove all-app coverage, provider identity or lockdown is active.");
         addCard(root, "VPN LOCKDOWN", "Always-on / lockdown: not verified", "Configure these OS-managed settings in Android VPN settings. Lockdown can block all network traffic when the VPN is unavailable.");
         addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Read-only boot properties. Unknown means the platform did not expose enough evidence.");
         addCard(root, "SELINUX", selinuxStatus(), "Read from the Android SELinux framework API.");
@@ -106,15 +106,17 @@ public final class MainActivity extends Activity {
 
     private String vpnStatus() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (manager == null) return "VPN status: unknown";
+        if (manager == null) return "Default network: unknown";
         try {
-            for (Network network : manager.getAllNetworks()) {
-                NetworkCapabilities caps = manager.getNetworkCapabilities(network);
-                if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                    return "VPN active · provider unverified";
-                }
+            Network activeNetwork = manager.getActiveNetwork();
+            if (activeNetwork == null) return "Default network: unavailable";
+
+            NetworkCapabilities capabilities = manager.getNetworkCapabilities(activeNetwork);
+            if (capabilities != null
+                    && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                return "Default network uses VPN transport · provider/coverage unverified";
             }
-            return "No active VPN transport detected";
+            return "Default network does not report VPN transport";
         } catch (RuntimeException error) {
             return "VPN status: unavailable";
         }
