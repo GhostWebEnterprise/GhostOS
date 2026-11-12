@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -71,6 +72,7 @@ public final class MainActivity extends Activity {
         addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport on the default network does not prove all-app coverage, provider identity or lockdown is active.");
         addCard(root, "VPN LOCKDOWN", "Always-on / lockdown: not verified", "Configure these OS-managed settings in Android VPN settings. Lockdown can block all network traffic when the VPN is unavailable.");
         addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Read-only boot properties. Unknown means the platform did not expose enough evidence.");
+        addCard(root, "DEVICE CAPABILITIES", deviceCapabilitiesStatus(), "Read-only PackageManager feature flags. Presence does not prove runtime health or secure configuration.");
         addCard(root, "SELINUX", selinuxStatus(), "Read from the Android SELinux framework API.");
         addCard(root, "SECURITY UPDATES", "Security patch: " + safe(Build.VERSION.SECURITY_PATCH), "Android release: " + safe(Build.VERSION.RELEASE) + "  ·  Device: " + safe(Build.DEVICE));
         addCard(root, "SCREEN LOCK", screenLockStatus(), "Read from Android KeyguardManager. This does not verify every lock-screen policy.");
@@ -120,6 +122,38 @@ public final class MainActivity extends Activity {
         } catch (RuntimeException error) {
             return "VPN status: unavailable";
         }
+    }
+
+    private String deviceCapabilitiesStatus() {
+        try {
+            PackageManager manager = getPackageManager();
+            if (manager == null) return "Device capabilities: unknown";
+
+            StringBuilder reported = new StringBuilder();
+            appendFeature(manager, reported, "Fingerprint", PackageManager.FEATURE_FINGERPRINT);
+            appendFeature(manager, reported, "Face biometrics", PackageManager.FEATURE_FACE);
+            appendFeature(manager, reported, "Camera", PackageManager.FEATURE_CAMERA_ANY);
+            appendFeature(manager, reported, "Microphone", PackageManager.FEATURE_MICROPHONE);
+            appendFeature(manager, reported, "GPS", PackageManager.FEATURE_LOCATION_GPS);
+            appendFeature(manager, reported, "Wi-Fi", PackageManager.FEATURE_WIFI);
+            appendFeature(manager, reported, "Bluetooth", PackageManager.FEATURE_BLUETOOTH);
+            appendFeature(manager, reported, "NFC", PackageManager.FEATURE_NFC);
+            appendFeature(manager, reported, "Telephony", PackageManager.FEATURE_TELEPHONY);
+            appendFeature(manager, reported, "USB host", PackageManager.FEATURE_USB_HOST);
+
+            return reported.length() == 0
+                    ? "No queried capabilities reported"
+                    : "Reported: " + reported;
+        } catch (RuntimeException error) {
+            return "Device capabilities: unknown";
+        }
+    }
+
+    private void appendFeature(PackageManager manager, StringBuilder reported,
+            String label, String feature) {
+        if (!manager.hasSystemFeature(feature)) return;
+        if (reported.length() > 0) reported.append(" · ");
+        reported.append(label);
     }
 
     private String bootIntegrityStatus() {

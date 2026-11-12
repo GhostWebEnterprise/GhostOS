@@ -19,6 +19,25 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertNotIn('QUERY_ALL_PACKAGES', manifest)
         self.assertNotIn('BIND_VPN_SERVICE', manifest)
 
+    def test_device_capabilities_use_package_manager_feature_flags(self):
+        source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
+        self.assertIn("getPackageManager()", source)
+        self.assertIn("manager.hasSystemFeature(feature)", source)
+        for feature in (
+            "FEATURE_FINGERPRINT",
+            "FEATURE_FACE",
+            "FEATURE_CAMERA_ANY",
+            "FEATURE_MICROPHONE",
+            "FEATURE_LOCATION_GPS",
+            "FEATURE_WIFI",
+            "FEATURE_BLUETOOTH",
+            "FEATURE_NFC",
+            "FEATURE_TELEPHONY",
+            "FEATURE_USB_HOST",
+        ):
+            self.assertIn("PackageManager." + feature, source)
+        self.assertIn("Presence does not prove runtime health or secure configuration", source)
+
     def test_vpn_state_is_platform_observed_and_provider_unverified(self):
         source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
         self.assertIn("NetworkCapabilities.TRANSPORT_VPN", source)
