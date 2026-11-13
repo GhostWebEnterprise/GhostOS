@@ -29,5 +29,23 @@ class SecurityCenterVpnStatusWordingTests(unittest.TestCase):
         )
 
 
+    def test_boot_and_selinux_evidence_is_scoped(self):
+        source = SOURCE.read_text(encoding="utf-8")
+        self.assertIn(
+            "Platform-reported boot properties only. Green/locked is not independent vbmeta signature verification.",
+            source,
+        )
+        self.assertIn(
+            "Platform reports green state · bootloader locked · AVB not independently verified",
+            source,
+        )
+        self.assertIn(
+            "Enforcement mode from Android SELinux framework; policy quality and rule coverage are not assessed here.",
+            source,
+        )
+        self.assertNotIn("Verified Boot: green · bootloader locked", source)
+        self.assertNotIn("Read from the Android SELinux framework API.", source)
+
+
 if __name__ == "__main__":
     unittest.main()
