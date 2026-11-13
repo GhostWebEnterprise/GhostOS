@@ -70,8 +70,8 @@ public final class MainActivity extends Activity {
 
         addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport does not prove all-app coverage, provider identity or lockdown is active.");
         addCard(root, "VPN LOCKDOWN", "Always-on / lockdown: not verified", "Configure these OS-managed settings in Android VPN settings. Lockdown can block all network traffic when the VPN is unavailable.");
-        addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Read-only boot properties. Unknown means the platform did not expose enough evidence.");
-        addCard(root, "SELINUX", selinuxStatus(), "Read from the Android SELinux framework API.");
+        addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Platform-reported boot properties only. Green/locked is not independent vbmeta signature verification.");
+        addCard(root, "SELINUX", selinuxStatus(), "Enforcement mode from Android SELinux framework; policy quality and rule coverage are not assessed here.");
         addCard(root, "SECURITY UPDATES", "Security patch: " + safe(Build.VERSION.SECURITY_PATCH), "Android release: " + safe(Build.VERSION.RELEASE) + "  ·  Device: " + safe(Build.DEVICE));
         addCard(root, "SCREEN LOCK", screenLockStatus(), "Read from Android KeyguardManager. This does not verify every lock-screen policy.");
         addCard(root, "DEBUGGING", adbStatus(), "Read from Android global settings. Additional developer options are not assessed here.");
@@ -126,10 +126,12 @@ public final class MainActivity extends Activity {
         try {
             String state = readSystemProperty("ro.boot.verifiedbootstate", "unknown");
             String locked = readSystemProperty("ro.boot.flash.locked", "unknown");
-            if ("red".equals(state)) return "Verified Boot: red · verification failure";
-            if ("orange".equals(state) || "0".equals(locked)) return "Verified Boot: unlocked";
-            if ("green".equals(state) && "1".equals(locked)) return "Verified Boot: green · bootloader locked";
-            if ("yellow".equals(state) && "1".equals(locked)) return "Verified Boot: yellow · custom trust root";
+            if ("red".equals(state)) return "Platform reports Verified Boot: red";
+            if ("orange".equals(state) || "0".equals(locked)) return "Platform reports bootloader unlocked";
+            if ("green".equals(state) && "1".equals(locked)) {
+                return "Platform reports green state · bootloader locked · AVB not independently verified";
+            }
+            if ("yellow".equals(state) && "1".equals(locked)) return "Platform reports yellow state · custom trust root";
             return "Verified Boot: unknown";
         } catch (RuntimeException error) {
             return "Verified Boot: unknown";
