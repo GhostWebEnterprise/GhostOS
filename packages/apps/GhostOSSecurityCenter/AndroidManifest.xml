@@ -4,6 +4,7 @@
 
     <queries>
         <package android:name="ch.protonvpn.android" />
+        <package android:name="org.ghostos.auditor" />
     </queries>
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

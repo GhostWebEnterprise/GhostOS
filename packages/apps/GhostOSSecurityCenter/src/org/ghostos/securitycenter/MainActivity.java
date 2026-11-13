@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 /**
  * First Android UI shell for GhostOS Security Center.
@@ -70,6 +71,16 @@ public final class MainActivity extends Activity {
         introParams.topMargin = dp(8);
         introParams.bottomMargin = dp(22);
         root.addView(intro, introParams);
+
+        Button auditorButton = new Button(this);
+        auditorButton.setText("Open GhostOS Auditor");
+        auditorButton.setAllCaps(false);
+        auditorButton.setTextColor(PRIMARY);
+        auditorButton.setBackground(tint(SURFACE, 18));
+        LinearLayout.LayoutParams auditorParams = params(-1, dp(50));
+        auditorParams.bottomMargin = dp(12);
+        root.addView(auditorButton, auditorParams);
+        auditorButton.setOnClickListener(v -> openAuditor());
 
         addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport on the default network does not prove all-app coverage, provider identity or lockdown is active.");
         addCard(root, "VPN LOCKDOWN", vpnLockdownStatus(), "Read-only Android Settings.Secure configuration. This does not prove VPN connectivity, provider identity, all-app coverage or lockdown allowlist contents.");
@@ -250,6 +261,20 @@ public final class MainActivity extends Activity {
             return enabled == 1 ? "USB debugging: enabled" : "USB debugging: disabled";
         } catch (RuntimeException error) {
             return "USB debugging: unknown";
+        }
+    }
+
+    private void openAuditor() {
+        try {
+            Intent launch = getPackageManager().getLaunchIntentForPackage("org.ghostos.auditor");
+            if (launch != null) {
+                startActivity(launch);
+            } else {
+                Toast.makeText(this, "GhostOS Auditor is not installed in this build.",
+                        Toast.LENGTH_LONG).show();
+            }
+        } catch (RuntimeException error) {
+            Toast.makeText(this, "GhostOS Auditor is unavailable.", Toast.LENGTH_LONG).show();
         }
     }
 
