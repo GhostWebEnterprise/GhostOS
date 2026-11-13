@@ -16,6 +16,7 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertIn('package="org.ghostos.securitycenter"', manifest)
         self.assertIn('android.permission.ACCESS_NETWORK_STATE', manifest)
         self.assertIn('<package android:name="ch.protonvpn.android" />', manifest)
+        self.assertIn('<package android:name="org.ghostos.privacy" />', manifest)
         self.assertNotIn('QUERY_ALL_PACKAGES', manifest)
         self.assertNotIn('BIND_VPN_SERVICE', manifest)
 
@@ -66,24 +67,17 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
             self.assertNotIn("VpnHood", module_source)
             self.assertNotIn("ghost-web-vpn", module_source)
 
-    def test_quick_settings_tile_is_a_non_toggleable_dashboard_shortcut(self):
-        manifest = (APP / "AndroidManifest.xml").read_text(encoding="utf-8")
-        source = (APP / "src/org/ghostos/securitycenter/GhostModeTileService.java").read_text(encoding="utf-8")
-        self.assertIn('android.permission.BIND_QUICK_SETTINGS_TILE', manifest)
-        self.assertIn('android.service.quicksettings.action.QS_TILE', manifest)
-        self.assertIn('android:exported="true"', manifest)
-        self.assertIn("Tile.STATE_INACTIVE", source)
-        self.assertIn("startActivityAndCollapse(pendingIntent)", source)
-        self.assertIn("Build.VERSION_CODES.UPSIDE_DOWN_CAKE", source)
-        self.assertIn("PendingIntent.FLAG_IMMUTABLE", source)
-        self.assertNotIn("DevicePolicyManager.set", source)
-        self.assertNotIn("Settings.Secure.put", source)
-        self.assertNotIn("Tile.STATE_ACTIVE", source)
+    def test_security_center_links_to_privacy_center(self):
+        source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
+        self.assertIn('getLaunchIntentForPackage("org.ghostos.privacy")', source)
+        self.assertIn("GhostMode controls in Privacy Center", source)
 
     def test_product_config_installs_security_center(self):
         config = (ROOT / "vendor/ghostos/config.mk").read_text(encoding="utf-8")
         script = (ROOT / "scripts/integrate-ghostos-apps.sh").read_text(encoding="utf-8")
         self.assertIn("GhostOSSecurityCenter", config)
+        self.assertIn("GhostOSAuditor", config)
+        self.assertIn("GhostOSPrivacyCenter", config)
         self.assertIn("vendor/ghostos/config.mk", script)
 
 

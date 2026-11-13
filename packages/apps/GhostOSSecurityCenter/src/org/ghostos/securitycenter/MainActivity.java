@@ -82,6 +82,16 @@ public final class MainActivity extends Activity {
         root.addView(auditorButton, auditorParams);
         auditorButton.setOnClickListener(v -> openAuditor());
 
+        Button privacyButton = new Button(this);
+        privacyButton.setText("Open Privacy Center");
+        privacyButton.setAllCaps(false);
+        privacyButton.setTextColor(PRIMARY);
+        privacyButton.setBackground(tint(SURFACE, 18));
+        LinearLayout.LayoutParams privacyParams = params(-1, dp(50));
+        privacyParams.bottomMargin = dp(12);
+        root.addView(privacyButton, privacyParams);
+        privacyButton.setOnClickListener(v -> openPrivacyCenter());
+
         addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport on the default network does not prove all-app coverage, provider identity or lockdown is active.");
         addCard(root, "VPN LOCKDOWN", vpnLockdownStatus(), "Read-only Android Settings.Secure configuration. This does not prove VPN connectivity, provider identity, all-app coverage or lockdown allowlist contents.");
         addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Read-only boot properties. Unknown means the platform did not expose enough evidence.");
@@ -90,7 +100,7 @@ public final class MainActivity extends Activity {
         addCard(root, "SECURITY UPDATES", "Security patch: " + safe(Build.VERSION.SECURITY_PATCH), "Android release: " + safe(Build.VERSION.RELEASE) + "  ·  Device: " + safe(Build.DEVICE));
         addCard(root, "SCREEN LOCK", screenLockStatus(), "Read from Android KeyguardManager. This does not verify every lock-screen policy.");
         addCard(root, "DEBUGGING", adbStatus(), "Read from Android global settings. Additional developer options are not assessed here.");
-        addCard(root, "PRIVACY & PERMISSIONS", "Permission audit: not yet connected", "Camera, microphone, location and clipboard events require framework-backed providers before they can be reported.");
+        addCard(root, "PRIVACY & PERMISSIONS", "GhostMode controls in Privacy Center", "Device Owner controls require explicit provisioning. Unsupported or unverified controls remain unavailable; no policy is changed by opening this dashboard.");
 
         Button protonVpn = new Button(this);
         protonVpn.setText("Open Proton VPN");
@@ -261,6 +271,20 @@ public final class MainActivity extends Activity {
             return enabled == 1 ? "USB debugging: enabled" : "USB debugging: disabled";
         } catch (RuntimeException error) {
             return "USB debugging: unknown";
+        }
+    }
+
+    private void openPrivacyCenter() {
+        try {
+            Intent launch = getPackageManager().getLaunchIntentForPackage("org.ghostos.privacy");
+            if (launch != null) {
+                startActivity(launch);
+            } else {
+                Toast.makeText(this, "GhostOS Privacy Center is not installed in this build.",
+                        Toast.LENGTH_LONG).show();
+            }
+        } catch (RuntimeException error) {
+            Toast.makeText(this, "GhostOS Privacy Center is unavailable.", Toast.LENGTH_LONG).show();
         }
     }
 

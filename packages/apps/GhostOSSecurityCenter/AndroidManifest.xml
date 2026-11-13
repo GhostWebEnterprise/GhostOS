@@ -5,6 +5,7 @@
     <queries>
         <package android:name="ch.protonvpn.android" />
         <package android:name="org.ghostos.auditor" />
+        <package android:name="org.ghostos.privacy" />
     </queries>
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -23,17 +24,5 @@
             </intent-filter>
         </activity>
 
-        <service
-            android:name=".GhostModeTileService"
-            android:label="GhostOS Security Center"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
-                android:value="false" />
-        </service>
     </application>
 </manifest>

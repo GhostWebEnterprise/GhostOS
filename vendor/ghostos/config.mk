@@ -2,4 +2,5 @@
 # Included by the larry device makefile during the GhostOS build bootstrap.
 PRODUCT_PACKAGES += \
     GhostOSSecurityCenter \
-    GhostOSAuditor
+    GhostOSAuditor \
+    GhostOSPrivacyCenter

@@ -49,6 +49,29 @@ jobs:
       - name: Install Android 17 API 37 and build tools
         run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0"
 
+      - name: Link Privacy Center Android resources and compile sources against API 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-37.0/android.jar"
+          aapt2="$ANDROID_HOME/build-tools/37.0.0/aapt2"
+          test -f "$android_jar"
+          test -x "$aapt2"
+          mkdir -p build/privacy-generated build/privacy-classes
+          "$aapt2" compile --dir packages/apps/GhostOSPrivacyCenter/res -o build/ghostos-privacy-resources.zip
+          "$aapt2" link \
+            -o build/ghostos-privacy-center-res.apk \
+            --manifest packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 29 --target-sdk-version 37 \
+            --java build/privacy-generated build/ghostos-privacy-resources.zip
+          test -f build/privacy-generated/org/ghostos/privacy/R.java
+          javac --release 17 -Xlint:deprecation -classpath "$android_jar" -d build/privacy-classes \
+            build/privacy-generated/org/ghostos/privacy/R.java \
+            $(find packages/apps/GhostOSPrivacyCenter/src -type f -name '*.java' -print)
+          test -f build/privacy-classes/org/ghostos/privacy/GhostModeQuickSettingsTile.class
+          test -f build/privacy-classes/org/ghostos/privacy/GhostModeDevicePolicyAdapter.class
+          test -f build/privacy-classes/org/ghostos/privacy/PrivacyActivity.class
+          test -f build/privacy-classes/org/ghostos/privacy/GhostModeAndroidPolicyManager.class
       - name: Compile Security Center against Android 17 SDK
         shell: bash
         run: |
@@ -149,6 +172,10 @@ jobs:
         run: python3 -m unittest -v tests.test_security_center_android_module
       - name: Test GhostOS Auditor Android module contract
         run: python3 -m unittest -v tests.test_ghostos_auditor_android_module
+      - name: Test Android Device Owner policy adapter and resources
+        run: python3 -m unittest -v tests/test_ghostmode_device_policy_adapter.py
+      - name: Test GhostOS Quick Settings tile
+        run: python3 -m unittest -v tests/test_ghostos_quick_settings_tile.py
       - name: Test Security Center VPN default-network evidence
         run: python3 -m unittest -v tests.test_security_center_vpn_status_wording
 

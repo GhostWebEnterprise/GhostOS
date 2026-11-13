@@ -29,9 +29,11 @@ class GhostOSIntegrationScriptTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue((self.android / "packages/apps/GhostOSSecurityCenter/Android.bp").is_file())
         self.assertTrue((self.android / "packages/apps/GhostOSAuditor/Android.bp").is_file())
+        self.assertTrue((self.android / "packages/apps/GhostOSPrivacyCenter/Android.bp").is_file())
         config = (self.android / "vendor/ghostos/config.mk").read_text(encoding="utf-8")
         self.assertIn("GhostOSSecurityCenter", config)
         self.assertIn("GhostOSAuditor", config)
+        self.assertIn("GhostOSPrivacyCenter", config)
         device_mk = (self.android / "device/oneplus/larry/device.mk").read_text(encoding="utf-8")
         self.assertIn("inherit-product, vendor/ghostos/config.mk", device_mk)
 
