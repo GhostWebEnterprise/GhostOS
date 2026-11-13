@@ -54,6 +54,8 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertIn("NetworkCapabilities.TRANSPORT_VPN", source)
         self.assertIn('readSystemProperty("ro.boot.verifiedbootstate"', source)
         self.assertIn('readSelinuxFlag("isSELinuxEnforced")', source)
+        self.assertIn("AVB not independently verified", source)
+        self.assertIn("policy quality and rule coverage are not assessed", source)
         self.assertIn('Class.forName("android.os.SystemProperties")', source)
         self.assertIn('Class.forName("android.os.SELinux")', source)
         self.assertIn("provider/coverage unverified", source)
