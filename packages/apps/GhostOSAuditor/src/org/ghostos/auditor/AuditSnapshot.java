@@ -34,6 +34,7 @@ public final class AuditSnapshot {
         String androidRelease();
         String device();
         int sdkInt();
+        Boolean hasSystemFeature(String feature);
     }
 
     private AuditSnapshot() { }
@@ -49,6 +50,40 @@ public final class AuditSnapshot {
         findings.add(observed("VBMeta device state", clean(source.property("ro.boot.vbmeta.device_state")),
                 "ro.boot.vbmeta.device_state",
                 "A boot property only; it is not an independent vbmeta signature verification."));
+        findings.add(observed("VBMeta digest", clean(source.property("ro.boot.vbmeta.digest")),
+                "ro.boot.vbmeta.digest",
+                "Platform-reported digest only; Auditor does not recompute it or verify a vbmeta signature."));
+        findings.add(observed("AVB version", clean(source.property("ro.boot.vbmeta.avb_version")),
+                "ro.boot.vbmeta.avb_version",
+                "Reported boot metadata only; it does not prove that AVB verification succeeded."));
+        findings.add(observed("Active boot slot", clean(source.property("ro.boot.slot_suffix")),
+                "ro.boot.slot_suffix",
+                "Reported slot suffix only; it does not prove the slot is bootable or successful."));
+        findings.add(observed("Boot slot successful flag", clean(source.property("ro.boot.slot_successful")),
+                "ro.boot.slot_successful",
+                "Platform-reported boot-control metadata; no boot-control HAL query is performed."));
+        findings.add(observed("Boot slot unbootable flag", clean(source.property("ro.boot.slot_unbootable")),
+                "ro.boot.slot_unbootable",
+                "Platform-reported boot-control metadata; no boot-control HAL query is performed."));
+        findings.add(observed("Boot slot retry count", clean(source.property("ro.boot.retry_count")),
+                "ro.boot.retry_count",
+                "Platform-reported retry metadata only; it is not a prediction of boot success."));
+        findings.add(observed("dm-verity mode", clean(source.property("ro.boot.veritymode")),
+                "ro.boot.veritymode",
+                "Reported boot property only; it does not independently validate dm-verity or AVB."));
+        findings.add(observed("A/B update capability", clean(source.property("ro.build.ab_update")),
+                "ro.build.ab_update",
+                "Build metadata only; it does not prove an updater is installed or an OTA is available."));
+        findings.add(observed("Build fingerprint", clean(source.property("ro.build.fingerprint")),
+                "ro.build.fingerprint",
+                "Build identity metadata only; it is not a trusted release or provenance verification."));
+        findings.add(observed("Build incremental", clean(source.property("ro.build.version.incremental")),
+                "ro.build.version.incremental",
+                "Build metadata only; it does not prove update freshness or successful installation."));
+        findings.add(new Finding("OTA updater status", State.UNKNOWN,
+                "Unknown — no UpdateEngine status observer is integrated",
+                "update_engine status callback unavailable",
+                "The Auditor does not start, cancel or modify updates. Slot/build properties cannot prove update availability, payload verification, installation or successful boot."));
         String patch = clean(source.securityPatch());
         State patchState = patch.matches("\\d{4}-\\d{2}-\\d{2}") ? State.OBSERVED : State.UNKNOWN;
         findings.add(new Finding("Security patch", patchState,
@@ -61,6 +96,27 @@ public final class AuditSnapshot {
                 "Build.DEVICE", "Build metadata does not verify the physical handset identity."));
         findings.add(observed("Android API level", source.sdkInt() > 0 ? Integer.toString(source.sdkInt()) : "",
                 "Build.VERSION.SDK_INT", "The API level is informational only."));
+        String[][] features = {
+                {"Fingerprint", "android.hardware.fingerprint"},
+                {"Face biometrics", "android.hardware.biometrics.face"},
+                {"Camera", "android.hardware.camera.any"},
+                {"Microphone", "android.hardware.microphone"},
+                {"GPS", "android.hardware.location.gps"},
+                {"Wi-Fi", "android.hardware.wifi"},
+                {"Bluetooth", "android.hardware.bluetooth"},
+                {"NFC", "android.hardware.nfc"},
+                {"Telephony", "android.hardware.telephony"},
+                {"USB host", "android.hardware.usb.host"}
+        };
+        for (String[] feature : features) {
+            Boolean present = source.hasSystemFeature(feature[1]);
+            State capabilityState = present == null ? State.UNKNOWN : State.OBSERVED;
+            String capabilityValue = present == null ? "Unknown"
+                    : present ? "Declared by PackageManager" : "Not declared by PackageManager";
+            findings.add(new Finding("Capability: " + feature[0], capabilityState, capabilityValue,
+                    "PackageManager.hasSystemFeature(" + feature[1] + ")",
+                    "Feature declaration only; it does not prove runtime hardware health, driver support or secure configuration."));
+        }
         return Collections.unmodifiableList(findings);
     }
 
@@ -79,7 +135,7 @@ public final class AuditSnapshot {
                     "This is not independent cryptographic verification of the boot chain.");
         }
         if ("green".equals(state) && "1".equals(locked)) {
-            return new Finding("Verified Boot", State.PASS, "Platform reports green state and locked bootloader",
+            return new Finding("Verified Boot", State.OBSERVED, "Platform reports green state and locked bootloader",
                     "ro.boot.verifiedbootstate / ro.boot.flash.locked",
                     "Platform-reported properties only; no independent AVB/vbmeta verification was performed.");
         }

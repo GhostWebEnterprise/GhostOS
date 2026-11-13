@@ -28,8 +28,13 @@ class GhostOSAuditorAndroidModuleTests(unittest.TestCase):
         for item in ("android.os.SystemProperties", "android.os.SELinux", "KeyguardManager",
                      "Settings.Global.ADB_ENABLED"):
             self.assertIn(item, source)
+        self.assertIn("PackageManager", source)
+        self.assertIn("hasSystemFeature", source)
+        self.assertIn("Feature declaration only", model)
         for item in ("ro.boot.verifiedbootstate", "ro.boot.flash.locked",
-                     "independent AVB/vbmeta verification", "State.UNKNOWN"):
+                     "independent AVB/vbmeta verification", "ro.boot.vbmeta.digest",
+                     "ro.boot.vbmeta.avb_version", "ro.boot.slot_suffix",
+                     "update_engine status callback unavailable", "State.UNKNOWN"):
             self.assertIn(item, model)
 
     def test_missing_evidence_is_not_promoted_to_pass_or_fail(self):

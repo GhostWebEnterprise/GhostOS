@@ -3,6 +3,7 @@ package org.ghostos.auditor;
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -190,5 +191,15 @@ public final class MainActivity extends Activity {
         @Override public String androidRelease() { return android.os.Build.VERSION.RELEASE; }
         @Override public String device() { return android.os.Build.DEVICE; }
         @Override public int sdkInt() { return android.os.Build.VERSION.SDK_INT; }
+
+        @Override
+        public Boolean hasSystemFeature(String feature) {
+            try {
+                PackageManager manager = context.getPackageManager();
+                return manager == null ? null : manager.hasSystemFeature(feature);
+            } catch (RuntimeException error) {
+                return null;
+            }
+        }
     }
 }
