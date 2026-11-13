@@ -36,6 +36,7 @@ public final class MainActivity extends Activity {
     private static final int MUTED = Color.rgb(164, 178, 199);
     private static final String SETTING_ALWAYS_ON_VPN_APP = "always_on_vpn_app";
     private static final String SETTING_ALWAYS_ON_VPN_LOCKDOWN = "always_on_vpn_lockdown";
+    private static final String ACTION_SYSTEM_UPDATE_SETTINGS = "android.settings.SYSTEM_UPDATE_SETTINGS";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +72,16 @@ public final class MainActivity extends Activity {
         introParams.topMargin = dp(8);
         introParams.bottomMargin = dp(22);
         root.addView(intro, introParams);
+
+        Button updaterButton = new Button(this);
+        updaterButton.setText("Open system updater");
+        updaterButton.setAllCaps(false);
+        updaterButton.setTextColor(PRIMARY);
+        updaterButton.setBackground(tint(SURFACE, 18));
+        LinearLayout.LayoutParams updaterParams = params(-1, dp(50));
+        updaterParams.bottomMargin = dp(12);
+        root.addView(updaterButton, updaterParams);
+        updaterButton.setOnClickListener(v -> openSystemUpdater());
 
         Button auditorButton = new Button(this);
         auditorButton.setText("Open GhostOS Auditor");
@@ -271,6 +282,15 @@ public final class MainActivity extends Activity {
             return enabled == 1 ? "USB debugging: enabled" : "USB debugging: disabled";
         } catch (RuntimeException error) {
             return "USB debugging: unknown";
+        }
+    }
+
+    private void openSystemUpdater() {
+        try {
+            startActivity(new Intent(ACTION_SYSTEM_UPDATE_SETTINGS));
+        } catch (RuntimeException error) {
+            Toast.makeText(this, "System updater is not available on this build.",
+                    Toast.LENGTH_LONG).show();
         }
     }
 

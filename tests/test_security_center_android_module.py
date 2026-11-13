@@ -67,6 +67,16 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
             self.assertNotIn("VpnHood", module_source)
             self.assertNotIn("ghost-web-vpn", module_source)
 
+    def test_system_updater_launch_is_explicit_and_fails_closed(self):
+        source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
+        self.assertIn('ACTION_SYSTEM_UPDATE_SETTINGS = "android.settings.SYSTEM_UPDATE_SETTINGS"', source)
+        self.assertIn('setText("Open system updater")', source)
+        self.assertIn("updaterButton.setOnClickListener(v -> openSystemUpdater())", source)
+        self.assertIn("startActivity(new Intent(ACTION_SYSTEM_UPDATE_SETTINGS))", source)
+        self.assertIn("System updater is not available on this build.", source)
+        self.assertNotIn("applyPayload", source)
+        self.assertNotIn("updateSystemUpdateInfo", source)
+
     def test_security_center_links_to_privacy_center(self):
         source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
         self.assertIn('getLaunchIntentForPackage("org.ghostos.privacy")', source)
