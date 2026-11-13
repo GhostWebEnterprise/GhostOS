@@ -37,6 +37,7 @@ class GhostOSAuditorAndroidModuleTests(unittest.TestCase):
         self.assertIn("does not independently prove payload signature verification", model)
         self.assertIn('getSystemService("system_update")', source)
         self.assertIn("retrieveSystemUpdateInfo", source)
+        self.assertIn(r'detail.append("\\n")', source)
         self.assertNotIn("updateSystemUpdateInfo", source)
         self.assertNotIn("applyPayload", source)
         self.assertNotIn("resetStatus", source)

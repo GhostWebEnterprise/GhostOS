@@ -236,7 +236,7 @@ public final class MainActivity extends Activity {
                 appendUpdateField(detail, info, "target_build_fingerprint", "Target build");
                 appendUpdateField(detail, info, "target_security_patch_level", "Target security patch");
                 if (info.containsKey("is_security_update")) {
-                    detail.append("\\nSecurity update: ").append(info.getBoolean("is_security_update"));
+                    detail.append("\nSecurity update: ").append(info.getBoolean("is_security_update"));
                 }
                 return detail.toString();
             } catch (ReflectiveOperationException | RuntimeException error) {
@@ -247,7 +247,7 @@ public final class MainActivity extends Activity {
         private static void appendUpdateField(StringBuilder detail, Bundle info, String key, String label) {
             String value = info.getString(key);
             if (value != null && !value.trim().isEmpty()) {
-                detail.append("\\n").append(label).append(": ").append(value.trim());
+                detail.append("\n").append(label).append(": ").append(value.trim());
             }
         }
     }
