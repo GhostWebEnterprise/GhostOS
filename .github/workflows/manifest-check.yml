@@ -220,6 +220,23 @@ jobs:
       - name: Test Android Device Owner policy adapter and resources
         run: python3 -m unittest -v tests/test_ghostmode_device_policy_adapter.py
 
+      - name: Verify platform signing for GhostOS system apps
+        shell: bash
+        run: |
+          set -euo pipefail
+          for module in \\
+            packages/apps/GhostOSPrivacyCenter/Android.bp \\
+            packages/apps/GhostOSSecurityCenter/Android.bp; do
+            grep -Fq 'certificate: "platform"' "$module" || {
+              echo "::error::GhostOS system app must use the platform certificate: $module" >&2
+              exit 1
+            }
+            grep -Fq 'system_ext_specific: true' "$module" || {
+              echo "::error::GhostOS system app must install in system_ext: $module" >&2
+              exit 1
+            }
+          done
+
       - name: Verify Security Center is installed in larry product
         run: grep -Fq "GhostOSSecurityCenter" vendor/ghostos/config/common.mk
 
