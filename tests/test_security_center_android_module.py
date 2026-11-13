@@ -66,6 +66,18 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
             self.assertNotIn("VpnHood", module_source)
             self.assertNotIn("ghost-web-vpn", module_source)
 
+    def test_quick_settings_tile_is_a_non_toggleable_dashboard_shortcut(self):
+        manifest = (APP / "AndroidManifest.xml").read_text(encoding="utf-8")
+        source = (APP / "src/org/ghostos/securitycenter/GhostModeTileService.java").read_text(encoding="utf-8")
+        self.assertIn('android.permission.BIND_QUICK_SETTINGS_TILE', manifest)
+        self.assertIn('android.service.quicksettings.action.QS_TILE', manifest)
+        self.assertIn('android:exported="true"', manifest)
+        self.assertIn("Tile.STATE_INACTIVE", source)
+        self.assertIn("startActivityAndCollapse", source)
+        self.assertNotIn("DevicePolicyManager.set", source)
+        self.assertNotIn("Settings.Secure.put", source)
+        self.assertNotIn("Tile.STATE_ACTIVE", source)
+
     def test_product_config_installs_security_center(self):
         config = (ROOT / "vendor/ghostos/config.mk").read_text(encoding="utf-8")
         script = (ROOT / "scripts/integrate-ghostos-apps.sh").read_text(encoding="utf-8")
