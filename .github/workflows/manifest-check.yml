@@ -224,9 +224,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for module in \\
-            packages/apps/GhostOSPrivacyCenter/Android.bp \\
-            packages/apps/GhostOSSecurityCenter/Android.bp; do
+          for module in packages/apps/GhostOSPrivacyCenter/Android.bp packages/apps/GhostOSSecurityCenter/Android.bp; do
             grep -Fq 'certificate: "platform"' "$module" || {
               echo "::error::GhostOS system app must use the platform certificate: $module" >&2
               exit 1
