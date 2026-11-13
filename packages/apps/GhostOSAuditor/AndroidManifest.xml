@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="org.ghostos.auditor">
+    <uses-permission android:name="android.permission.READ_SYSTEM_UPDATE_INFO" />
     <application
         android:allowBackup="false"
         android:label="GhostOS Auditor"

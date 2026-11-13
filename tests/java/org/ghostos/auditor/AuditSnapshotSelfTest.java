@@ -21,6 +21,7 @@ public final class AuditSnapshotSelfTest {
         String release = "17";
         String device = "larry";
         int sdk = 37;
+        String otaStatus;
         final Map<String, Boolean> features = new HashMap<>();
 
         public String property(String key) { return properties.get(key); }
@@ -33,6 +34,7 @@ public final class AuditSnapshotSelfTest {
         public String device() { return device; }
         public int sdkInt() { return sdk; }
         public Boolean hasSystemFeature(String feature) { return features.get(feature); }
+        public String otaStatus() { return otaStatus; }
     }
 
     private static AuditSnapshot.Finding find(List<AuditSnapshot.Finding> findings, String title) {
@@ -76,6 +78,7 @@ public final class AuditSnapshotSelfTest {
         source.properties.put("ro.build.version.incremental", "eng.test");
         source.features.put("android.hardware.fingerprint", true);
         source.features.put("android.hardware.nfc", false);
+        source.otaStatus = "System updater reports no pending update";
         List<AuditSnapshot.Finding> findings = AuditSnapshot.collect(source);
         if (findings.size() != 30) throw new AssertionError("expected 30 findings, got " + findings.size());
         expect(AuditSnapshot.State.OBSERVED, find(findings, "Verified Boot"));
@@ -85,7 +88,7 @@ public final class AuditSnapshotSelfTest {
         expect(AuditSnapshot.State.OBSERVED, find(findings, "VBMeta digest"));
         expect(AuditSnapshot.State.OBSERVED, find(findings, "AVB version"));
         expect(AuditSnapshot.State.OBSERVED, find(findings, "Active boot slot"));
-        expect(AuditSnapshot.State.UNKNOWN, find(findings, "OTA updater status"));
+        expect(AuditSnapshot.State.OBSERVED, find(findings, "OTA updater status"));
         expect(AuditSnapshot.State.OBSERVED, find(findings, "Capability: Fingerprint"));
         expect(AuditSnapshot.State.OBSERVED, find(findings, "Capability: NFC"));
         expect(AuditSnapshot.State.UNKNOWN, find(findings, "Capability: Face biometrics"));
@@ -101,8 +104,11 @@ public final class AuditSnapshotSelfTest {
         source.enforced = null;
         source.screenLock = null;
         source.adb = null;
+        source.otaStatus = null;
         source.features.clear();
-        for (AuditSnapshot.Finding finding : AuditSnapshot.collect(source)) {
+        List<AuditSnapshot.Finding> unknownFindings = AuditSnapshot.collect(source);
+        expect(AuditSnapshot.State.UNKNOWN, find(unknownFindings, "OTA updater status"));
+        for (AuditSnapshot.Finding finding : unknownFindings) {
             if (finding.state == AuditSnapshot.State.PASS || finding.state == AuditSnapshot.State.FAIL) {
                 throw new AssertionError("missing evidence must not become PASS/FAIL: " + finding.title);
             }

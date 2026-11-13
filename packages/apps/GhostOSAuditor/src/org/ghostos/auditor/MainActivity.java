@@ -201,5 +201,54 @@ public final class MainActivity extends Activity {
                 return null;
             }
         }
+
+        @Override
+        public String otaStatus() {
+            try {
+                Object service = context.getSystemService("system_update");
+                if (service == null) return null;
+                Object result = service.getClass().getMethod("retrieveSystemUpdateInfo").invoke(service);
+                if (!(result instanceof Bundle)) return null;
+                Bundle info = (Bundle) result;
+                if (!info.containsKey("status")) return null;
+                int status = info.getInt("status", 0);
+                String label;
+                switch (status) {
+                    case 1:
+                        label = "System updater reports no pending update";
+                        break;
+                    case 2:
+                        label = "Update waiting for download approval";
+                        break;
+                    case 3:
+                        label = "Update in progress";
+                        break;
+                    case 4:
+                        label = "Update waiting for installation";
+                        break;
+                    case 5:
+                        label = "Update waiting for reboot";
+                        break;
+                    default:
+                        return null;
+                }
+                StringBuilder detail = new StringBuilder(label);
+                appendUpdateField(detail, info, "target_build_fingerprint", "Target build");
+                appendUpdateField(detail, info, "target_security_patch_level", "Target security patch");
+                if (info.containsKey("is_security_update")) {
+                    detail.append("\\nSecurity update: ").append(info.getBoolean("is_security_update"));
+                }
+                return detail.toString();
+            } catch (ReflectiveOperationException | RuntimeException error) {
+                return null;
+            }
+        }
+
+        private static void appendUpdateField(StringBuilder detail, Bundle info, String key, String label) {
+            String value = info.getString(key);
+            if (value != null && !value.trim().isEmpty()) {
+                detail.append("\\n").append(label).append(": ").append(value.trim());
+            }
+        }
     }
 }

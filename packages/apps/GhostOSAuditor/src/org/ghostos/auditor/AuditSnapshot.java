@@ -35,6 +35,7 @@ public final class AuditSnapshot {
         String device();
         int sdkInt();
         Boolean hasSystemFeature(String feature);
+        String otaStatus();
     }
 
     private AuditSnapshot() { }
@@ -80,10 +81,9 @@ public final class AuditSnapshot {
         findings.add(observed("Build incremental", clean(source.property("ro.build.version.incremental")),
                 "ro.build.version.incremental",
                 "Build metadata only; it does not prove update freshness or successful installation."));
-        findings.add(new Finding("OTA updater status", State.UNKNOWN,
-                "Unknown — no UpdateEngine status observer is integrated",
-                "update_engine status callback unavailable",
-                "The Auditor does not start, cancel or modify updates. Slot/build properties cannot prove update availability, payload verification, installation or successful boot."));
+        findings.add(observed("OTA updater status", clean(source.otaStatus()),
+                "SystemUpdateManager.retrieveSystemUpdateInfo",
+                "The system updater may publish pending-update status and target metadata. Missing status remains unknown; this does not independently prove payload signature verification, installation success or boot success."));
         String patch = clean(source.securityPatch());
         State patchState = patch.matches("\\d{4}-\\d{2}-\\d{2}") ? State.OBSERVED : State.UNKNOWN;
         findings.add(new Finding("Security patch", patchState,

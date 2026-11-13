@@ -14,12 +14,15 @@ class GhostOSAuditorAndroidModuleTests(unittest.TestCase):
         self.assertIn('certificate: "platform"', bp)
         self.assertIn("system_ext_specific: true", bp)
 
-    def test_manifest_has_launcher_and_no_privileged_permissions(self):
+    def test_manifest_has_launcher_and_only_read_only_update_permission(self):
         manifest = (APP / "AndroidManifest.xml").read_text(encoding="utf-8")
         self.assertIn('package="org.ghostos.auditor"', manifest)
         self.assertIn('android:name=".MainActivity"', manifest)
         self.assertIn('android:exported="true"', manifest)
-        self.assertNotIn("uses-permission", manifest)
+        self.assertIn("android.permission.READ_SYSTEM_UPDATE_INFO", manifest)
+        self.assertNotIn("android.permission.RECOVERY", manifest)
+        self.assertNotIn("android.permission.INSTALL_PACKAGES", manifest)
+        self.assertNotIn("android.permission.UPDATE_CONFIG", manifest)
         self.assertNotIn("QUERY_ALL_PACKAGES", manifest)
 
     def test_platform_observations_and_limitations_are_explicit(self):
@@ -31,10 +34,16 @@ class GhostOSAuditorAndroidModuleTests(unittest.TestCase):
         self.assertIn("PackageManager", source)
         self.assertIn("hasSystemFeature", source)
         self.assertIn("Feature declaration only", model)
+        self.assertIn("does not independently prove payload signature verification", model)
+        self.assertIn('getSystemService("system_update")', source)
+        self.assertIn("retrieveSystemUpdateInfo", source)
+        self.assertNotIn("updateSystemUpdateInfo", source)
+        self.assertNotIn("applyPayload", source)
+        self.assertNotIn("resetStatus", source)
         for item in ("ro.boot.verifiedbootstate", "ro.boot.flash.locked",
                      "independent AVB/vbmeta verification", "ro.boot.vbmeta.digest",
                      "ro.boot.vbmeta.avb_version", "ro.boot.slot_suffix",
-                     "update_engine status callback unavailable", "State.UNKNOWN"):
+                     "SystemUpdateManager.retrieveSystemUpdateInfo", "State.UNKNOWN"):
             self.assertIn(item, model)
 
     def test_missing_evidence_is_not_promoted_to_pass_or_fail(self):
