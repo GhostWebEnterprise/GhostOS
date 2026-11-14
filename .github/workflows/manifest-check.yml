@@ -179,6 +179,29 @@ jobs:
       - name: Test Security Center VPN default-network evidence
         run: python3 -m unittest -v tests.test_security_center_vpn_status_wording
 
+      - name: Keep GhostWeb VPN implementation outside GhostOS
+        shell: bash
+        run: |
+          set -euo pipefail
+          roots=(
+            device/ghostos
+            vendor/ghostos
+            packages/apps/GhostOSAuditor
+            packages/apps/GhostOSPrivacyCenter
+            packages/apps/GhostOSSecurityCenter
+            manifests
+          )
+          if grep -RniE \
+            --include='*.bp' --include='*.mk' --include='*.xml' \
+            --include='*.java' --include='*.kt' \
+            --include='*.gradle' --include='*.gradle.kts' \
+            --include='*.json' --include='*.properties' --include='*.sh' \
+            'VpnHood|ghost-web-vpn|GhostWebVpn|ghostwebvpn' \
+            "${roots[@]}"; then
+            echo "::error::GhostWeb VPN client code or product integration must remain outside GhostOS" >&2
+            exit 1
+          fi
+
       - name: Test GhostOS larry app integration script
         run: python3 -m unittest -v tests.test_ghostos_integration_script
 
