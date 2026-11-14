@@ -183,7 +183,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          roots=(
+          candidates=(
             device/ghostos
             vendor/ghostos
             packages/apps/GhostOSAuditor
@@ -191,16 +191,41 @@ jobs:
             packages/apps/GhostOSSecurityCenter
             manifests
           )
-          if grep -RniE \
+          roots=()
+          for root in "${candidates[@]}"; do
+            if [[ -d "$root" ]]; then
+              roots+=("$root")
+            fi
+          done
+          (("${#roots[@]}" > 0)) || {
+            echo "::error::No GhostOS source/product roots found for VPN exclusion scan" >&2
+            exit 1
+          }
+
+          set +e
+          grep -RniE \
             --include='*.bp' --include='*.mk' --include='*.xml' \
             --include='*.java' --include='*.kt' \
             --include='*.gradle' --include='*.gradle.kts' \
             --include='*.json' --include='*.properties' --include='*.sh' \
             'VpnHood|ghost-web-vpn|GhostWebVpn|ghostwebvpn' \
-            "${roots[@]}"; then
-            echo "::error::GhostWeb VPN client code or product integration must remain outside GhostOS" >&2
-            exit 1
-          fi
+            "${roots[@]}"
+          grep_status=$?
+          set -e
+
+          case "$grep_status" in
+            0)
+              echo "::error::GhostWeb VPN client code or product integration must remain outside GhostOS" >&2
+              exit 1
+              ;;
+            1)
+              echo "No GhostWeb VPN implementation references found in GhostOS source/product roots."
+              ;;
+            *)
+              echo "::error::GhostWeb VPN exclusion scan failed (grep exit $grep_status)" >&2
+              exit "$grep_status"
+              ;;
+          esac
 
       - name: Test GhostOS larry app integration script
         run: python3 -m unittest -v tests.test_ghostos_integration_script
