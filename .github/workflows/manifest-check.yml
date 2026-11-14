@@ -135,6 +135,9 @@ jobs:
       - name: Validate build script
         run: bash -n scripts/ghostos-build.sh
 
+      - name: Test Android source checkout path safety
+        run: bash tests/test_ghostos_build_path_safety.sh
+
       - name: Validate GhostMode policy files
         shell: bash
         run: |
