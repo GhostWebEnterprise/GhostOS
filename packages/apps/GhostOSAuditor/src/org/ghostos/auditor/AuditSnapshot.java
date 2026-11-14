@@ -1,5 +1,7 @@
 package org.ghostos.auditor;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,7 +87,7 @@ public final class AuditSnapshot {
                 "SystemUpdateManager.retrieveSystemUpdateInfo",
                 "The system updater may publish pending-update status and target metadata. Missing status remains unknown; this does not independently prove payload signature verification, installation success or boot success."));
         String patch = clean(source.securityPatch());
-        State patchState = patch.matches("\\d{4}-\\d{2}-\\d{2}") ? State.OBSERVED : State.UNKNOWN;
+        State patchState = isValidSecurityPatchDate(patch) ? State.OBSERVED : State.UNKNOWN;
         findings.add(new Finding("Security patch", patchState,
                 patchState == State.UNKNOWN ? "Unknown" : patch,
                 "Build.VERSION.SECURITY_PATCH",
@@ -181,6 +183,16 @@ public final class AuditSnapshot {
                 "Settings.Global.ADB_ENABLED", "This checks ADB only, not every debugging interface.");
         return new Finding("ADB debugging", State.UNKNOWN, "Unknown",
                 "Settings.Global.ADB_ENABLED", "The setting could not be read.");
+    }
+
+    private static boolean isValidSecurityPatchDate(String value) {
+        if (value == null || value.isEmpty()) return false;
+        try {
+            LocalDate.parse(value);
+            return true;
+        } catch (DateTimeParseException error) {
+            return false;
+        }
     }
 
     private static Finding observed(String title, String value, String source, String limitation) {

@@ -89,6 +89,23 @@ public final class AuditSnapshotSelfTest {
         expect(AuditSnapshot.State.OBSERVED, find(findings, "AVB version"));
         expect(AuditSnapshot.State.OBSERVED, find(findings, "Active boot slot"));
         expect(AuditSnapshot.State.OBSERVED, find(findings, "OTA updater status"));
+        expect(AuditSnapshot.State.OBSERVED, find(findings, "Security patch"));
+        source.patch = "2024-02-29";
+        expect(AuditSnapshot.State.OBSERVED,
+                find(AuditSnapshot.collect(source), "Security patch"));
+        source.patch = "2026-02-30";
+        expect(AuditSnapshot.State.UNKNOWN,
+                find(AuditSnapshot.collect(source), "Security patch"));
+        source.patch = "2025-02-29";
+        expect(AuditSnapshot.State.UNKNOWN,
+                find(AuditSnapshot.collect(source), "Security patch"));
+        source.patch = "2026-13-01";
+        expect(AuditSnapshot.State.UNKNOWN,
+                find(AuditSnapshot.collect(source), "Security patch"));
+        source.patch = "2026-2-3";
+        expect(AuditSnapshot.State.UNKNOWN,
+                find(AuditSnapshot.collect(source), "Security patch"));
+        source.patch = "2026-11-01";
         expect(AuditSnapshot.State.OBSERVED, find(findings, "Capability: Fingerprint"));
         expect(AuditSnapshot.State.OBSERVED, find(findings, "Capability: NFC"));
         expect(AuditSnapshot.State.UNKNOWN, find(findings, "Capability: Face biometrics"));
