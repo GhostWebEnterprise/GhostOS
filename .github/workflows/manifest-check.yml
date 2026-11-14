@@ -220,7 +220,7 @@ jobs:
       - name: Test Android Device Owner policy adapter and resources
         run: python3 -m unittest -v tests/test_ghostmode_device_policy_adapter.py
 
-      - name: Verify platform signing for GhostOS system apps
+      - name: Verify platform certificate declarations and system_ext placement
         shell: bash
         run: |
           set -euo pipefail
