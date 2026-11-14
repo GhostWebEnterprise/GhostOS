@@ -6,6 +6,7 @@ on:
       - main
       - 'feature/ghostmode-*'
       - 'feature/universal-gsi-larry'
+      - 'feat/security-center-android17-larry'
       - 'fix/ghostmode-*'
     paths:
       - 'manifests/**'
@@ -17,10 +18,12 @@ on:
       - 'device/ghostos/**'
       - 'vendor/ghostos/**'
       - 'packages/apps/GhostOSPrivacyCenter/**'
+      - 'packages/apps/GhostOSSecurityCenter/**'
       - '.github/workflows/manifest-check.yml'
   pull_request:
     branches:
       - main
+      - 'feature/universal-gsi-larry'
     paths:
       - 'manifests/**'
       - 'scripts/**'
@@ -31,6 +34,7 @@ on:
       - 'device/ghostos/**'
       - 'vendor/ghostos/**'
       - 'packages/apps/GhostOSPrivacyCenter/**'
+      - 'packages/apps/GhostOSSecurityCenter/**'
       - '.github/workflows/manifest-check.yml'
   workflow_dispatch:
 
@@ -70,7 +74,7 @@ jobs:
             build/ghostos-privacy-resources.zip
           test -f build/android-generated/org/ghostos/privacy/R.java \
             || { echo "::error::aapt2 did not generate the Privacy Center R.java"; exit 1; }
-          javac --release 17 -classpath "$android_jar" -d build/android-classes \
+          javac --release 17 -Xlint:deprecation -classpath "$android_jar" -d build/android-classes \
             build/android-generated/org/ghostos/privacy/R.java \
             $(find packages/apps/GhostOSPrivacyCenter/src -type f -name '*.java' -print)
           test -f build/android-classes/org/ghostos/privacy/GhostModeQuickSettingsTile.class
@@ -78,12 +82,31 @@ jobs:
           test -f build/android-classes/org/ghostos/privacy/PrivacyActivity.class
           test -f build/android-classes/org/ghostos/privacy/GhostModeAndroidPolicyManager.class
 
+      - name: Compile Security Center against Android 17 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-37.0/android.jar"
+          aapt2="$ANDROID_HOME/build-tools/37.0.0/aapt2"
+          test -f "$android_jar"
+          test -x "$aapt2"
+          mkdir -p build/security-center/classes
+          "$aapt2" link -o build/security-center/manifest-check.apk \
+            --manifest packages/apps/GhostOSSecurityCenter/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 31 --target-sdk-version 37
+          javac --release 17 -Xlint:deprecation -classpath "$android_jar" \
+            -d build/security-center/classes \
+            $(find packages/apps/GhostOSSecurityCenter/src -type f -name '*.java' -print)
+          test -f build/security-center/classes/org/ghostos/securitycenter/MainActivity.class
+      - name: Test Security Center VPN status wording
+        run: python3 -m unittest -v tests/test_security_center_vpn_status_wording.py
+
       - name: Keep GhostWeb VPN outside GhostOS product configuration
         shell: bash
         run: |
           set -euo pipefail
           if grep -RniE 'VpnHood|ghost-web-vpn' \
-            device/ghostos vendor/ghostos packages/apps/GhostOSPrivacyCenter manifests; then
+            device/ghostos vendor/ghostos packages/apps/GhostOSPrivacyCenter packages/apps/GhostOSSecurityCenter manifests; then
             echo "::error::GhostWeb VPN must remain outside GhostOS product configuration" >&2
             exit 1
           fi
@@ -98,6 +121,7 @@ jobs:
               "manifests/ghostos-24.0.xml",
               "manifests/ghostos_larry.xml",
               "packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml",
+              "packages/apps/GhostOSSecurityCenter/AndroidManifest.xml",
               "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml",
               "packages/apps/GhostOSPrivacyCenter/res/values/styles.xml",
               "packages/apps/GhostOSPrivacyCenter/res/xml/device_admin.xml",
@@ -195,6 +219,24 @@ jobs:
 
       - name: Test Android Device Owner policy adapter and resources
         run: python3 -m unittest -v tests/test_ghostmode_device_policy_adapter.py
+
+      - name: Verify platform certificate declarations and system_ext placement
+        shell: bash
+        run: |
+          set -euo pipefail
+          for module in packages/apps/GhostOSPrivacyCenter/Android.bp packages/apps/GhostOSSecurityCenter/Android.bp; do
+            grep -Fq 'certificate: "platform"' "$module" || {
+              echo "::error::GhostOS system app must use the platform certificate: $module" >&2
+              exit 1
+            }
+            grep -Fq 'system_ext_specific: true' "$module" || {
+              echo "::error::GhostOS system app must install in system_ext: $module" >&2
+              exit 1
+            }
+          done
+
+      - name: Verify Security Center is installed in larry product
+        run: grep -Fq "GhostOSSecurityCenter" vendor/ghostos/config/common.mk
 
       - name: Show supported devices
         run: grep -E 'android_device_oneplus_larry' manifests/ghostos-24.0.xml

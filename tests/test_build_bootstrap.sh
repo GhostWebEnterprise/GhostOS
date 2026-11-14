@@ -62,6 +62,7 @@ run_case() {
   cmp "$ROOT/device/ghostos/larry/ghostos_larry.mk" "$checkout/device/ghostos/larry/ghostos_larry.mk"
   cmp "$ROOT/vendor/ghostos/config/common.mk" "$checkout/vendor/ghostos/config/common.mk"
   cmp "$ROOT/packages/apps/GhostOSPrivacyCenter/Android.bp" "$checkout/packages/apps/GhostOSPrivacyCenter/Android.bp"
+  cmp "$ROOT/packages/apps/GhostOSSecurityCenter/Android.bp" "$checkout/packages/apps/GhostOSSecurityCenter/Android.bp"
   grep -Fxq 'lunch ghostos_larry-userdebug' "$GHOSTOS_BUILD_LOG"
   grep -Fxq 'm bacon' "$GHOSTOS_BUILD_LOG"
 }
