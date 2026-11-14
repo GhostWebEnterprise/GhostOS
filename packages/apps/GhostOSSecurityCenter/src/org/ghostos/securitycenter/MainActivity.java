@@ -1,0 +1,397 @@
+package org.ghostos.securitycenter;
+
+import android.app.Activity;
+import android.app.KeyguardManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+/**
+ * First Android UI shell for GhostOS Security Center.
+ * Every status shown here is either read from a public Android API or explicitly
+ * labelled unknown/unverified. This app does not control or embed a VPN client.
+ */
+public final class MainActivity extends Activity {
+    private static final int BACKGROUND = Color.rgb(10, 14, 24);
+    private static final int SURFACE = Color.rgb(22, 29, 44);
+    private static final int ACCENT = Color.rgb(111, 170, 255);
+    private static final int PRIMARY = Color.rgb(241, 245, 252);
+    private static final int MUTED = Color.rgb(164, 178, 199);
+    private static final String SETTING_ALWAYS_ON_VPN_APP = "always_on_vpn_app";
+    private static final String SETTING_ALWAYS_ON_VPN_LOCKDOWN = "always_on_vpn_lockdown";
+    private static final String ACTION_SYSTEM_UPDATE_SETTINGS = "android.settings.SYSTEM_UPDATE_SETTINGS";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(buildContent());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Recreate the snapshot after returning from Android VPN settings.
+        setContentView(buildContent());
+    }
+
+    private View buildContent() {
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        scroll.setBackgroundColor(BACKGROUND);
+
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(22), dp(28), dp(22), dp(32));
+        scroll.addView(root);
+
+        TextView eyebrow = text("GHOSTOS  /  DEVICE PROTECTION", 11, ACCENT, true);
+        root.addView(eyebrow);
+        TextView title = text("Security Center", 30, PRIMARY, true);
+        LinearLayout.LayoutParams titleParams = params(-1, -2);
+        titleParams.topMargin = dp(7);
+        root.addView(title, titleParams);
+        TextView intro = text("A live overview of the security state reported by Android. Unknown means not yet verified.", 14, MUTED, false);
+        LinearLayout.LayoutParams introParams = params(-1, -2);
+        introParams.topMargin = dp(8);
+        introParams.bottomMargin = dp(22);
+        root.addView(intro, introParams);
+
+        Button updaterButton = new Button(this);
+        updaterButton.setText("Open system updater");
+        updaterButton.setAllCaps(false);
+        updaterButton.setTextColor(PRIMARY);
+        updaterButton.setBackground(tint(SURFACE, 18));
+        LinearLayout.LayoutParams updaterParams = params(-1, dp(50));
+        updaterParams.bottomMargin = dp(12);
+        root.addView(updaterButton, updaterParams);
+        updaterButton.setOnClickListener(v -> openSystemUpdater());
+
+        Button auditorButton = new Button(this);
+        auditorButton.setText("Open GhostOS Auditor");
+        auditorButton.setAllCaps(false);
+        auditorButton.setTextColor(PRIMARY);
+        auditorButton.setBackground(tint(SURFACE, 18));
+        LinearLayout.LayoutParams auditorParams = params(-1, dp(50));
+        auditorParams.bottomMargin = dp(12);
+        root.addView(auditorButton, auditorParams);
+        auditorButton.setOnClickListener(v -> openAuditor());
+
+        Button privacyButton = new Button(this);
+        privacyButton.setText("Open Privacy Center");
+        privacyButton.setAllCaps(false);
+        privacyButton.setTextColor(PRIMARY);
+        privacyButton.setBackground(tint(SURFACE, 18));
+        LinearLayout.LayoutParams privacyParams = params(-1, dp(50));
+        privacyParams.bottomMargin = dp(12);
+        root.addView(privacyButton, privacyParams);
+        privacyButton.setOnClickListener(v -> openPrivacyCenter());
+
+        addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport on the default network does not prove all-app coverage, provider identity or lockdown is active.");
+        addCard(root, "VPN LOCKDOWN", vpnLockdownStatus(), "Read-only Android Settings.Secure configuration. This does not prove VPN connectivity, provider identity, all-app coverage or lockdown allowlist contents.");
+        addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Platform-reported boot properties only. Green/locked is not independent vbmeta signature verification.");
+        addCard(root, "DEVICE CAPABILITIES", deviceCapabilitiesStatus(), "Read-only PackageManager feature flags. Presence does not prove runtime health or secure configuration.");
+        addCard(root, "SELINUX", selinuxStatus(), "Enforcement mode from Android SELinux framework; policy quality and rule coverage are not assessed.");
+        addCard(root, "SECURITY UPDATES", "Security patch: " + safe(Build.VERSION.SECURITY_PATCH), "Android release: " + safe(Build.VERSION.RELEASE) + "  ·  Device: " + safe(Build.DEVICE));
+        addCard(root, "SCREEN LOCK", screenLockStatus(), "Read from Android KeyguardManager. This does not verify every lock-screen policy.");
+        addCard(root, "DEBUGGING", adbStatus(), "Read from Android global settings. Additional developer options are not assessed here.");
+        addCard(root, "PRIVACY & PERMISSIONS", "GhostMode controls in Privacy Center", "Device Owner controls require explicit provisioning. Unsupported or unverified controls remain unavailable; no policy is changed by opening this dashboard.");
+
+        Button protonVpn = new Button(this);
+        protonVpn.setText("Open Proton VPN");
+        protonVpn.setAllCaps(false);
+        protonVpn.setTextColor(PRIMARY);
+        protonVpn.setBackground(tint(SURFACE, 18));
+        LinearLayout.LayoutParams protonParams = params(-1, dp(50));
+        protonParams.bottomMargin = dp(8);
+        root.addView(protonVpn, protonParams);
+        protonVpn.setOnClickListener(v -> openProtonVpn());
+
+        Button vpnSettings = new Button(this);
+        vpnSettings.setText("Open Android VPN settings");
+        vpnSettings.setAllCaps(false);
+        vpnSettings.setTextColor(Color.rgb(8, 18, 34));
+        vpnSettings.setBackground(tint(ACCENT, 100));
+        LinearLayout.LayoutParams buttonParams = params(-1, dp(52));
+        buttonParams.topMargin = dp(8);
+        root.addView(vpnSettings, buttonParams);
+        vpnSettings.setOnClickListener(v -> openVpnSettings());
+
+        TextView footer = text("Proton VPN is supported as a separate official Android app. GhostOS does not contain a VPN client or Proton credentials.", 12, MUTED, false);
+        LinearLayout.LayoutParams footerParams = params(-1, -2);
+        footerParams.topMargin = dp(16);
+        root.addView(footer, footerParams);
+        return scroll;
+    }
+
+    private String vpnStatus() {
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (manager == null) return "Default network: unknown";
+        try {
+            Network activeNetwork = manager.getActiveNetwork();
+            if (activeNetwork == null) return "Default network: unavailable";
+
+            NetworkCapabilities capabilities = manager.getNetworkCapabilities(activeNetwork);
+            if (capabilities != null
+                    && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                return "Default network uses VPN transport · provider/coverage unverified";
+            }
+            return "Default network does not report VPN transport";
+        } catch (RuntimeException error) {
+            return "VPN status: unavailable";
+        }
+    }
+
+    private String deviceCapabilitiesStatus() {
+        try {
+            PackageManager manager = getPackageManager();
+            if (manager == null) return "Device capabilities: unknown";
+
+            StringBuilder reported = new StringBuilder();
+            appendFeature(manager, reported, "Fingerprint", PackageManager.FEATURE_FINGERPRINT);
+            appendFeature(manager, reported, "Face biometrics", PackageManager.FEATURE_FACE);
+            appendFeature(manager, reported, "Camera", PackageManager.FEATURE_CAMERA_ANY);
+            appendFeature(manager, reported, "Microphone", PackageManager.FEATURE_MICROPHONE);
+            appendFeature(manager, reported, "GPS", PackageManager.FEATURE_LOCATION_GPS);
+            appendFeature(manager, reported, "Wi-Fi", PackageManager.FEATURE_WIFI);
+            appendFeature(manager, reported, "Bluetooth", PackageManager.FEATURE_BLUETOOTH);
+            appendFeature(manager, reported, "NFC", PackageManager.FEATURE_NFC);
+            appendFeature(manager, reported, "Telephony", PackageManager.FEATURE_TELEPHONY);
+            appendFeature(manager, reported, "USB host", PackageManager.FEATURE_USB_HOST);
+
+            return reported.length() == 0
+                    ? "No queried capabilities reported"
+                    : "Reported: " + reported;
+        } catch (RuntimeException error) {
+            return "Device capabilities: unknown";
+        }
+    }
+
+    private void appendFeature(PackageManager manager, StringBuilder reported,
+            String label, String feature) {
+        if (!manager.hasSystemFeature(feature)) return;
+        if (reported.length() > 0) reported.append(" · ");
+        reported.append(label);
+    }
+
+    private String vpnLockdownStatus() {
+        try {
+            String packageName = Settings.Secure.getString(
+                    getContentResolver(), SETTING_ALWAYS_ON_VPN_APP);
+            String lockdown = Settings.Secure.getString(
+                    getContentResolver(), SETTING_ALWAYS_ON_VPN_LOCKDOWN);
+
+            if (packageName == null || packageName.isEmpty()) {
+                if ("1".equals(lockdown)) {
+                    return "Lockdown setting present · always-on package unknown";
+                }
+                if ("0".equals(lockdown)) return "Always-on VPN package: not configured";
+                return "Always-on VPN / lockdown: unknown";
+            }
+            if ("1".equals(lockdown)) {
+                return "Always-on VPN configured · lockdown setting enabled";
+            }
+            if ("0".equals(lockdown)) {
+                return "Always-on VPN configured · lockdown disabled";
+            }
+            return "Always-on VPN configured · lockdown unknown";
+        } catch (RuntimeException error) {
+            return "Always-on VPN / lockdown: unknown";
+        }
+    }
+
+    private String bootIntegrityStatus() {
+        try {
+            String state = readSystemProperty("ro.boot.verifiedbootstate", "unknown");
+            String locked = readSystemProperty("ro.boot.flash.locked", "unknown");
+            if ("red".equals(state)) return "Platform reports Verified Boot: red";
+            if ("orange".equals(state) || "0".equals(locked)) return "Platform reports bootloader unlocked";
+            if ("green".equals(state) && "1".equals(locked)) {
+                return "Platform reports green state · bootloader locked · AVB not independently verified";
+            }
+            if ("yellow".equals(state) && "1".equals(locked)) return "Platform reports yellow state · custom trust root";
+            return "Verified Boot: unknown";
+        } catch (RuntimeException error) {
+            return "Verified Boot: unknown";
+        }
+    }
+
+    private String selinuxStatus() {
+        try {
+            Boolean enabled = readSelinuxFlag("isSELinuxEnabled");
+            if (enabled == null) return "SELinux: unknown";
+            if (!enabled) return "SELinux: disabled";
+            Boolean enforced = readSelinuxFlag("isSELinuxEnforced");
+            if (enforced == null) return "SELinux: unknown";
+            return enforced ? "SELinux: enforcing" : "SELinux: permissive";
+        } catch (RuntimeException error) {
+            return "SELinux: unknown";
+        }
+    }
+
+    // Platform-only APIs are guarded so SDK-only CI compilation remains possible.
+    // Runtime access may be restricted; unavailable evidence is always shown as unknown.
+    private String readSystemProperty(String key, String fallback) {
+        try {
+            Class<?> properties = Class.forName("android.os.SystemProperties");
+            Object value = properties.getMethod("get", String.class, String.class)
+                    .invoke(null, key, fallback);
+            return value instanceof String ? (String) value : fallback;
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            return fallback;
+        }
+    }
+
+    private Boolean readSelinuxFlag(String methodName) {
+        try {
+            Class<?> selinux = Class.forName("android.os.SELinux");
+            Object value = selinux.getMethod(methodName).invoke(null);
+            return value instanceof Boolean ? (Boolean) value : null;
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            return null;
+        }
+    }
+
+    private String screenLockStatus() {
+        try {
+            KeyguardManager keyguard = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            if (keyguard == null) return "Secure screen lock: unknown";
+            return keyguard.isDeviceSecure() ? "Secure screen lock: enabled" : "Secure screen lock: not detected";
+        } catch (RuntimeException error) {
+            return "Secure screen lock: unknown";
+        }
+    }
+
+    private String adbStatus() {
+        try {
+            int enabled = Settings.Global.getInt(getContentResolver(), Settings.Global.ADB_ENABLED, 0);
+            return enabled == 1 ? "USB debugging: enabled" : "USB debugging: disabled";
+        } catch (RuntimeException error) {
+            return "USB debugging: unknown";
+        }
+    }
+
+    private void openSystemUpdater() {
+        try {
+            startActivity(new Intent(ACTION_SYSTEM_UPDATE_SETTINGS));
+        } catch (RuntimeException error) {
+            Toast.makeText(this, "System updater is not available on this build.",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void openPrivacyCenter() {
+        try {
+            Intent launch = getPackageManager().getLaunchIntentForPackage("org.ghostos.privacy");
+            if (launch != null) {
+                startActivity(launch);
+            } else {
+                Toast.makeText(this, "GhostOS Privacy Center is not installed in this build.",
+                        Toast.LENGTH_LONG).show();
+            }
+        } catch (RuntimeException error) {
+            Toast.makeText(this, "GhostOS Privacy Center is unavailable.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void openAuditor() {
+        try {
+            Intent launch = getPackageManager().getLaunchIntentForPackage("org.ghostos.auditor");
+            if (launch != null) {
+                startActivity(launch);
+            } else {
+                Toast.makeText(this, "GhostOS Auditor is not installed in this build.",
+                        Toast.LENGTH_LONG).show();
+            }
+        } catch (RuntimeException error) {
+            Toast.makeText(this, "GhostOS Auditor is unavailable.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void openProtonVpn() {
+        try {
+            Intent launch = getPackageManager().getLaunchIntentForPackage("ch.protonvpn.android");
+            if (launch != null) {
+                startActivity(launch);
+            } else {
+                Intent releases = new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://github.com/ProtonVPN/android-app/releases"));
+                startActivity(releases);
+            }
+        } catch (RuntimeException error) {
+            // Do not claim Proton VPN is installed or connected when launch is unavailable.
+        }
+    }
+
+    private void openVpnSettings() {
+        try {
+            startActivity(new Intent(Settings.ACTION_VPN_SETTINGS));
+        } catch (RuntimeException error) {
+            // Keep the app usable if the device build does not expose this settings page.
+        }
+    }
+
+    private void addCard(LinearLayout root, String heading, String value, String detail) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(17), dp(15), dp(17), dp(16));
+        card.setBackground(tint(SURFACE, 18));
+        LinearLayout.LayoutParams cardParams = params(-1, -2);
+        cardParams.bottomMargin = dp(12);
+        root.addView(card, cardParams);
+        card.addView(text(heading, 10, ACCENT, true));
+        TextView valueView = text(value, 17, PRIMARY, true);
+        LinearLayout.LayoutParams valueParams = params(-1, -2);
+        valueParams.topMargin = dp(8);
+        card.addView(valueView, valueParams);
+        TextView detailView = text(detail, 12, MUTED, false);
+        LinearLayout.LayoutParams detailParams = params(-1, -2);
+        detailParams.topMargin = dp(7);
+        card.addView(detailView, detailParams);
+    }
+
+    private TextView text(String value, int sizeSp, int color, boolean bold) {
+        TextView view = new TextView(this);
+        view.setText(value);
+        view.setTextSize(sizeSp);
+        view.setTextColor(color);
+        view.setGravity(Gravity.START);
+        if (bold) view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        return view;
+    }
+
+    private GradientDrawable tint(int color, int radiusDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(radiusDp));
+        return drawable;
+    }
+
+    private LinearLayout.LayoutParams params(int width, int height) {
+        return new LinearLayout.LayoutParams(width, height);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
+    }
+
+    private String safe(String value) {
+        return value == null || value.isEmpty() ? "unknown" : value;
+    }
+}

@@ -5,13 +5,19 @@ on:
     branches:
       - main
       - 'feature/ghostmode-*'
+      - 'feat/proton-vpn-security-center'
       - 'fix/ghostmode-*'
     paths:
       - 'manifests/**'
       - 'scripts/**'
       - 'ghostos/ghostmode/**'
+      - 'packages/**'
+      - 'vendor/**'
+      - 'ghostos/security_center/**'
+      - 'tests/test_security_center.py'
       - 'tests/**'
       - 'docs/GHOSTMODE-IMPLEMENTATION.md'
+      - 'docs/SECURITY-CENTER.md'
       - '.github/workflows/manifest-check.yml'
   pull_request:
     branches:
@@ -20,8 +26,11 @@ on:
       - 'manifests/**'
       - 'scripts/**'
       - 'ghostos/ghostmode/**'
+      - 'packages/**'
+      - 'vendor/**'
       - 'tests/**'
       - 'docs/GHOSTMODE-IMPLEMENTATION.md'
+      - 'docs/SECURITY-CENTER.md'
       - '.github/workflows/manifest-check.yml'
   workflow_dispatch:
 
@@ -32,6 +41,76 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Install Android 17 API 37 and build tools
+        run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0"
+
+      - name: Link Privacy Center Android resources and compile sources against API 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-37.0/android.jar"
+          aapt2="$ANDROID_HOME/build-tools/37.0.0/aapt2"
+          test -f "$android_jar"
+          test -x "$aapt2"
+          mkdir -p build/privacy-generated build/privacy-classes
+          "$aapt2" compile --dir packages/apps/GhostOSPrivacyCenter/res -o build/ghostos-privacy-resources.zip
+          "$aapt2" link \
+            -o build/ghostos-privacy-center-res.apk \
+            --manifest packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 29 --target-sdk-version 37 \
+            --java build/privacy-generated build/ghostos-privacy-resources.zip
+          test -f build/privacy-generated/org/ghostos/privacy/R.java
+          javac --release 17 -Xlint:deprecation -classpath "$android_jar" -d build/privacy-classes \
+            build/privacy-generated/org/ghostos/privacy/R.java \
+            $(find packages/apps/GhostOSPrivacyCenter/src -type f -name '*.java' -print)
+          test -f build/privacy-classes/org/ghostos/privacy/GhostModeQuickSettingsTile.class
+          test -f build/privacy-classes/org/ghostos/privacy/GhostModeDevicePolicyAdapter.class
+          test -f build/privacy-classes/org/ghostos/privacy/PrivacyActivity.class
+          test -f build/privacy-classes/org/ghostos/privacy/GhostModeAndroidPolicyManager.class
+      - name: Compile Security Center against Android 17 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-37.0/android.jar"
+          aapt2="$ANDROID_HOME/build-tools/37.0.0/aapt2"
+          test -f "$android_jar" || { echo "::error::Android API 37 android.jar is missing"; exit 1; }
+          test -x "$aapt2" || { echo "::error::Android 17 aapt2 is missing"; exit 1; }
+          mkdir -p build/security-center/classes
+          "$aapt2" link -o build/security-center/manifest-check.apk \
+            --manifest packages/apps/GhostOSSecurityCenter/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 31 --target-sdk-version 37
+          javac --release 17 -classpath "$android_jar" \
+            -d build/security-center/classes \
+            $(find packages/apps/GhostOSSecurityCenter/src -type f -name '*.java' -print)
+          test -f build/security-center/classes/org/ghostos/securitycenter/MainActivity.class
+      - name: Compile GhostOS Auditor against Android 17 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-37.0/android.jar"
+          aapt2="$ANDROID_HOME/build-tools/37.0.0/aapt2"
+          mkdir -p build/auditor/classes
+          "$aapt2" link -o build/auditor/manifest-check.apk \
+            --manifest packages/apps/GhostOSAuditor/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 31 --target-sdk-version 37
+          javac --release 17 -classpath "$android_jar" \
+            -d build/auditor/classes \
+            $(find packages/apps/GhostOSAuditor/src -type f -name '*.java' -print)
+          test -f build/auditor/classes/org/ghostos/auditor/MainActivity.class
+      - name: Test GhostOS Auditor evidence classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/auditor-tests
+          javac --release 17 -d build/auditor-tests \
+            packages/apps/GhostOSAuditor/src/org/ghostos/auditor/AuditSnapshot.java \
+            tests/java/org/ghostos/auditor/AuditSnapshotSelfTest.java
+          java -cp build/auditor-tests org.ghostos.auditor.AuditSnapshotSelfTest
       - name: Install XML validator
         run: |
           sudo apt-get update
@@ -56,6 +135,9 @@ jobs:
       - name: Validate build script
         run: bash -n scripts/ghostos-build.sh
 
+      - name: Test Android source checkout path safety
+        run: bash tests/test_ghostos_build_path_safety.sh
+
       - name: Validate GhostMode policy files
         shell: bash
         run: |
@@ -79,6 +161,77 @@ jobs:
 
       - name: Test GhostMode SystemUI integration
         run: python3 -m unittest -v ghostos.ghostmode.test_systemui
+
+      - name: Test GhostOS Security Center status model
+        run: python3 -m unittest -v tests.test_security_center
+
+      - name: Validate Security Center Android manifest
+        run: xmllint --noout packages/apps/GhostOSSecurityCenter/AndroidManifest.xml
+
+      - name: Validate GhostOS integration scripts
+        run: bash -n scripts/ghostos-build.sh && bash -n scripts/integrate-ghostos-apps.sh
+
+      - name: Test Security Center Android module contract
+        run: python3 -m unittest -v tests.test_security_center_android_module
+      - name: Test GhostOS Auditor Android module contract
+        run: python3 -m unittest -v tests.test_ghostos_auditor_android_module
+      - name: Test Android Device Owner policy adapter and resources
+        run: python3 -m unittest -v tests/test_ghostmode_device_policy_adapter.py
+      - name: Test GhostOS Quick Settings tile
+        run: python3 -m unittest -v tests/test_ghostos_quick_settings_tile.py
+      - name: Test Security Center VPN default-network evidence
+        run: python3 -m unittest -v tests.test_security_center_vpn_status_wording
+
+      - name: Keep GhostWeb VPN implementation outside GhostOS
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidates=(
+            device/ghostos
+            vendor/ghostos
+            packages/apps/GhostOSAuditor
+            packages/apps/GhostOSPrivacyCenter
+            packages/apps/GhostOSSecurityCenter
+            manifests
+          )
+          roots=()
+          for root in "${candidates[@]}"; do
+            if [[ -d "$root" ]]; then
+              roots+=("$root")
+            fi
+          done
+          (("${#roots[@]}" > 0)) || {
+            echo "::error::No GhostOS source/product roots found for VPN exclusion scan" >&2
+            exit 1
+          }
+
+          set +e
+          grep -RniE \
+            --include='*.bp' --include='*.mk' --include='*.xml' \
+            --include='*.java' --include='*.kt' \
+            --include='*.gradle' --include='*.gradle.kts' \
+            --include='*.json' --include='*.properties' --include='*.sh' \
+            'VpnHood|ghost-web-vpn|GhostWebVpn|ghostwebvpn' \
+            "${roots[@]}"
+          grep_status=$?
+          set -e
+
+          case "$grep_status" in
+            0)
+              echo "::error::GhostWeb VPN client code or product integration must remain outside GhostOS" >&2
+              exit 1
+              ;;
+            1)
+              echo "No GhostWeb VPN implementation references found in GhostOS source/product roots."
+              ;;
+            *)
+              echo "::error::GhostWeb VPN exclusion scan failed (grep exit $grep_status)" >&2
+              exit "$grep_status"
+              ;;
+          esac
+
+      - name: Test GhostOS larry app integration script
+        run: python3 -m unittest -v tests.test_ghostos_integration_script
 
       - name: Show supported devices
         run: |
