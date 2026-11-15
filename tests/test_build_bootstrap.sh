@@ -38,6 +38,9 @@ MOCK
 chmod +x "$WORK/bin/repo"
 export PATH="$WORK/bin:$PATH"
 export GHOSTOS_REPO_LOG="$WORK/repo.log"
+# Lower thresholds only for mocked offline tests; production defaults stay strict.
+export GHOSTOS_MIN_RAM_GIB=1
+export GHOSTOS_MIN_DISK_GB=1
 
 # Keep GhostOS product identity while inheriting all pinned upstream larry
 # device composition and firmware-derived build-property overrides.
@@ -109,4 +112,25 @@ fi
 grep -q "must not be the filesystem root" "$WORK/root.out"
 test ! -s "$GHOSTOS_REPO_LOG"
 
-echo "GhostOS Android 17 bootstrap regression: 3 init cases and 3 source-path safety cases passed"
+# Resource guards must stop before creating a source target or invoking repo.
+LOW_RAM="$WORK/low-ram-target"
+: > "$GHOSTOS_REPO_LOG"
+if ANDROID_DIR="$LOW_RAM" GHOSTOS_MIN_RAM_GIB=999999 GHOSTOS_MIN_DISK_GB=1 DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/low-ram.out" 2>&1; then
+  echo "Android 17 build unexpectedly accepted an insufficient RAM threshold" >&2
+  exit 1
+fi
+grep -q "requires at least 999999 GiB RAM" "$WORK/low-ram.out"
+test ! -e "$LOW_RAM"
+test ! -s "$GHOSTOS_REPO_LOG"
+
+LOW_DISK="$WORK/low-disk-target"
+: > "$GHOSTOS_REPO_LOG"
+if ANDROID_DIR="$LOW_DISK" GHOSTOS_MIN_RAM_GIB=1 GHOSTOS_MIN_DISK_GB=999999 DEVICE=larry JOBS=2 bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/low-disk.out" 2>&1; then
+  echo "Android 17 build unexpectedly accepted an insufficient disk threshold" >&2
+  exit 1
+fi
+grep -q "requires at least 999999 GB free disk" "$WORK/low-disk.out"
+test ! -e "$LOW_DISK"
+test ! -s "$GHOSTOS_REPO_LOG"
+
+echo "GhostOS Android 17 bootstrap regression: 3 init cases, 3 source-path safety cases and 2 resource preflight cases passed"
