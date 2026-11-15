@@ -47,7 +47,7 @@ jobs:
           packages: platform-tools
 
       - name: Install Android 17 API 37 and build tools
-        run: sdkmanager "platforms;android-37.0" "build-tools;37.0.0"
+        run: sdkmanager "platforms;android-36" "platforms;android-37.0" "build-tools;37.0.0"
 
       - name: Link Privacy Center Android resources and compile sources against API 37
         shell: bash
@@ -102,6 +102,44 @@ jobs:
             -d build/auditor/classes \
             $(find packages/apps/GhostOSAuditor/src -type f -name '*.java' -print)
           test -f build/auditor/classes/org/ghostos/auditor/MainActivity.class
+      - name: Compile GhostOS system apps against LineageOS 23.2 Android 16 API 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-36/android.jar"
+          aapt2="$ANDROID_HOME/build-tools/37.0.0/aapt2"
+          test -f "$android_jar" || { echo "::error::Android 16 API 36 android.jar is missing"; exit 1; }
+          test -x "$aapt2" || { echo "::error::Android build tools 37 aapt2 is missing"; exit 1; }
+
+          mkdir -p build/android16/privacy-generated build/android16/privacy-classes
+          "$aapt2" compile --dir packages/apps/GhostOSPrivacyCenter/res -o build/android16/privacy-resources.zip
+          "$aapt2" link -o build/android16/privacy-center-res.apk \
+            --manifest packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 29 --target-sdk-version 36 \
+            --java build/android16/privacy-generated build/android16/privacy-resources.zip
+          javac --release 17 -classpath "$android_jar" -d build/android16/privacy-classes \
+            build/android16/privacy-generated/org/ghostos/privacy/R.java \
+            $(find packages/apps/GhostOSPrivacyCenter/src -type f -name '*.java' -print)
+          test -f build/android16/privacy-classes/org/ghostos/privacy/GhostModeQuickSettingsTile.class
+          test -f build/android16/privacy-classes/org/ghostos/privacy/GhostModeDevicePolicyAdapter.class
+          test -f build/android16/privacy-classes/org/ghostos/privacy/PrivacyActivity.class
+
+          mkdir -p build/android16/security-center-classes
+          "$aapt2" link -o build/android16/security-center-manifest.apk \
+            --manifest packages/apps/GhostOSSecurityCenter/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 31 --target-sdk-version 36
+          javac --release 17 -classpath "$android_jar" -d build/android16/security-center-classes \
+            $(find packages/apps/GhostOSSecurityCenter/src -type f -name '*.java' -print)
+          test -f build/android16/security-center-classes/org/ghostos/securitycenter/MainActivity.class
+
+          mkdir -p build/android16/auditor-classes
+          "$aapt2" link -o build/android16/auditor-manifest.apk \
+            --manifest packages/apps/GhostOSAuditor/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 31 --target-sdk-version 36
+          javac --release 17 -classpath "$android_jar" -d build/android16/auditor-classes \
+            $(find packages/apps/GhostOSAuditor/src -type f -name '*.java' -print)
+          test -f build/android16/auditor-classes/org/ghostos/auditor/MainActivity.class
+
       - name: Test GhostOS Auditor evidence classification
         shell: bash
         run: |
