@@ -106,7 +106,7 @@ jobs:
         run: |
           set -euo pipefail
           if grep -RniE 'VpnHood|ghost-web-vpn' \
-            device/ghostos vendor/ghostos packages/apps/GhostOSPrivacyCenter packages/apps/GhostOSSecurityCenter manifests; then
+            device/ghostos vendor/ghostos packages/apps manifests; then
             echo "::error::GhostWeb VPN must remain outside GhostOS product configuration" >&2
             exit 1
           fi
