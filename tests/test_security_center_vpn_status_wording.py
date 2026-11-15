@@ -12,6 +12,18 @@ class SecurityCenterVpnStatusWordingTests(unittest.TestCase):
         self.assertIn("manager.getNetworkCapabilities(activeNetwork)", source)
         self.assertNotIn("manager.getAllNetworks()", source)
         self.assertIn(
+            'if (capabilities == null) {',
+            source,
+        )
+        self.assertIn(
+            'return "Default network VPN transport: unknown (capabilities unavailable)";',
+            source,
+        )
+        self.assertLess(
+            source.index('if (capabilities == null) {'),
+            source.index('capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)'),
+        )
+        self.assertIn(
             'return "Default network uses VPN transport · provider/coverage unverified";',
             source,
         )
