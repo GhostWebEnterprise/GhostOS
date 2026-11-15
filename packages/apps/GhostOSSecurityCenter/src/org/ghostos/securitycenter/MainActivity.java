@@ -148,8 +148,10 @@ public final class MainActivity extends Activity {
             if (activeNetwork == null) return "Default network: unavailable";
 
             NetworkCapabilities capabilities = manager.getNetworkCapabilities(activeNetwork);
-            if (capabilities != null
-                    && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+            if (capabilities == null) {
+                return "Default network VPN transport: unknown (capabilities unavailable)";
+            }
+            if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
                 return "Default network uses VPN transport · provider/coverage unverified";
             }
             return "Default network does not report VPN transport";
