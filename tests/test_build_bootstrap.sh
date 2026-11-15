@@ -136,4 +136,4 @@ test ! -e "$LOW_DISK"
 test ! -s "$GHOSTOS_REPO_LOG"
 
 
-echo "GhostOS Android 17 bootstrap regression: 3 init cases and 3 source-path safety cases passed"
+echo "GhostOS Android 17 bootstrap regression: 3 init cases, 3 source-path safety cases and 2 resource preflight cases passed"
