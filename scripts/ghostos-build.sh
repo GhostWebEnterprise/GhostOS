@@ -53,6 +53,55 @@ case "$ROOT/" in
     ;;
 esac
 
+# A full LineageOS 24.0 sync and Soong build must not start on a small host.
+# 56 GiB visible RAM is the practical floor for a 64-GB-class Linux builder;
+# keep at least 400 GB free on the filesystem that will hold the source tree.
+MIN_RAM_GIB="${GHOSTOS_MIN_RAM_GIB:-56}"
+MIN_DISK_GB="${GHOSTOS_MIN_DISK_GB:-400}"
+[[ "$MIN_RAM_GIB" =~ ^[1-9][0-9]*$ ]] || {
+  echo "ERROR: GHOSTOS_MIN_RAM_GIB must be a positive integer" >&2
+  exit 1
+}
+[[ "$MIN_DISK_GB" =~ ^[1-9][0-9]*$ ]] || {
+  echo "ERROR: GHOSTOS_MIN_DISK_GB must be a positive integer" >&2
+  exit 1
+}
+[[ -r /proc/meminfo ]] || {
+  echo "ERROR: Linux /proc/meminfo is required; run the Android 17 build on a Linux host" >&2
+  exit 1
+}
+MEM_TOTAL_KIB="$(awk '/^MemTotal:/ { print $2; exit }' /proc/meminfo)"
+[[ "$MEM_TOTAL_KIB" =~ ^[1-9][0-9]*$ ]] || {
+  echo "ERROR: could not determine total Linux memory from /proc/meminfo" >&2
+  exit 1
+}
+MIN_RAM_KIB=$((MIN_RAM_GIB * 1024 * 1024))
+if (( MEM_TOTAL_KIB < MIN_RAM_KIB )); then
+  echo "ERROR: GhostOS Android 17 full build requires at least ${MIN_RAM_GIB} GiB RAM; detected $((MEM_TOTAL_KIB / 1024 / 1024)) GiB" >&2
+  exit 1
+fi
+
+DISK_PROBE="$ANDROID_DIR"
+while [[ ! -d "$DISK_PROBE" ]]; do
+  PARENT_DIR="$(dirname "$DISK_PROBE")"
+  [[ "$PARENT_DIR" != "$DISK_PROBE" ]] || {
+    echo "ERROR: could not locate an existing filesystem for $ANDROID_DIR" >&2
+    exit 1
+  }
+  DISK_PROBE="$PARENT_DIR"
+done
+DISK_AVAILABLE_KIB="$(df -Pk "$DISK_PROBE" | awk 'END { print $4 }')"
+[[ "$DISK_AVAILABLE_KIB" =~ ^[0-9]+$ ]] || {
+  echo "ERROR: could not determine free disk space for $DISK_PROBE" >&2
+  exit 1
+}
+MIN_DISK_KIB=$((MIN_DISK_GB * 1000000 / 1024))
+if (( DISK_AVAILABLE_KIB < MIN_DISK_KIB )); then
+  echo "ERROR: GhostOS Android 17 full build requires at least ${MIN_DISK_GB} GB free disk; detected $((DISK_AVAILABLE_KIB * 1024 / 1000000000)) GB" >&2
+  exit 1
+fi
+echo "==> Host preflight passed: $((MEM_TOTAL_KIB / 1024 / 1024)) GiB RAM and $((DISK_AVAILABLE_KIB * 1024 / 1000000000)) GB free disk"
+
 mkdir -p "$ANDROID_DIR"
 ANDROID_DIR="$(cd "$ANDROID_DIR" && pwd -P)"
 
