@@ -41,8 +41,11 @@ action. It never activates or restores a policy itself.
   unavailable.
 - The VPN entry point opens Android's VPN settings only. GhostWeb VPN code,
   routing and service integration are explicitly outside GhostOS.
-- The module uses the development `testkey` certificate in Soong. This is not
-  a production-signed APK or release image.
+- The Soong module declares `certificate: "platform"`, which selects the
+  platform certificate configured by the Android build tree. The actual
+  certificate material depends on that build's key configuration. CI has not
+  produced an APK or ROM image, so no production signing or release image is
+  verified.
 
 CI compiles and validates the Privacy Center sources against the configured
 Android SDK. That is not a full LineageOS/Soong ROM build, a flashable image,
