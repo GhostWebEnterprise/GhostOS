@@ -6,40 +6,24 @@ SOURCE = ROOT / "packages/apps/GhostOSSecurityCenter/src/org/ghostos/securitycen
 
 
 class SecurityCenterVpnStatusWordingTests(unittest.TestCase):
-    def test_vpn_status_reports_only_the_active_default_network(self):
+    def test_vpn_status_uses_only_active_default_network_evidence(self):
         source = SOURCE.read_text(encoding="utf-8")
+        evidence = (SOURCE.parent / "VpnTransportEvidence.java").read_text(encoding="utf-8")
         self.assertIn("manager.getActiveNetwork()", source)
         self.assertIn("manager.getNetworkCapabilities(activeNetwork)", source)
         self.assertNotIn("manager.getAllNetworks()", source)
-        self.assertIn(
-            'if (capabilities == null) {',
-            source,
-        )
-        self.assertIn(
-            'return "Default network VPN transport: unknown (capabilities unavailable)";',
-            source,
-        )
-        self.assertLess(
-            source.index('if (capabilities == null) {'),
-            source.index('capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)'),
-        )
-        self.assertIn(
-            'return "Default network uses VPN transport · provider/coverage unverified";',
-            source,
-        )
-        self.assertIn(
-            'return "Default network does not report VPN transport";',
-            source,
-        )
-        self.assertIn(
-            "A VPN transport on the default network does not prove all-app coverage, provider identity or lockdown is active.",
-            source,
-        )
-        self.assertIn(
-            'if (activeNetwork == null) return "Default network: unavailable";',
-            source,
-        )
-        self.assertNotIn('return "VPN active · provider unverified";', source)
+        self.assertIn("NetworkCapabilities.TRANSPORT_VPN", source)
+        self.assertIn("VpnTransportEvidence.classify(false, false, false)", source)
+        self.assertIn("VpnTransportEvidence.classify(true, false, false)", source)
+        self.assertIn("VpnTransportEvidence.unavailable(", source)
+        self.assertIn("VPN_TRANSPORT_OBSERVED", evidence)
+        self.assertIn("NO_VPN_TRANSPORT_OBSERVED", evidence)
+        self.assertIn("State.UNKNOWN", evidence)
+        self.assertIn("other protection not assessed", evidence)
+        self.assertIn("provider/coverage unverified", evidence)
+        self.assertIn("per-app coverage", evidence)
+        self.assertIn("lockdown", evidence)
+        self.assertNotIn("VpnService", source)
 
 
 if __name__ == "__main__":

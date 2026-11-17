@@ -149,6 +149,15 @@ jobs:
             packages/apps/GhostOSAuditor/src/org/ghostos/auditor/AuditSnapshot.java \
             tests/java/org/ghostos/auditor/AuditSnapshotSelfTest.java
           java -cp build/auditor-tests org.ghostos.auditor.AuditSnapshotSelfTest
+      - name: Test Security Center VPN transport evidence classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/security-center-tests
+          javac --release 17 -d build/security-center-tests \
+            packages/apps/GhostOSSecurityCenter/src/org/ghostos/securitycenter/VpnTransportEvidence.java \
+            tests/java/org/ghostos/securitycenter/VpnTransportEvidenceSelfTest.java
+          java -cp build/security-center-tests org.ghostos.securitycenter.VpnTransportEvidenceSelfTest
       - name: Install XML validator
         run: |
           sudo apt-get update

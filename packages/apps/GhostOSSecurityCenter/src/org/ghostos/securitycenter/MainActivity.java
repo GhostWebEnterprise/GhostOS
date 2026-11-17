@@ -142,21 +142,27 @@ public final class MainActivity extends Activity {
 
     private String vpnStatus() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (manager == null) return "Default network: unknown";
+        if (manager == null) {
+            return VpnTransportEvidence.unavailable(
+                    "VPN status: connectivity service unavailable").label;
+        }
         try {
             Network activeNetwork = manager.getActiveNetwork();
-            if (activeNetwork == null) return "Default network: unavailable";
+            if (activeNetwork == null) {
+                return VpnTransportEvidence.classify(false, false, false).label;
+            }
 
             NetworkCapabilities capabilities = manager.getNetworkCapabilities(activeNetwork);
             if (capabilities == null) {
-                return "Default network VPN transport: unknown (capabilities unavailable)";
+                return VpnTransportEvidence.classify(true, false, false).label;
             }
-            if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                return "Default network uses VPN transport · provider/coverage unverified";
-            }
-            return "Default network does not report VPN transport";
+            return VpnTransportEvidence.classify(
+                    true,
+                    true,
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+            ).label;
         } catch (RuntimeException error) {
-            return "VPN status: unavailable";
+            return VpnTransportEvidence.unavailable("VPN status: unavailable").label;
         }
     }
 
