@@ -184,6 +184,12 @@ jobs:
 
       - name: Test Android source checkout path safety
         run: bash tests/test_ghostos_build_path_safety.sh
+      - name: Validate read-only larry device smoke harness
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/ghostos-device-smoke.sh
+          bash tests/test_ghostos_device_smoke.sh
 
       - name: Validate GhostMode policy files
         shell: bash
