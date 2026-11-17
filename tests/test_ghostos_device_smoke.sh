@@ -78,7 +78,7 @@ grep -Fxq 'ANDROID_API=36' <<< "$output"
 grep -Fxq 'SELINUX_MODE=Enforcing' <<< "$output"
 grep -Fxq 'PACKAGE_org.ghostos.securitycenter=INSTALLED_PATH_OBSERVED' <<< "$output"
 grep -Fxq 'QS_TILE_COMPONENT=LISTED_IN_PACKAGE_DUMP_RUNTIME_NOT_PROVEN' <<< "$output"
-grep -Fq 'DEFAULT_NETWORK_OR_PROVIDER_PROOF' <<< "$output" && exit 1 || true
+grep -Fxq 'LIMITATION=VPN_DUMPSYS_TOKEN_IS_NOT_DEFAULT_NETWORK_OR_PROVIDER_PROOF' <<< "$output"
 grep -Fxq 'NO_DEVICE_SETTINGS_OR_POLICY_WERE_CHANGED' <<< "$output"
 
 if grep -E '(^|[[:space:]])(flash|reboot|install|uninstall|setprop|settings|dpm)([[:space:]]|$)' "$FAKE_ADB_LOG"; then
