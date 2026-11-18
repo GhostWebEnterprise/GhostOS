@@ -65,8 +65,10 @@ run_case() {
   cmp "$ROOT/manifests/ghostos-24.0.xml" "$checkout/.repo/local_manifests/ghostos.xml"
   cmp "$ROOT/device/ghostos/larry/ghostos_larry.mk" "$checkout/device/ghostos/larry/ghostos_larry.mk"
   cmp "$ROOT/vendor/ghostos/config/common.mk" "$checkout/vendor/ghostos/config/common.mk"
-  cmp "$ROOT/packages/apps/GhostOSPrivacyCenter/Android.bp" "$checkout/packages/apps/GhostOSPrivacyCenter/Android.bp"
-  cmp "$ROOT/packages/apps/GhostOSSecurityCenter/Android.bp" "$checkout/packages/apps/GhostOSSecurityCenter/Android.bp"
+  for app in GhostOSPrivacyCenter GhostOSSecurityCenter GhostOSAuditor; do
+    cmp "$ROOT/packages/apps/$app/Android.bp" "$checkout/packages/apps/$app/Android.bp"
+    cmp "$ROOT/packages/apps/$app/AndroidManifest.xml" "$checkout/packages/apps/$app/AndroidManifest.xml"
+  done
   grep -Fxq 'lunch ghostos_larry-userdebug' "$GHOSTOS_BUILD_LOG"
   grep -Fxq 'm bacon' "$GHOSTOS_BUILD_LOG"
 }
