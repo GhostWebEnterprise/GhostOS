@@ -254,7 +254,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for module in packages/apps/GhostOSPrivacyCenter/Android.bp packages/apps/GhostOSSecurityCenter/Android.bp; do
+          for module in packages/apps/GhostOSPrivacyCenter/Android.bp packages/apps/GhostOSSecurityCenter/Android.bp packages/apps/GhostOSAuditor/Android.bp; do
             grep -Fq 'certificate: "platform"' "$module" || {
               echo "::error::GhostOS system app must use the platform certificate: $module" >&2
               exit 1
@@ -265,8 +265,16 @@ jobs:
             }
           done
 
-      - name: Verify Security Center is installed in larry product
-        run: grep -Fq "GhostOSSecurityCenter" vendor/ghostos/config/common.mk
+      - name: Verify GhostOS system apps are installed in larry product
+        shell: bash
+        run: |
+          set -euo pipefail
+          for package in GhostOSPrivacyCenter GhostOSSecurityCenter GhostOSAuditor; do
+            grep -Fq "$package" vendor/ghostos/config/common.mk || {
+              echo "::error::Missing $package from the larry product package list" >&2
+              exit 1
+            }
+          done
 
       - name: Show supported devices
         run: grep -E 'android_device_oneplus_larry' manifests/ghostos-24.0.xml
