@@ -21,6 +21,7 @@ on:
   pull_request:
     branches:
       - main
+      - 'feature/universal-gsi-larry'
     paths:
       - 'manifests/**'
       - 'scripts/**'
