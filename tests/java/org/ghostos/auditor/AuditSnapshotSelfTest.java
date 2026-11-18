@@ -47,9 +47,14 @@ public final class AuditSnapshotSelfTest {
     public static void main(String[] args) {
         expect(AuditSnapshot.State.OBSERVED, AuditSnapshot.verifiedBoot("green", "1"));
         expect(AuditSnapshot.State.FAIL, AuditSnapshot.verifiedBoot("red", "1"));
+        expect(AuditSnapshot.State.FAIL, AuditSnapshot.verifiedBoot("red", "0"));
         expect(AuditSnapshot.State.WARNING, AuditSnapshot.verifiedBoot("orange", "0"));
+        expect(AuditSnapshot.State.UNKNOWN, AuditSnapshot.verifiedBoot("orange", "1"));
         expect(AuditSnapshot.State.WARNING, AuditSnapshot.verifiedBoot("yellow", "1"));
-        expect(AuditSnapshot.State.WARNING, AuditSnapshot.verifiedBoot("green", "0"));
+        expect(AuditSnapshot.State.UNKNOWN, AuditSnapshot.verifiedBoot("yellow", "0"));
+        expect(AuditSnapshot.State.UNKNOWN, AuditSnapshot.verifiedBoot("green", "0"));
+        expect(AuditSnapshot.State.WARNING, AuditSnapshot.verifiedBoot("unknown", "0"));
+        expect(AuditSnapshot.State.UNKNOWN, AuditSnapshot.verifiedBoot("green", ""));
         expect(AuditSnapshot.State.UNKNOWN, AuditSnapshot.verifiedBoot("", ""));
         expect(AuditSnapshot.State.PASS, AuditSnapshot.selinux(true, true));
         expect(AuditSnapshot.State.WARNING, AuditSnapshot.selinux(true, false));
