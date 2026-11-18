@@ -129,17 +129,36 @@ public final class AuditSnapshot {
             return new Finding("Verified Boot", State.FAIL, "Platform reports red state",
                     "ro.boot.verifiedbootstate", "Platform property evidence; inspect boot logs and vbmeta separately.");
         }
-        if ("orange".equals(state) || "yellow".equals(state) || "0".equals(locked)) {
-            String detail = "yellow".equals(state) ? "Platform reports a custom trust root"
-                    : "Platform reports an unlocked boot state";
-            return new Finding("Verified Boot", State.WARNING, detail,
+
+        // These two properties describe related boot-chain state. Do not turn contradictory
+        // values into a warning or an apparent positive result: the evidence is inconclusive.
+        if (("green".equals(state) && "0".equals(locked))
+                || ("orange".equals(state) && "1".equals(locked))
+                || ("yellow".equals(state) && "0".equals(locked))) {
+            return new Finding("Verified Boot", State.UNKNOWN, "Inconsistent boot-state properties",
                     "ro.boot.verifiedbootstate / ro.boot.flash.locked",
-                    "This is not independent cryptographic verification of the boot chain.");
+                    "The boot-state and bootloader-lock properties conflict; no trust conclusion is made.");
         }
+
         if ("green".equals(state) && "1".equals(locked)) {
             return new Finding("Verified Boot", State.OBSERVED, "Platform reports green state and locked bootloader",
                     "ro.boot.verifiedbootstate / ro.boot.flash.locked",
                     "Platform-reported properties only; no independent AVB/vbmeta verification was performed.");
+        }
+        if ("orange".equals(state)) {
+            return new Finding("Verified Boot", State.WARNING, "Platform reports an unlocked boot state",
+                    "ro.boot.verifiedbootstate / ro.boot.flash.locked",
+                    "Platform property evidence only; this is not independent cryptographic verification of the boot chain.");
+        }
+        if ("yellow".equals(state)) {
+            return new Finding("Verified Boot", State.WARNING, "Platform reports a custom trust root",
+                    "ro.boot.verifiedbootstate / ro.boot.flash.locked",
+                    "Platform property evidence only; the custom trust root has not been independently validated.");
+        }
+        if ("0".equals(locked)) {
+            return new Finding("Verified Boot", State.WARNING, "Bootloader lock property reports unlocked",
+                    "ro.boot.flash.locked",
+                    "Only the lock property was conclusive; verified-boot state was unavailable or unrecognized.");
         }
         return new Finding("Verified Boot", State.UNKNOWN, "Unknown",
                 "ro.boot.verifiedbootstate / ro.boot.flash.locked",
