@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 PRODUCT_PACKAGES += \
     GhostOSPrivacyCenter \
-    GhostOSSecurityCenter
+    GhostOSSecurityCenter \
+    GhostOSAuditor
 PRODUCT_PACKAGE_OVERLAYS += vendor/ghostos/overlay
 PRODUCT_SYSTEM_PROPERTIES += ro.ghostos.channel=experimental
 # GhostWire is a normal presigned system app, never a platform-signed privileged app.

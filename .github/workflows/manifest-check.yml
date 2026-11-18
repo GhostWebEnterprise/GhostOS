@@ -19,6 +19,7 @@ on:
       - 'vendor/ghostos/**'
       - 'packages/apps/GhostOSPrivacyCenter/**'
       - 'packages/apps/GhostOSSecurityCenter/**'
+      - 'packages/apps/GhostOSAuditor/**'
       - '.github/workflows/manifest-check.yml'
   pull_request:
     branches:
@@ -35,6 +36,7 @@ on:
       - 'vendor/ghostos/**'
       - 'packages/apps/GhostOSPrivacyCenter/**'
       - 'packages/apps/GhostOSSecurityCenter/**'
+      - 'packages/apps/GhostOSAuditor/**'
       - '.github/workflows/manifest-check.yml'
   workflow_dispatch:
 
@@ -98,6 +100,33 @@ jobs:
             -d build/security-center/classes \
             $(find packages/apps/GhostOSSecurityCenter/src -type f -name '*.java' -print)
           test -f build/security-center/classes/org/ghostos/securitycenter/MainActivity.class
+
+      - name: Compile GhostOS Auditor against Android 17 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          android_jar="$ANDROID_HOME/platforms/android-37.0/android.jar"
+          aapt2="$ANDROID_HOME/build-tools/37.0.0/aapt2"
+          test -f "$android_jar"
+          test -x "$aapt2"
+          mkdir -p build/auditor/classes
+          "$aapt2" link -o build/auditor/manifest-check.apk \
+            --manifest packages/apps/GhostOSAuditor/AndroidManifest.xml \
+            -I "$android_jar" --min-sdk-version 31 --target-sdk-version 37
+          javac --release 17 -Xlint:deprecation -classpath "$android_jar" \
+            -d build/auditor/classes \
+            $(find packages/apps/GhostOSAuditor/src -type f -name '*.java' -print)
+          test -f build/auditor/classes/org/ghostos/auditor/MainActivity.class
+
+      - name: Test GhostOS Auditor evidence classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/auditor-tests
+          javac --release 17 -d build/auditor-tests \
+            packages/apps/GhostOSAuditor/src/org/ghostos/auditor/AuditSnapshot.java \
+            tests/java/org/ghostos/auditor/AuditSnapshotSelfTest.java
+          java -cp build/auditor-tests org.ghostos.auditor.AuditSnapshotSelfTest
       - name: Test Security Center VPN status wording
         run: python3 -m unittest -v tests/test_security_center_vpn_status_wording.py
 
@@ -122,6 +151,7 @@ jobs:
               "manifests/ghostos_larry.xml",
               "packages/apps/GhostOSPrivacyCenter/AndroidManifest.xml",
               "packages/apps/GhostOSSecurityCenter/AndroidManifest.xml",
+              "packages/apps/GhostOSAuditor/AndroidManifest.xml",
               "packages/apps/GhostOSPrivacyCenter/res/values/strings.xml",
               "packages/apps/GhostOSPrivacyCenter/res/values/styles.xml",
               "packages/apps/GhostOSPrivacyCenter/res/xml/device_admin.xml",
