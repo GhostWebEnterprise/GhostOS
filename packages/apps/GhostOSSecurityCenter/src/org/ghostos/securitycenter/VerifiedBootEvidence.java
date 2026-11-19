@@ -36,7 +36,7 @@ public final class VerifiedBootEvidence {
         if (("green".equals(state) && "0".equals(locked))
                 || ("orange".equals(state) && "1".equals(locked))
                 || ("yellow".equals(state) && "0".equals(locked))) {
-            return of(State.UNKNOWN, "Verified Boot: unknown · inconsistent boot-state properties",
+            return of(State.UNKNOWN, "Inconsistent boot-state properties · Verified Boot: unknown",
                     "The boot-state and bootloader-lock properties conflict; no trust conclusion is made.");
         }
 
