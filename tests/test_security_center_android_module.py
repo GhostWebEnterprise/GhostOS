@@ -15,6 +15,9 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         manifest = (APP / "AndroidManifest.xml").read_text(encoding="utf-8")
         self.assertIn('package="org.ghostos.securitycenter"', manifest)
         self.assertIn('android.permission.ACCESS_NETWORK_STATE', manifest)
+        self.assertIn('android.permission.READ_SECURE_SETTINGS', manifest)
+        self.assertIn('certificate: "platform"', (APP / "Android.bp").read_text(encoding="utf-8"))
+        self.assertNotIn('android.permission.WRITE_SECURE_SETTINGS', manifest)
         self.assertIn('<package android:name="ch.protonvpn.android" />', manifest)
         self.assertIn('<package android:name="org.ghostos.privacy" />', manifest)
         self.assertNotIn('QUERY_ALL_PACKAGES', manifest)
@@ -57,6 +60,8 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertIn('readSystemProperty("ro.boot.verifiedbootstate"', source)
         self.assertIn('readSelinuxFlag("isSELinuxEnforced")', source)
         self.assertIn("AVB not independently verified", source)
+        self.assertIn("VerifiedBootEvidence.classify(", source)
+        self.assertNotIn('if ("orange".equals(state)', source)
         self.assertIn("policy quality and rule coverage are not assessed", source)
         self.assertIn('Class.forName("android.os.SystemProperties")', source)
         self.assertIn('Class.forName("android.os.SELinux")', source)
@@ -82,6 +87,15 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertIn("System updater is not available on this build.", source)
         self.assertNotIn("applyPayload", source)
         self.assertNotIn("updateSystemUpdateInfo", source)
+
+
+    def test_verified_boot_status_uses_conservative_shared_classifier(self):
+        source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
+        evidence = (APP / "src/org/ghostos/securitycenter/VerifiedBootEvidence.java").read_text(encoding="utf-8")
+        self.assertIn("VerifiedBootEvidence.classify(", source)
+        self.assertIn("Inconsistent boot-state properties", evidence)
+        self.assertIn("AVB not independently verified", evidence)
+        self.assertIn("State.UNKNOWN", evidence)
 
     def test_security_center_links_to_privacy_center(self):
         source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
