@@ -6,7 +6,7 @@ GhostOS uses a common Android/GhostOS layer with small, independently maintained
 
 | Device | Codename | SoC | Foundation | Status |
 |---|---|---|---|---|
-| OnePlus Nord CE 3 Lite 5G | `larry` | SM6375 / Snapdragon 695 | LineageOS 23.2 device tree + SM6375 common | **Primary port** |
+| OnePlus Nord CE 3 Lite 5G | `larry` | SM6375 / Snapdragon 695 | LineageOS 24.0 / Android 17 (pinned manifest) | **Primary port** |
 | OnePlus Nord CE 2 Lite 5G | `oscaro` | SM6375 / Snapdragon 695 | LineageOS device tree/common | Candidate |
 | OnePlus Nord CE 4 5G | `benz` | Snapdragon 7 Gen 3 family | Existing community/Lineage ecosystem | Candidate |
 | OnePlus Nord CE 5G | `ebba` | SM7225 | Existing community device tree | Candidate |
@@ -32,6 +32,8 @@ Each port must provide:
 
 ## larry first
 
-`larry` is the first hardware target. Its public LineageOS 23.2 device tree exists and declares a dependency on `android_device_oneplus_sm6375-common`. The kernel family is `android_kernel_oneplus_sm6375`.
+`larry` is the first hardware target. The active Android 17 bring-up uses the pinned LineageOS 24.0 manifest at `manifests/ghostos-24.0.xml`, including the larry device tree, SM6375 common tree, Oplus hardware, kernel and vendor repositories. The separate 23.2 manifest remains in the repository but is not selected by the current Android 17 build script.
+
+The port remains experimental: no complete Soong/product build, flashable image or physical boot is verified. After a device is booted, `scripts/ghostos-device-smoke.sh` performs read-only checks for the larry codename, API level and required GhostOS packages. It only reports boot properties as observations; it does not verify AVB signatures or hardware functionality.
 
 GhostOS should consume those upstream foundations through manifests and apply only GhostOS-specific changes in this project or dedicated GhostOS device repositories.
