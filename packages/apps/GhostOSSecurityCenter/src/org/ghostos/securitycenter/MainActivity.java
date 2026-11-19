@@ -32,6 +32,8 @@ public final class MainActivity extends Activity {
     private static final int ACCENT = Color.rgb(111, 170, 255);
     private static final int PRIMARY = Color.rgb(241, 245, 252);
     private static final int MUTED = Color.rgb(164, 178, 199);
+    private static final String SETTING_ALWAYS_ON_VPN_APP = "always_on_vpn_app";
+    private static final String SETTING_ALWAYS_ON_VPN_LOCKDOWN = "always_on_vpn_lockdown";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +71,7 @@ public final class MainActivity extends Activity {
         root.addView(intro, introParams);
 
         addCard(root, "NETWORK PROTECTION", vpnStatus(), "A VPN transport does not prove all-app coverage, provider identity or lockdown is active.");
-        addCard(root, "VPN LOCKDOWN", "Always-on / lockdown: not verified", "Configure these OS-managed settings in Android VPN settings. Lockdown can block all network traffic when the VPN is unavailable.");
+        addCard(root, "VPN LOCKDOWN", vpnLockdownStatus(), "Read-only Android Settings.Secure configuration. This does not prove VPN connectivity, provider identity, all-app coverage or lockdown allowlist contents.");
         addCard(root, "DEVICE INTEGRITY", bootIntegrityStatus(), "Platform-reported boot properties only. Green/locked is not independent vbmeta signature verification.");
         addCard(root, "SELINUX", selinuxStatus(), "Enforcement mode from Android SELinux framework; policy quality and rule coverage are not assessed here.");
         addCard(root, "SECURITY UPDATES", "Security patch: " + safe(Build.VERSION.SECURITY_PATCH), "Android release: " + safe(Build.VERSION.RELEASE) + "  ·  Device: " + safe(Build.DEVICE));
@@ -106,36 +108,61 @@ public final class MainActivity extends Activity {
 
     private String vpnStatus() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (manager == null) return "Default network: unknown";
+        if (manager == null) {
+            return VpnTransportEvidence.unavailable(
+                    "VPN status: connectivity service unavailable").label;
+        }
         try {
             Network activeNetwork = manager.getActiveNetwork();
-            if (activeNetwork == null) return "Default network: unavailable";
+            if (activeNetwork == null) {
+                return VpnTransportEvidence.classify(false, false, false).label;
+            }
 
             NetworkCapabilities capabilities = manager.getNetworkCapabilities(activeNetwork);
-            if (capabilities != null
-                    && capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
-                return "Default network uses VPN transport · provider/coverage unverified";
+            if (capabilities == null) {
+                return VpnTransportEvidence.classify(true, false, false).label;
             }
-            return "Default network does not report VPN transport";
+            return VpnTransportEvidence.classify(
+                    true,
+                    true,
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+            ).label;
         } catch (RuntimeException error) {
-            return "VPN status: unavailable";
+            return VpnTransportEvidence.unavailable("VPN status: unavailable").label;
+        }
+    }
+
+    private String vpnLockdownStatus() {
+        try {
+            String packageName = Settings.Secure.getString(
+                    getContentResolver(), SETTING_ALWAYS_ON_VPN_APP);
+            String lockdown = Settings.Secure.getString(
+                    getContentResolver(), SETTING_ALWAYS_ON_VPN_LOCKDOWN);
+
+            if (packageName == null || packageName.isEmpty()) {
+                if ("1".equals(lockdown)) {
+                    return "Lockdown setting present · always-on package unknown";
+                }
+                if ("0".equals(lockdown)) return "Always-on VPN package: not configured";
+                return "Always-on VPN / lockdown: unknown";
+            }
+            if ("1".equals(lockdown)) {
+                return "Always-on VPN configured · lockdown setting enabled";
+            }
+            if ("0".equals(lockdown)) {
+                return "Always-on VPN configured · lockdown disabled";
+            }
+            return "Always-on VPN configured · lockdown unknown";
+        } catch (RuntimeException error) {
+            return "Always-on VPN / lockdown: unknown";
         }
     }
 
     private String bootIntegrityStatus() {
-        try {
-            String state = readSystemProperty("ro.boot.verifiedbootstate", "unknown");
-            String locked = readSystemProperty("ro.boot.flash.locked", "unknown");
-            if ("red".equals(state)) return "Platform reports Verified Boot: red";
-            if ("orange".equals(state) || "0".equals(locked)) return "Platform reports bootloader unlocked";
-            if ("green".equals(state) && "1".equals(locked)) {
-                return "Platform reports green state · bootloader locked · AVB not independently verified";
-            }
-            if ("yellow".equals(state) && "1".equals(locked)) return "Platform reports yellow state · custom trust root";
-            return "Verified Boot: unknown";
-        } catch (RuntimeException error) {
-            return "Verified Boot: unknown";
-        }
+        VerifiedBootEvidence evidence = VerifiedBootEvidence.classify(
+                readSystemProperty("ro.boot.verifiedbootstate", "unknown"),
+                readSystemProperty("ro.boot.flash.locked", "unknown"));
+        return evidence.label;
     }
 
     private String selinuxStatus() {
