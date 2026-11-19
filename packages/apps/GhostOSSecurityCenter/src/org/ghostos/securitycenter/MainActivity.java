@@ -225,19 +225,10 @@ public final class MainActivity extends Activity {
     }
 
     private String bootIntegrityStatus() {
-        try {
-            String state = readSystemProperty("ro.boot.verifiedbootstate", "unknown");
-            String locked = readSystemProperty("ro.boot.flash.locked", "unknown");
-            if ("red".equals(state)) return "Platform reports Verified Boot: red";
-            if ("orange".equals(state) || "0".equals(locked)) return "Platform reports bootloader unlocked";
-            if ("green".equals(state) && "1".equals(locked)) {
-                return "Platform reports green state · bootloader locked · AVB not independently verified";
-            }
-            if ("yellow".equals(state) && "1".equals(locked)) return "Platform reports yellow state · custom trust root";
-            return "Verified Boot: unknown";
-        } catch (RuntimeException error) {
-            return "Verified Boot: unknown";
-        }
+        VerifiedBootEvidence evidence = VerifiedBootEvidence.classify(
+                readSystemProperty("ro.boot.verifiedbootstate", "unknown"),
+                readSystemProperty("ro.boot.flash.locked", "unknown"));
+        return evidence.label;
     }
 
     private String selinuxStatus() {
