@@ -223,6 +223,8 @@ jobs:
 
       - name: Validate LineageOS 24.0 / Android 17 build script syntax
         run: bash -n scripts/ghostos-build.sh
+      - name: Test Android 17 build-host RAM and disk preflight
+        run: bash tests/test_android17_build_preflight.sh
 
       - name: Validate LineageOS 24.0 / Android 17 bootstrap script syntax
         run: bash -n scripts/init-android17.sh
