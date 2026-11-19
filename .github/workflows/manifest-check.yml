@@ -193,6 +193,8 @@ jobs:
 
       - name: Test Android source checkout path safety
         run: bash tests/test_ghostos_build_path_safety.sh
+      - name: Test GhostOS Linux build-host preflight
+        run: bash -n scripts/ghostos-build.sh && bash tests/test_ghostos_build_preflight.sh
       - name: Validate read-only larry device smoke harness
         shell: bash
         run: |
