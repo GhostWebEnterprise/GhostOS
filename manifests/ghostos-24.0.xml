@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+  <!-- LineageOS 24.0 is based on AOSP android-17.0.0_r1 (Android 17 / API 37). -->
+  <!-- The larry and vendor trees below are pinned to the observed 2026-11-01 heads. -->
+  <!-- Their source firmware is CPH2467_15.0.0.2000(EX01); verify the handset before flashing. -->
+  <remote name="lineage" fetch="https://github.com/LineageOS" revision="lineage-24.0" />
+  <remote name="themuppets" fetch="https://github.com/TheMuppets" revision="lineage-24.0" />
+
+  <project name="android_device_oneplus_larry" path="device/oneplus/larry" remote="lineage" revision="c61f542b529d561e8b4e1d2dcf33027e437c3740" />
+  <project name="android_device_oneplus_sm6375-common" path="device/oneplus/sm6375-common" remote="lineage" revision="16a0967e6b5a4a23aa35e1bf857e84c543733db7" />
+  <project name="android_hardware_oplus" path="hardware/oplus" remote="lineage" revision="c78b87c9efb89049b35a184d60095f26c7cb29aa" />
+  <project name="android_kernel_oneplus_sm6375" path="kernel/oneplus/sm6375" remote="lineage" revision="410239fbcdd647b66eca7011b9c3053e52cf1d9d" />
+
+  <project name="proprietary_vendor_oneplus_larry" path="vendor/oneplus/larry" remote="themuppets" revision="491fcb0a609f4e165dfdac41cbff9630d871f226" />
+  <project name="proprietary_vendor_oneplus_sm6375-common" path="vendor/oneplus/sm6375-common" remote="themuppets" revision="306f82d86c7be9f899603b6e3b47a08544c6276c" />
+</manifest>

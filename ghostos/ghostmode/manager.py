@@ -20,16 +20,86 @@ class AdapterError(RuntimeError):
 
 
 class GhostModeManager:
+    _POLICY_SCHEMA_V1 = {
+        "network": {
+            "route": ("enum", frozenset({"direct", "tor", "user_selected"})),
+            "killSwitch": ("bool", None),
+            "blockTrackers": ("bool", None),
+            "blockLan": ("bool", None),
+        },
+        "sensors": {
+            "backgroundCamera": ("bool", None),
+            "backgroundMicrophone": ("bool", None),
+            "backgroundLocation": ("enum", frozenset({"deny", "approximate", "user_selected"})),
+        },
+        "clipboard": {
+            "notifyReads": ("bool", None),
+            "autoClearSeconds": ("seconds", None),
+        },
+        "usb": {
+            "lockedMode": ("enum", frozenset({"charge_only", "user_selected"})),
+        },
+        "notifications": {
+            "hideSensitiveOnLockscreen": ("bool", None),
+        },
+    }
+
     def __init__(self, presets_path: str | Path, adapters: Mapping[str, Any] | None = None):
         raw = json.loads(Path(presets_path).read_text(encoding="utf-8"))
-        self._presets = self._validate_presets(raw)
+        if not isinstance(raw, dict):
+            raise PolicyError("preset document must be an object")
+        schema_version = raw.get("schemaVersion")
+        if "schemaVersion" in raw and (type(schema_version) is not int or schema_version != 1):
+            raise PolicyError("unsupported preset schemaVersion")
+        self._strict_schema = schema_version == 1
+        self._presets = self._validate_presets(raw, strict_schema=self._strict_schema)
         self._adapters = dict(adapters or {})
         self._active: dict[str, Any] | None = None
         self._applied: list[tuple[Any, Any]] = []
         self._recovery_required = False
 
     @staticmethod
-    def _validate_presets(raw: Any) -> dict[str, dict[str, Any]]:
+    def _policy_sections(policy: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+        """Validate and copy policy sections, excluding preset display metadata."""
+        sections: dict[str, dict[str, Any]] = {}
+        for name, value in policy.items():
+            if name in {"id", "name", "description"}:
+                continue
+            if not isinstance(value, Mapping):
+                raise PolicyError(f"policy section {name} must be an object")
+            if not value:
+                raise PolicyError(f"policy section {name} must not be empty")
+            sections[name] = copy.deepcopy(dict(value))
+        return sections
+
+    @classmethod
+    def _validate_schema_v1(cls, policy: Mapping[str, Any]) -> None:
+        """Validate the versioned public preset schema before any adapter runs."""
+        sections = cls._policy_sections(policy)
+        for section_name, section in sections.items():
+            schema = cls._POLICY_SCHEMA_V1.get(section_name)
+            if schema is None:
+                raise PolicyError(f"unsupported policy section in schema v1: {section_name}")
+            for field, value in section.items():
+                rule = schema.get(field)
+                if rule is None:
+                    raise PolicyError(f"unsupported {section_name} policy field: {field}")
+                kind, choices = rule
+                if kind == "bool":
+                    valid = type(value) is bool
+                elif kind == "enum":
+                    valid = isinstance(value, str) and value in choices
+                elif kind == "seconds":
+                    valid = type(value) is int and 1 <= value <= 86400
+                else:
+                    valid = False
+                if not valid:
+                    raise PolicyError(f"invalid value for {section_name}.{field}")
+
+    @staticmethod
+    def _validate_presets(
+        raw: Any, strict_schema: bool = False
+    ) -> dict[str, dict[str, Any]]:
         if not isinstance(raw, dict):
             raise PolicyError("preset document must be an object")
         presets = raw.get("presets")
@@ -45,6 +115,10 @@ class GhostModeManager:
             key = name.strip().lower()
             if key in result:
                 raise PolicyError(f"duplicate preset: {name}")
+            if not GhostModeManager._policy_sections(preset):
+                raise PolicyError("each preset requires at least one policy section")
+            if strict_schema:
+                GhostModeManager._validate_schema_v1(preset)
             result[key] = copy.deepcopy(preset)
         return result
 
@@ -64,16 +138,64 @@ class GhostModeManager:
         effective = copy.deepcopy(self._presets[key])
         if overrides:
             self._deep_merge(effective, overrides)
+        if self._strict_schema:
+            self._validate_schema_v1(effective)
+        else:
+            self._policy_sections(effective)
         return effective
+
+    def _adapter_policies(self, policy: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+        """Route the public preset schema to the available policy adapters.
+
+        Production presets keep controls grouped as network/sensors/clipboard/
+        usb/notifications. The Android adapter contract groups sensors and
+        clipboard under privacy, and USB/notifications under device. Existing
+        direct adapter sections remain supported for focused host tests.
+        """
+        sections = self._policy_sections(policy)
+        if "privacy" in sections and any(name in sections for name in ("sensors", "clipboard")):
+            raise AdapterError("ambiguous GhostMode privacy sections")
+        if "device" in sections and any(name in sections for name in ("usb", "notifications")):
+            raise AdapterError("ambiguous GhostMode device sections")
+
+        routed: dict[str, dict[str, Any]] = {}
+        for name, section in sections.items():
+            if name in self._adapters:
+                routed[name] = copy.deepcopy(section)
+            elif name in ("sensors", "clipboard"):
+                routed.setdefault("privacy", {})[name] = copy.deepcopy(section)
+            elif name in ("usb", "notifications"):
+                routed.setdefault("device", {})[name] = copy.deepcopy(section)
+            elif name in ("network", "privacy", "device"):
+                routed[name] = copy.deepcopy(section)
+            else:
+                raise AdapterError(f"no adapter mapping for policy section: {name}")
+        return routed
 
     def activate(self, preset: str, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
         if self._active is not None:
             raise AdapterError("deactivate GhostMode before changing presets")
         target = self.preview_policy(preset, overrides)
+        if not self._adapters:
+            raise AdapterError("no platform adapters configured; policy was not applied")
+        adapter_policies = self._adapter_policies(target)
+        required = set(adapter_policies)
+        if not any(name in self._adapters for name in required):
+            raise AdapterError("no matching platform adapters configured; policy was not applied")
+        # Preflight every adapter required by the real preset schema. A partial
+        # adapter set must never report the full policy as active.
+        unavailable = sorted(
+            name for name in required
+            if name not in self._adapters or not bool(getattr(self._adapters[name], "supported", True))
+        )
+        if unavailable:
+            raise AdapterError(
+                f"missing or unsupported platform adapters for: {', '.join(unavailable)}; policy was not applied"
+            )
         applied: list[tuple[Any, Any]] = []
         try:
             for name, adapter in self._adapters.items():
-                section = target.get(name)
+                section = adapter_policies.get(name)
                 if section is None:
                     continue
                 try:
@@ -119,9 +241,17 @@ class GhostModeManager:
         self._recovery_required = False
 
     def get_capabilities(self) -> dict[str, bool]:
-        return {name: bool(getattr(adapter, "supported", True)) for name, adapter in self._adapters.items()}
+        """Report every adapter category required by the shipped presets."""
+        required: set[str] = set()
+        for preset in self._presets.values():
+            required.update(self._adapter_policies(preset))
+        return {
+            name: name in self._adapters and bool(getattr(self._adapters[name], "supported", True))
+            for name in sorted(required)
+        }
 
     def get_degraded_controls(self) -> list[str]:
+        """List missing or unsupported required backends; never hide unwired controls."""
         return [name for name, supported in self.get_capabilities().items() if not supported]
 
     @classmethod

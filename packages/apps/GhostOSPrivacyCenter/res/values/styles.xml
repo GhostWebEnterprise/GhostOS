@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="GhostTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:windowBackground">#101214</item>
+        <item name="android:colorBackground">#101214</item>
+        <item name="android:statusBarColor">#101214</item>
+        <item name="android:navigationBarColor">#101214</item>
+        <item name="android:colorAccent">#B7C9E2</item>
+        <item name="android:textColorPrimary">#F1F3F5</item>
+        <item name="android:textColorSecondary">#C4C7CC</item>
+    </style>
+</resources>

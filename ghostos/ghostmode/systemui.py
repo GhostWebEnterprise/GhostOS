@@ -1,19 +1,18 @@
 """Host-testable SystemUI/Quick Settings integration for GhostMode.
 
-This models the state/actions that the future Android SystemUI tile binds to.
-It deliberately does not claim a real device tile is installed or functional.
+The Android Quick Settings tile is a non-toggleable shortcut to Privacy Center.
+It reflects verified policy state but never applies or restores policy itself.
 """
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any
 
 from .manager import GhostModeManager
 
 
 class GhostModeSystemUI:
-    def __init__(self, manager: GhostModeManager, default_preset: str = "private"):
+    def __init__(self, manager: GhostModeManager):
         self._manager = manager
-        self._default_preset = default_preset
 
     def tile_state(self) -> dict[str, Any]:
         active = self._manager.get_active_policy()
@@ -27,12 +26,14 @@ class GhostModeSystemUI:
             "degraded_controls": degraded,
         }
 
-    def click(self, overrides: Mapping[str, Any] | None = None) -> dict[str, Any]:
-        if self._manager.get_active_policy() is None:
-            self._manager.activate(self._default_preset, overrides)
-        else:
-            self._manager.deactivate()
-        return self.tile_state()
+    def click(self) -> dict[str, Any]:
+        """Open Privacy Center without changing any GhostMode policy."""
+        return {
+            **self.tile_state(),
+            "action": "open_privacy_center",
+            "target": self.privacy_center_target(),
+        }
 
-    def long_click_target(self) -> str:
+    @staticmethod
+    def privacy_center_target() -> str:
         return "ghostos://privacy-center/ghostmode"

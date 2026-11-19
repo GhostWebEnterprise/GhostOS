@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from ghostos.ghostmode.manager import GhostModeManager
+from ghostos.ghostmode.manager import AdapterError, GhostModeManager
 from ghostos.ghostmode.privacy_center import GhostModePrivacyCenter
 
 
@@ -13,6 +13,16 @@ class UnsupportedAdapter:
 
     def apply(self, policy):
         raise AssertionError("unsupported adapter must not be used in this test")
+
+
+class WorkingAdapter:
+    supported = True
+
+    def apply(self, policy):
+        return policy
+
+    def rollback(self, token):
+        pass
 
 
 class PrivacyCenterTest(unittest.TestCase):
@@ -31,8 +41,24 @@ class PrivacyCenterTest(unittest.TestCase):
         self.assertIn("policy", preview)
         self.assertIsNone(manager.get_active_policy())
 
-    def test_activate_and_deactivate_reflect_manager_state(self):
+    def test_activation_without_adapters_is_not_reported_active(self):
         manager = GhostModeManager(PRESETS)
+        center = GhostModePrivacyCenter(manager)
+        with self.assertRaisesRegex(AdapterError, "no platform adapters configured"):
+            center.activate("standard")
+        self.assertFalse(center.card_state()["active"])
+
+    def test_partial_support_does_not_mark_card_active(self):
+        manager = GhostModeManager(PRESETS, {"network": WorkingAdapter()})
+        center = GhostModePrivacyCenter(manager)
+        with self.assertRaisesRegex(AdapterError, "missing or unsupported platform adapters"):
+            center.activate("standard")
+        self.assertFalse(center.card_state()["active"])
+
+    def test_activate_and_deactivate_reflect_manager_state(self):
+        manager = GhostModeManager(PRESETS, {
+            name: WorkingAdapter() for name in ("network", "sensors", "clipboard", "usb", "notifications")
+        })
         center = GhostModePrivacyCenter(manager)
         result = center.activate("standard")
         self.assertEqual(result["policy"], manager.get_active_policy())
