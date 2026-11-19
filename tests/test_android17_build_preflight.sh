@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Offline regression for the Android 17 larry build host preflight.
+# Offline regression for the Android 17 larry build host preflight and source staging.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
@@ -17,6 +17,14 @@ case "$1" in
     : > .repo/manifest.xml
     ;;
   sync)
+    if [[ "${GHOSTOS_MOCK_REPO_SYNC_SUCCESS:-0}" == "1" ]]; then
+      mkdir -p build
+      cat > build/envsetup.sh <<'ENV'
+lunch() { printf 'lunch %s\n' "$*" >> "$GHOSTOS_BUILD_LOG"; }
+m() { printf 'm %s\n' "$*" >> "$GHOSTOS_BUILD_LOG"; }
+ENV
+      exit 0
+    fi
     exit 23
     ;;
   *)
@@ -67,4 +75,27 @@ grep -Fq "Syncing pinned GhostOS larry Android 17 foundation" "$WORK/pass.log"
 grep -Fq "init " "$GHOSTOS_REPO_LOG"
 grep -Fq "sync " "$GHOSTOS_REPO_LOG"
 
-echo "GhostOS Android 17 build-host preflight regression: RAM, disk and pass paths verified"
+# Exercise the staging phase with a fake repo sync and fake lunch/m commands.
+# This verifies the product inputs copied by the real script without claiming
+# that a LineageOS source sync or Soong build has run.
+STAGE_TARGET="$WORK/staging-passed"
+export GHOSTOS_BUILD_LOG="$WORK/build.log"
+: > "$GHOSTOS_BUILD_LOG"
+ANDROID_DIR="$STAGE_TARGET" DEVICE=larry JOBS=1 GHOSTOS_MIN_RAM_GIB=1 GHOSTOS_MIN_DISK_GB=1 \
+  GHOSTOS_MOCK_REPO_SYNC_SUCCESS=1 \
+  bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/staging.log" 2>&1
+
+for app in GhostOSPrivacyCenter GhostOSSecurityCenter GhostOSAuditor; do
+  test -f "$STAGE_TARGET/packages/apps/$app/Android.bp" || {
+    echo "Android 17 staging omitted $app/Android.bp" >&2
+    exit 1
+  }
+done
+test -f "$STAGE_TARGET/packages/apps/GhostOSAuditor/AndroidManifest.xml"
+test -f "$STAGE_TARGET/vendor/ghostos/config/common.mk"
+test -f "$STAGE_TARGET/vendor/ghostos/prebuilts/ghostwire.mk"
+grep -Fq "lunch ghostos_larry-userdebug" "$GHOSTOS_BUILD_LOG"
+grep -Fq "m bacon" "$GHOSTOS_BUILD_LOG"
+grep -Fq "GhostOS larry Android 17 build command completed" "$WORK/staging.log"
+
+echo "GhostOS Android 17 build-host preflight and three-app staging regressions passed"
