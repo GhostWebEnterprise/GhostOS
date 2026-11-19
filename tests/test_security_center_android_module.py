@@ -59,7 +59,7 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
         self.assertIn("VpnTransportEvidence.classify(", source)
         self.assertIn('readSystemProperty("ro.boot.verifiedbootstate"', source)
         self.assertIn('readSelinuxFlag("isSELinuxEnforced")', source)
-        self.assertIn("AVB not independently verified", source)
+        self.assertIn("AVB not independently verified", evidence)
         self.assertIn("VerifiedBootEvidence.classify(", source)
         self.assertNotIn('if ("orange".equals(state)', source)
         self.assertIn("policy quality and rule coverage are not assessed", source)
