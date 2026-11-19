@@ -55,11 +55,12 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
     def test_vpn_state_is_platform_observed_and_provider_unverified(self):
         source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
         evidence = (APP / "src/org/ghostos/securitycenter/VpnTransportEvidence.java").read_text(encoding="utf-8")
+        boot_evidence = (APP / "src/org/ghostos/securitycenter/VerifiedBootEvidence.java").read_text(encoding="utf-8")
         self.assertIn("NetworkCapabilities.TRANSPORT_VPN", source)
         self.assertIn("VpnTransportEvidence.classify(", source)
         self.assertIn('readSystemProperty("ro.boot.verifiedbootstate"', source)
         self.assertIn('readSelinuxFlag("isSELinuxEnforced")', source)
-        self.assertIn("AVB not independently verified", evidence)
+        self.assertIn("AVB not independently verified", boot_evidence)
         self.assertIn("VerifiedBootEvidence.classify(", source)
         self.assertNotIn('if ("orange".equals(state)', source)
         self.assertIn("policy quality and rule coverage are not assessed", source)
