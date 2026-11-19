@@ -9,6 +9,8 @@
     </queries>
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Platform-signed system_ext app: read Always-on VPN / lockdown state only. -->
+    <uses-permission android:name="android.permission.READ_SECURE_SETTINGS" />
 
     <application
         android:allowBackup="false"
