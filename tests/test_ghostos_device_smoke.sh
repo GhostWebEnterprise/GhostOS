@@ -79,20 +79,32 @@ SUCCESS_LOG="$WORK/success.log"
 run_smoke "$SUCCESS_LOG" > "$WORK/success.out" 2>&1
 grep -Fq 'DEVICE_SMOKE_STATUS: PASS' "$WORK/success.out"
 grep -Fq 'Package present: org.ghostos.privacy' "$WORK/success.out"
-grep -Fq 'Package present: org.ghostos.securitycenter' "$WORK/success.out"
-grep -Fq 'Package present: org.ghostos.auditor' "$WORK/success.out"
-grep -Fq 'not independent AVB/signature verification' "$WORK/success.out"
-
-# The harness may only issue read-only ADB queries.
-if grep -E '(^| )(install|push|reboot|flash|root|remount|sideload)( |$)' "$SUCCESS_LOG"; then
-  echo "Read-only device smoke harness issued a mutating ADB command" >&2
+if grep -Fq 'Package present: org.ghostos.securitycenter' "$WORK/success.out"; then
+  echo "Default Larry bring-up check unexpectedly requires the later Security Center package" >&2
   exit 1
 fi
+grep -Fq 'not independent AVB/signature verification' "$WORK/success.out"
+
+# The Security Center/Auditor packages are optional on the base GSI branch and
+# can be required explicitly by a later stacked product branch.
+ALL_APPS='org.ghostos.privacy,org.ghostos.securitycenter,org.ghostos.auditor'
+run_smoke "$WORK/all-apps.log" GHOSTOS_REQUIRED_PACKAGES="$ALL_APPS" > "$WORK/all-apps.out" 2>&1
+grep -Fq 'Package present: org.ghostos.privacy' "$WORK/all-apps.out"
+grep -Fq 'Package present: org.ghostos.securitycenter' "$WORK/all-apps.out"
+grep -Fq 'Package present: org.ghostos.auditor' "$WORK/all-apps.out"
+
+# The harness may only issue read-only ADB queries.
+for log in "$SUCCESS_LOG" "$WORK/all-apps.log"; do
+  if grep -E '(^| )(install|push|reboot|flash|root|remount|sideload)( |$)' "$log"; then
+    echo "Read-only device smoke harness issued a mutating ADB command" >&2
+    exit 1
+  fi
+done
 
 expect_failure 'expected exactly one online ADB device' "$WORK/no-device.out" "$WORK/no-device.log" MOCK_DEVICE_COUNT=0
 expect_failure 'expected exactly one online ADB device' "$WORK/multi-device.out" "$WORK/multi-device.log" MOCK_DEVICE_COUNT=2
 expect_failure 'expected device larry' "$WORK/wrong-device.out" "$WORK/wrong-device.log" MOCK_DEVICE=other
 expect_failure 'expected Android API 37 or newer' "$WORK/old-api.out" "$WORK/old-api.log" MOCK_SDK=36
-expect_failure 'required GhostOS package is not installed: org.ghostos.auditor' "$WORK/missing-package.out" "$WORK/missing-package.log" MOCK_MISSING_PACKAGE=org.ghostos.auditor
+expect_failure 'required GhostOS package is not installed: org.ghostos.auditor' "$WORK/missing-package.out" "$WORK/missing-package.log" GHOSTOS_REQUIRED_PACKAGES=org.ghostos.privacy,org.ghostos.securitycenter,org.ghostos.auditor MOCK_MISSING_PACKAGE=org.ghostos.auditor
 
 echo "GhostOS read-only Larry device smoke harness regression: PASS"

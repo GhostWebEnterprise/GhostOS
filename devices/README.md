@@ -34,6 +34,6 @@ Each port must provide:
 
 `larry` is the first hardware target. The active Android 17 bring-up uses the pinned LineageOS 24.0 manifest at `manifests/ghostos-24.0.xml`, including the larry device tree, SM6375 common tree, Oplus hardware, kernel and vendor repositories. The separate 23.2 manifest remains in the repository but is not selected by the current Android 17 build script.
 
-The port remains experimental: no complete Soong/product build, flashable image or physical boot is verified. After a device is booted, `scripts/ghostos-device-smoke.sh` performs read-only checks for the larry codename, API level and required GhostOS packages. It only reports boot properties as observations; it does not verify AVB signatures or hardware functionality.
+The port remains experimental: no complete Soong/product build, flashable image or physical boot is verified. After a device is booted, `scripts/ghostos-device-smoke.sh` performs read-only checks for the larry codename, API level and package presence. It checks `org.ghostos.privacy` by default; a stacked product can set `GHOSTOS_REQUIRED_PACKAGES=org.ghostos.privacy,org.ghostos.securitycenter,org.ghostos.auditor`. It only reports boot properties as observations; it does not verify AVB signatures or hardware functionality.
 
 GhostOS should consume those upstream foundations through manifests and apply only GhostOS-specific changes in this project or dedicated GhostOS device repositories.

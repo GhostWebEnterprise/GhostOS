@@ -34,12 +34,11 @@ sdk="$(getprop ro.build.version.sdk)"
 [[ "$sdk" =~ ^[0-9]+$ ]] || fail "Android SDK level is missing or invalid: ${sdk:-<empty>}"
 (( sdk >= MIN_SDK )) || fail "expected Android API $MIN_SDK or newer; observed API $sdk"
 
-required_packages=(
-  org.ghostos.privacy
-  org.ghostos.securitycenter
-  org.ghostos.auditor
-)
+REQUIRED_PACKAGES_CSV="${GHOSTOS_REQUIRED_PACKAGES:-org.ghostos.privacy}"
+[[ -n "$REQUIRED_PACKAGES_CSV" ]] || fail "GHOSTOS_REQUIRED_PACKAGES must not be empty"
+IFS=',' read -r -a required_packages <<< "$REQUIRED_PACKAGES_CSV"
 for package in "${required_packages[@]}"; do
+  [[ "$package" =~ ^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)+$ ]] || fail "invalid Android package name: $package"
   if ! package_path="$("$ADB_BIN" -s "$serial" shell pm path "$package" 2>/dev/null)"; then
     fail "required GhostOS package is not installed: $package"
   fi
