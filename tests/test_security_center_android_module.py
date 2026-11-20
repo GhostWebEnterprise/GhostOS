@@ -44,12 +44,18 @@ class SecurityCenterAndroidModuleTests(unittest.TestCase):
 
     def test_vpn_lockdown_is_read_only_platform_configuration(self):
         source = (APP / "src/org/ghostos/securitycenter/MainActivity.java").read_text(encoding="utf-8")
+        evidence = (APP / "src/org/ghostos/securitycenter/VpnLockdownEvidence.java").read_text(encoding="utf-8")
         self.assertIn("Settings.Secure.getString(", source)
         self.assertIn("SETTING_ALWAYS_ON_VPN_APP", source)
         self.assertIn("SETTING_ALWAYS_ON_VPN_LOCKDOWN", source)
-        self.assertIn('"1".equals(lockdown)', source)
-        self.assertIn('"0".equals(lockdown)', source)
-        self.assertIn("lockdown allowlist contents", source)
+        self.assertIn("VpnLockdownEvidence.classify(packageName, lockdown)", source)
+        self.assertIn("Always-on VPN configured · lockdown setting enabled", evidence)
+        self.assertIn("Always-on VPN configured · lockdown disabled", evidence)
+        self.assertIn("Always-on VPN configured · lockdown unknown", evidence)
+        self.assertIn("Lockdown setting present · always-on package unknown", evidence)
+        self.assertIn("Always-on VPN package: not configured", evidence)
+        self.assertIn("lockdown allowlist are not verified", evidence)
+        self.assertNotIn("Settings.Secure.putString", source)
         self.assertNotIn("setAlwaysOnVpnPackage(", source)
 
     def test_vpn_state_is_platform_observed_and_provider_unverified(self):

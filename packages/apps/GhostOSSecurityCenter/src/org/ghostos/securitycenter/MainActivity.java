@@ -204,23 +204,9 @@ public final class MainActivity extends Activity {
                     getContentResolver(), SETTING_ALWAYS_ON_VPN_APP);
             String lockdown = Settings.Secure.getString(
                     getContentResolver(), SETTING_ALWAYS_ON_VPN_LOCKDOWN);
-
-            if (packageName == null || packageName.isEmpty()) {
-                if ("1".equals(lockdown)) {
-                    return "Lockdown setting present · always-on package unknown";
-                }
-                if ("0".equals(lockdown)) return "Always-on VPN package: not configured";
-                return "Always-on VPN / lockdown: unknown";
-            }
-            if ("1".equals(lockdown)) {
-                return "Always-on VPN configured · lockdown setting enabled";
-            }
-            if ("0".equals(lockdown)) {
-                return "Always-on VPN configured · lockdown disabled";
-            }
-            return "Always-on VPN configured · lockdown unknown";
+            return VpnLockdownEvidence.classify(packageName, lockdown).label;
         } catch (RuntimeException error) {
-            return "Always-on VPN / lockdown: unknown";
+            return VpnLockdownEvidence.classify(null, null).label;
         }
     }
 

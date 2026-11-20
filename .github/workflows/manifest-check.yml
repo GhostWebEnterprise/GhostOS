@@ -167,6 +167,16 @@ jobs:
             packages/apps/GhostOSSecurityCenter/src/org/ghostos/securitycenter/VpnTransportEvidence.java \
             tests/java/org/ghostos/securitycenter/VpnTransportEvidenceSelfTest.java
           java -cp build/security-center-tests org.ghostos.securitycenter.VpnTransportEvidenceSelfTest
+      - name: Test Security Center VPN lockdown evidence classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/security-center-lockdown-tests
+          javac --release 17 -d build/security-center-lockdown-tests \
+            packages/apps/GhostOSSecurityCenter/src/org/ghostos/securitycenter/VpnLockdownEvidence.java \
+            tests/java/org/ghostos/securitycenter/VpnLockdownEvidenceSelfTest.java
+          java -cp build/security-center-lockdown-tests org.ghostos.securitycenter.VpnLockdownEvidenceSelfTest
+
       - name: Install XML validator
         run: |
           sudo apt-get update
