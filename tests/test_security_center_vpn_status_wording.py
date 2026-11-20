@@ -36,13 +36,22 @@ class SecurityCenterEvidenceTests(unittest.TestCase):
 
     def test_lockdown_settings_are_read_only_and_permission_is_declared(self):
         source = SOURCE.read_text(encoding="utf-8")
+        evidence = (SOURCE.parent / "VpnLockdownEvidence.java").read_text(encoding="utf-8")
         manifest = (APP / "AndroidManifest.xml").read_text(encoding="utf-8")
         bp = (APP / "Android.bp").read_text(encoding="utf-8")
         self.assertIn("Settings.Secure.getString(", source)
         self.assertIn("SETTING_ALWAYS_ON_VPN_APP", source)
         self.assertIn("SETTING_ALWAYS_ON_VPN_LOCKDOWN", source)
+        self.assertIn("VpnLockdownEvidence.classify(packageName, lockdown)", source)
         self.assertIn("android.permission.READ_SECURE_SETTINGS", manifest)
         self.assertIn('certificate: "platform"', bp)
+        self.assertIn("Always-on VPN configured · lockdown setting enabled", evidence)
+        self.assertIn("Always-on VPN configured · lockdown disabled", evidence)
+        self.assertIn("Always-on VPN configured · lockdown unknown", evidence)
+        self.assertIn("Lockdown setting present · always-on package unknown", evidence)
+        self.assertIn("Always-on VPN package: not configured", evidence)
+        self.assertIn("lockdown allowlist are not verified", evidence)
+        self.assertNotIn("Settings.Secure.putString", source)
         self.assertNotIn("android.permission.WRITE_SECURE_SETTINGS", manifest)
         self.assertNotIn("setAlwaysOnVpnPackage(", source)
 

@@ -110,9 +110,12 @@ jobs:
             packages/apps/GhostOSSecurityCenter/src/org/ghostos/securitycenter/VerifiedBootEvidence.java \
             packages/apps/GhostOSSecurityCenter/src/org/ghostos/securitycenter/VpnTransportEvidence.java \
             tests/java/org/ghostos/securitycenter/VerifiedBootEvidenceSelfTest.java \
-            tests/java/org/ghostos/securitycenter/VpnTransportEvidenceSelfTest.java
+            tests/java/org/ghostos/securitycenter/VpnTransportEvidenceSelfTest.java \
+            packages/apps/GhostOSSecurityCenter/src/org/ghostos/securitycenter/VpnLockdownEvidence.java \
+            tests/java/org/ghostos/securitycenter/VpnLockdownEvidenceSelfTest.java
           java -cp build/security-center-tests org.ghostos.securitycenter.VerifiedBootEvidenceSelfTest
           java -cp build/security-center-tests org.ghostos.securitycenter.VpnTransportEvidenceSelfTest
+          java -cp build/security-center-tests org.ghostos.securitycenter.VpnLockdownEvidenceSelfTest
 
       - name: Compile GhostOS Auditor against Android 17 SDK
         shell: bash
