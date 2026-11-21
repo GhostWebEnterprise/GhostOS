@@ -52,7 +52,21 @@ public final class VpnLockdownEvidenceSelfTest {
         VpnLockdownEvidence malformed =
                 VpnLockdownEvidence.classify(" ", "true");
         expect(VpnLockdownEvidence.State.UNKNOWN, malformed,
-                "malformed settings and no package");
+                "malformed lockdown setting and no package");
+
+        VpnLockdownEvidence invalidPackage =
+                VpnLockdownEvidence.classify("com..example.vpn", "0");
+        expect(VpnLockdownEvidence.State.INVALID_PACKAGE_EVIDENCE, invalidPackage,
+                "invalid package value must not be reported as not configured");
+        if (invalidPackage.label.contains("not configured")) {
+            throw new AssertionError("invalid package evidence must not be reported as absent");
+        }
+
+        VpnLockdownEvidence invalidPackageLockdownEnabled =
+                VpnLockdownEvidence.classify("com.example-vpn", "1");
+        expect(VpnLockdownEvidence.State.INVALID_PACKAGE_EVIDENCE,
+                invalidPackageLockdownEnabled,
+                "invalid package value must not be reported as lockdown enabled");
 
         System.out.println("GhostOS VPN lockdown evidence classification: PASS");
     }
