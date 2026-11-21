@@ -1,17 +1,23 @@
 package org.ghostos.securitycenter;
 
+import java.util.regex.Pattern;
+
 /**
  * Conservative classification of Android Always-on VPN and lockdown settings.
  * These values are configuration evidence only; they do not prove a VPN tunnel,
- * provider identity, per-app coverage, or a correct lockdown allowlist.
+ * provider identity, package installation, per-app coverage, or a correct lockdown allowlist.
  */
 public final class VpnLockdownEvidence {
+    private static final Pattern PACKAGE_NAME = Pattern.compile(
+            "[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*");
+
     public enum State {
         ALWAYS_ON_LOCKDOWN_ENABLED,
         ALWAYS_ON_LOCKDOWN_DISABLED,
         ALWAYS_ON_LOCKDOWN_UNKNOWN,
         LOCKDOWN_SETTING_WITHOUT_PACKAGE,
         NOT_CONFIGURED,
+        INVALID_PACKAGE_EVIDENCE,
         UNKNOWN
     }
 
@@ -22,11 +28,18 @@ public final class VpnLockdownEvidence {
     private VpnLockdownEvidence(State state, String label) {
         this.state = state;
         this.label = label;
-        this.limitation = "Read-only settings only; tunnel, provider, per-app coverage and lockdown allowlist are not verified.";
+        this.limitation = "Read-only settings only; tunnel, provider, package installation, per-app coverage and lockdown allowlist are not verified.";
     }
 
     public static VpnLockdownEvidence classify(String packageName, String lockdownValue) {
-        boolean packageConfigured = packageName != null && !packageName.trim().isEmpty();
+        String packageValue = packageName == null ? "" : packageName.trim();
+        boolean packagePresent = !packageValue.isEmpty();
+        if (packagePresent && !PACKAGE_NAME.matcher(packageValue).matches()) {
+            return new VpnLockdownEvidence(
+                    State.INVALID_PACKAGE_EVIDENCE,
+                    "Always-on VPN package value invalid · lockdown state not trusted");
+        }
+        boolean packageConfigured = packagePresent;
         String value = lockdownValue == null ? null : lockdownValue.trim();
 
         if ("1".equals(value)) {
