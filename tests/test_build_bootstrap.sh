@@ -38,9 +38,10 @@ MOCK
 chmod +x "$WORK/bin/repo"
 export PATH="$WORK/bin:$PATH"
 export GHOSTOS_REPO_LOG="$WORK/repo.log"
-# Lower thresholds only for mocked offline tests; production defaults stay strict.
+# Lower resource thresholds only for mocked offline regression tests.
 export GHOSTOS_MIN_RAM_GIB=1
 export GHOSTOS_MIN_DISK_GB=1
+
 
 # Keep GhostOS product identity while inheriting all pinned upstream larry
 # device composition and firmware-derived build-property overrides.
@@ -64,7 +65,10 @@ run_case() {
   cmp "$ROOT/manifests/ghostos-24.0.xml" "$checkout/.repo/local_manifests/ghostos.xml"
   cmp "$ROOT/device/ghostos/larry/ghostos_larry.mk" "$checkout/device/ghostos/larry/ghostos_larry.mk"
   cmp "$ROOT/vendor/ghostos/config/common.mk" "$checkout/vendor/ghostos/config/common.mk"
-  cmp "$ROOT/packages/apps/GhostOSPrivacyCenter/Android.bp" "$checkout/packages/apps/GhostOSPrivacyCenter/Android.bp"
+  for app in GhostOSPrivacyCenter GhostOSSecurityCenter GhostOSAuditor; do
+    cmp "$ROOT/packages/apps/$app/Android.bp" "$checkout/packages/apps/$app/Android.bp"
+    cmp "$ROOT/packages/apps/$app/AndroidManifest.xml" "$checkout/packages/apps/$app/AndroidManifest.xml"
+  done
   grep -Fxq 'lunch ghostos_larry-userdebug' "$GHOSTOS_BUILD_LOG"
   grep -Fxq 'm bacon' "$GHOSTOS_BUILD_LOG"
 }
@@ -132,5 +136,6 @@ fi
 grep -q "requires at least 999999 GB free disk" "$WORK/low-disk.out"
 test ! -e "$LOW_DISK"
 test ! -s "$GHOSTOS_REPO_LOG"
+
 
 echo "GhostOS Android 17 bootstrap regression: 3 init cases, 3 source-path safety cases and 2 resource preflight cases passed"
