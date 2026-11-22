@@ -42,6 +42,26 @@ jobs:
           xmllint --noout manifests/ghostos-23.2.xml
           xmllint --noout manifests/ghostos_larry.xml
 
+      - name: Validate Android 17 / LineageOS 24.0 bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          xmllint --noout manifests/ghostos-24.0.xml
+          bash -n scripts/init-android17.sh
+          python3 tests/test_android17_bootstrap.py
+          for repo in \
+            android_device_oneplus_larry \
+            android_device_oneplus_sm6375-common \
+            android_hardware_oplus \
+            android_kernel_oneplus_sm6375; do
+            git ls-remote --exit-code --heads "https://github.com/LineageOS/${repo}.git" lineage-24.0 >/dev/null
+          done
+          for repo in \
+            proprietary_vendor_oneplus_larry \
+            proprietary_vendor_oneplus_sm6375-common; do
+            git ls-remote --exit-code --heads "https://github.com/TheMuppets/${repo}.git" lineage-24.0 >/dev/null
+          done
+
       - name: Validate larry upstream foundations
         shell: bash
         run: |
