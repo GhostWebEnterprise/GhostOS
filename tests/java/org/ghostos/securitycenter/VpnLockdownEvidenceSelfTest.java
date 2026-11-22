@@ -49,9 +49,9 @@ public final class VpnLockdownEvidenceSelfTest {
         expect(VpnLockdownEvidence.State.UNKNOWN, missingEvidence,
                 "missing package and lockdown evidence");
 
-        VpnLockdownEvidence malformed =
-                VpnLockdownEvidence.classify(" ", "true");
-        expect(VpnLockdownEvidence.State.UNKNOWN, malformed,
+        VpnLockdownEvidence malformedLockdown =
+                VpnLockdownEvidence.classify(null, "true");
+        expect(VpnLockdownEvidence.State.UNKNOWN, malformedLockdown,
                 "malformed lockdown setting and no package");
 
         VpnLockdownEvidence invalidPackage =
@@ -67,6 +67,21 @@ public final class VpnLockdownEvidenceSelfTest {
         expect(VpnLockdownEvidence.State.INVALID_PACKAGE_EVIDENCE,
                 invalidPackageLockdownEnabled,
                 "invalid package value must not be reported as lockdown enabled");
+
+        VpnLockdownEvidence whitespacePackage =
+                VpnLockdownEvidence.classify("   ", "1");
+        expect(VpnLockdownEvidence.State.INVALID_PACKAGE_EVIDENCE,
+                whitespacePackage,
+                "whitespace-only package must not be normalized to absent");
+
+        VpnLockdownEvidence paddedPackage =
+                VpnLockdownEvidence.classify(" com.example.vpn ", "1");
+        expect(VpnLockdownEvidence.State.INVALID_PACKAGE_EVIDENCE,
+                paddedPackage,
+                "padded package must not be normalized to valid evidence");
+        if (paddedPackage.label.contains("setting enabled")) {
+            throw new AssertionError("malformed package must not be reported as lockdown enabled");
+        }
 
         System.out.println("GhostOS VPN lockdown evidence classification: PASS");
     }
