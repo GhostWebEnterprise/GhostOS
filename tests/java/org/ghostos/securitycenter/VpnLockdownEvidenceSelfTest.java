@@ -83,6 +83,24 @@ public final class VpnLockdownEvidenceSelfTest {
             throw new AssertionError("malformed package must not be reported as lockdown enabled");
         }
 
+        VpnLockdownEvidence paddedLockdownEnabled =
+                VpnLockdownEvidence.classify("com.example.vpn", " 1 ");
+        expect(VpnLockdownEvidence.State.ALWAYS_ON_LOCKDOWN_UNKNOWN,
+                paddedLockdownEnabled,
+                "whitespace-padded lockdown value must not be normalized to enabled");
+        if (paddedLockdownEnabled.label.contains("setting enabled")) {
+            throw new AssertionError("padded lockdown value must not claim lockdown enabled");
+        }
+
+        VpnLockdownEvidence paddedLockdownDisabled =
+                VpnLockdownEvidence.classify("com.example.vpn", " 0 ");
+        expect(VpnLockdownEvidence.State.ALWAYS_ON_LOCKDOWN_UNKNOWN,
+                paddedLockdownDisabled,
+                "whitespace-padded lockdown value must not be normalized to disabled");
+        if (paddedLockdownDisabled.label.contains("lockdown disabled")) {
+            throw new AssertionError("padded lockdown value must not claim lockdown disabled");
+        }
+
         System.out.println("GhostOS VPN lockdown evidence classification: PASS");
     }
 }
