@@ -43,7 +43,9 @@ public final class VpnLockdownEvidence {
                     "Always-on VPN package value invalid · lockdown state not trusted");
         }
         boolean packageConfigured = packagePresent;
-        String value = lockdownValue == null ? null : lockdownValue.trim();
+        // Settings.Secure values are expected to be exactly "0" or "1".
+        // Do not trim corrupted values into a security-positive/negative state.
+        String value = lockdownValue;
 
         if ("1".equals(value)) {
             if (packageConfigured) {
