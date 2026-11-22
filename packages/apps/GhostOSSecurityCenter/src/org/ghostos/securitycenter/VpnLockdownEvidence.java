@@ -1,7 +1,6 @@
 package org.ghostos.securitycenter;
 
 import java.util.regex.Pattern;
-
 /**
  * Conservative classification of Android Always-on VPN and lockdown settings.
  * These values are configuration evidence only; they do not prove a VPN tunnel,
@@ -32,9 +31,13 @@ public final class VpnLockdownEvidence {
     }
 
     public static VpnLockdownEvidence classify(String packageName, String lockdownValue) {
-        String packageValue = packageName == null ? "" : packageName.trim();
-        boolean packagePresent = !packageValue.isEmpty();
-        if (packagePresent && !PACKAGE_NAME.matcher(packageValue).matches()) {
+        // Do not normalize malformed platform evidence into a valid package name.
+        // Null/empty means absent; any non-empty value must be valid as supplied.
+        String rawPackageValue = packageName == null ? "" : packageName;
+        boolean packagePresent = !rawPackageValue.isEmpty();
+        String packageValue = rawPackageValue.trim();
+        if (packagePresent && (!rawPackageValue.equals(packageValue)
+                || !PACKAGE_NAME.matcher(packageValue).matches())) {
             return new VpnLockdownEvidence(
                     State.INVALID_PACKAGE_EVIDENCE,
                     "Always-on VPN package value invalid · lockdown state not trusted");
