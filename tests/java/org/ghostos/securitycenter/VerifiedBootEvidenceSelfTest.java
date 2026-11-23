@@ -43,6 +43,21 @@ public final class VerifiedBootEvidenceSelfTest {
         expect(VerifiedBootEvidence.State.UNKNOWN,
                 VerifiedBootEvidence.classify("unrecognized", "1"), "unrecognized state");
 
+        // Boot-state and bootloader-lock properties must be exact platform tokens.
+        // Trimming/case-folding could turn malformed evidence into a trust-positive state.
+        expect(VerifiedBootEvidence.State.UNKNOWN,
+                VerifiedBootEvidence.classify(" green ", "1"), "padded green state");
+        expect(VerifiedBootEvidence.State.UNKNOWN,
+                VerifiedBootEvidence.classify("green", " 1 "), "padded locked value");
+        expect(VerifiedBootEvidence.State.UNKNOWN,
+                VerifiedBootEvidence.classify("\\tgreen", "1"), "tab-prefixed green state");
+        expect(VerifiedBootEvidence.State.UNKNOWN,
+                VerifiedBootEvidence.classify("GREEN", "1"), "case-folded state must not be trusted");
+        expect(VerifiedBootEvidence.State.UNKNOWN,
+                VerifiedBootEvidence.classify(" red ", "1"), "padded red must not be treated as exact state");
+        expect(VerifiedBootEvidence.State.UNKNOWN,
+                VerifiedBootEvidence.classify("green", "true"), "invalid lock token with green state");
+
         System.out.println("GhostOS Security Center Verified Boot evidence classification: PASS");
     }
 }
