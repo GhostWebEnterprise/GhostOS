@@ -1,6 +1,5 @@
 package org.ghostos.securitycenter;
 
-import java.util.Locale;
 
 /**
  * Conservative interpretation of Android's platform-reported Verified Boot properties.
@@ -24,8 +23,10 @@ public final class VerifiedBootEvidence {
     }
 
     public static VerifiedBootEvidence classify(String stateValue, String lockedValue) {
-        String state = clean(stateValue).toLowerCase(Locale.ROOT);
-        String locked = clean(lockedValue);
+        // Android boot properties are expected to be exact tokens. Do not trim or case-fold
+        // malformed input into a trust-positive classification.
+        String state = stateValue == null ? "" : stateValue;
+        String locked = lockedValue == null ? "" : lockedValue;
 
         if ("red".equals(state)) {
             return of(State.FAIL, "Platform reports Verified Boot: red",
@@ -61,7 +62,4 @@ public final class VerifiedBootEvidence {
                 "Required boot properties were missing, inconsistent or inaccessible.");
     }
 
-    private static String clean(String value) {
-        return value == null ? "" : value.trim();
-    }
 }
