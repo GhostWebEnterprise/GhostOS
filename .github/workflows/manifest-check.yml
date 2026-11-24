@@ -37,6 +37,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -177,15 +178,14 @@ jobs:
             tests/java/org/ghostos/securitycenter/VpnLockdownEvidenceSelfTest.java
           java -cp build/security-center-lockdown-tests org.ghostos.securitycenter.VpnLockdownEvidenceSelfTest
 
-      - name: Install XML validator
+      - name: Validate XML manifests with Python standard library
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-utils
-
-      - name: Validate XML manifests
-        run: |
-          xmllint --noout manifests/ghostos-23.2.xml
-          xmllint --noout manifests/ghostos_larry.xml
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          for path in ("manifests/ghostos-23.2.xml", "manifests/ghostos_larry.xml"):
+              ET.parse(path)
+              print(f"XML valid: {path}")
+          PY
 
       - name: Validate larry upstream foundations
         shell: bash
