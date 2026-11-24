@@ -25,6 +25,17 @@ class SecurityCenterStatusTests(unittest.TestCase):
         observation = VpnObservation(transport_active=False, lockdown_enabled=True, blocked_by_lockdown=True)
         self.assertEqual(classify_vpn(observation), VpnState.BLOCKED_BY_LOCKDOWN)
 
+    def test_lockdown_blocked_requires_consistent_platform_evidence(self):
+        contradictory = (
+            VpnObservation(transport_active=True, lockdown_enabled=True, blocked_by_lockdown=True),
+            VpnObservation(transport_active=False, lockdown_enabled=False, blocked_by_lockdown=True),
+            VpnObservation(transport_active=False, lockdown_enabled=None, blocked_by_lockdown=True),
+            VpnObservation(transport_active=None, lockdown_enabled=True, blocked_by_lockdown=True),
+        )
+        for observation in contradictory:
+            with self.subTest(observation=observation):
+                self.assertEqual(classify_vpn(observation), VpnState.UNKNOWN)
+
     def test_stale_vpn_observation_is_unknown(self):
         self.assertEqual(classify_vpn(VpnObservation(transport_active=True, stale=True)), VpnState.UNKNOWN)
 

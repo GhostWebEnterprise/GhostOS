@@ -63,8 +63,12 @@ def classify_vpn(observation: VpnObservation) -> VpnState:
     """Map platform evidence to a conservative user-visible VPN state."""
     if observation.stale:
         return VpnState.UNKNOWN
-    if observation.blocked_by_lockdown and observation.transport_active is not True:
-        return VpnState.BLOCKED_BY_LOCKDOWN
+    if observation.blocked_by_lockdown:
+        # Do not accept contradictory or incomplete evidence as a confirmed block.
+        # The platform must report lockdown enabled and no active VPN transport.
+        if observation.lockdown_enabled is True and observation.transport_active is False:
+            return VpnState.BLOCKED_BY_LOCKDOWN
+        return VpnState.UNKNOWN
     if observation.transport_active is None:
         return VpnState.UNKNOWN
     if observation.transport_active is False:
