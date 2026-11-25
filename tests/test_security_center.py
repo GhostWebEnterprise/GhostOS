@@ -42,6 +42,23 @@ class SecurityCenterStatusTests(unittest.TestCase):
     def test_unknown_transport_is_not_assumed_disconnected(self):
         self.assertEqual(classify_vpn(VpnObservation(transport_active=None)), VpnState.UNKNOWN)
 
+    def test_truthy_non_boolean_transport_is_unknown(self):
+        for malformed in (1, "true", "connected", [], object()):
+            with self.subTest(malformed=repr(malformed)):
+                self.assertEqual(classify_vpn(VpnObservation(transport_active=malformed)), VpnState.UNKNOWN)
+
+    def test_non_boolean_lockdown_and_stale_flags_are_unknown(self):
+        malformed = (
+            VpnObservation(transport_active=False, lockdown_enabled=1, blocked_by_lockdown=True),
+            VpnObservation(transport_active=False, lockdown_enabled=True, blocked_by_lockdown=1),
+            VpnObservation(transport_active=True, stale="false"),
+            VpnObservation(transport_active=False, connecting="yes"),
+            VpnObservation(transport_active=True, provider_identity_verified=1),
+        )
+        for observation in malformed:
+            with self.subTest(observation=observation):
+                self.assertEqual(classify_vpn(observation), VpnState.UNKNOWN)
+
 
 if __name__ == "__main__":
     unittest.main()
