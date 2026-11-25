@@ -60,7 +60,22 @@ class VpnObservation:
 
 
 def classify_vpn(observation: VpnObservation) -> VpnState:
-    """Map platform evidence to a conservative user-visible VPN state."""
+    """Map strictly typed platform evidence to a conservative VPN state.
+
+    Python truthy values such as 1, "true", and non-empty strings are not
+    platform booleans. Treat them as malformed evidence rather than inferring
+    an active tunnel or lockdown state.
+    """
+    boolean_evidence = (
+        observation.transport_active,
+        observation.provider_identity_verified,
+        observation.connecting,
+        observation.lockdown_enabled,
+        observation.blocked_by_lockdown,
+        observation.stale,
+    )
+    if any(value is not None and type(value) is not bool for value in boolean_evidence):
+        return VpnState.UNKNOWN
     if observation.stale:
         return VpnState.UNKNOWN
     if observation.blocked_by_lockdown:
