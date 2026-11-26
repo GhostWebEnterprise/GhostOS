@@ -11,6 +11,12 @@ class SecurityCenterStatusTests(unittest.TestCase):
         status = ControlStatus(state=EvidenceState.ENABLED, source="android", stale=True)
         self.assertEqual(status.state, EvidenceState.UNKNOWN)
 
+    def test_stale_non_binary_control_states_are_unknown(self):
+        for state in (EvidenceState.SUPPORTED, EvidenceState.UNSUPPORTED, EvidenceState.DEGRADED):
+            with self.subTest(state=state):
+                status = ControlStatus(state=state, source="android", stale=True)
+                self.assertEqual(status.state, EvidenceState.UNKNOWN)
+
     def test_active_transport_without_verified_provider_is_not_attributed(self):
         self.assertEqual(classify_vpn(VpnObservation(transport_active=True)), VpnState.ACTIVE_PROVIDER_UNVERIFIED)
 
