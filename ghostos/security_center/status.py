@@ -39,7 +39,9 @@ class ControlStatus:
     def __post_init__(self) -> None:
         if not self.source.strip():
             raise ValueError("status source must be non-empty")
-        if self.stale and self.state in (EvidenceState.ENABLED, EvidenceState.DISABLED):
+        if self.stale:
+            # Stale evidence must not preserve any security conclusion.
+            # Capability, degraded, and disabled states can all change at runtime.
             object.__setattr__(self, "state", EvidenceState.UNKNOWN)
 
 
