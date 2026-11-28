@@ -83,7 +83,8 @@ DISK_AVAILABLE_KIB="$(df -Pk "$DISK_PROBE" | awk 'END { print $4 }')"
   echo "ERROR: could not determine free disk space for $DISK_PROBE" >&2
   exit 1
 }
-MIN_DISK_KIB=$((MIN_DISK_GB * 1000000 / 1024))
+# df -Pk reports KiB; convert decimal GB to KiB (1 GB = 1,000,000,000 bytes).
+MIN_DISK_KIB=$((MIN_DISK_GB * 1000000000 / 1024))
 if (( DISK_AVAILABLE_KIB < MIN_DISK_KIB )); then
   echo "ERROR: GhostOS full build requires at least ${MIN_DISK_GB} GB free disk; detected $((DISK_AVAILABLE_KIB * 1024 / 1000000000)) GB" >&2
   exit 1
