@@ -56,7 +56,7 @@ test ! -s "$GHOSTOS_REPO_LOG"
 cat > "$WORK/bin/df" <<'MOCK_DF'
 #!/usr/bin/env bash
 printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\n'
-printf '/dev/mock 500000000 100000000 399000000 20%% /\n'
+printf '/dev/mock 500000000 100000000 390000000 22%% /\n'
 MOCK_DF
 chmod +x "$WORK/bin/df"
 DISK_399_TARGET="$WORK/disk-399gb"
