@@ -42,7 +42,9 @@ GhostOS Apps
   - Auditor
   - Updater
   - Browser/WebView
+  - GhostOS Security Center
   - Privacy Center
+  - Proton VPN integration (official, separately signed app)
       |
 Common device interface
       |

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
-  <!-- Verified Android 16 / LineageOS 23.2 foundation for the first bring-up. -->
+  <!-- LineageOS 23.2 / Android 16 source baseline; not yet full-product-build verified. -->
   <remote name="lineage" fetch="https://github.com/LineageOS" revision="lineage-23.2" />
 
   <!-- OnePlus Nord CE 3 Lite 5G (larry) -->

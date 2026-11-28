@@ -1,0 +1,10 @@
+android_app {
+    name: "GhostOSAuditor",
+    srcs: ["src/**/*.java"],
+    manifest: "AndroidManifest.xml",
+    platform_apis: true,
+    min_sdk_version: "31",
+    java_version: "17",
+    certificate: "platform",
+    system_ext_specific: true,
+}
