@@ -52,6 +52,24 @@ grep -Fq "requires at least 999999999 GB free disk" "$WORK/disk.log"
 test ! -e "$DISK_TARGET"
 test ! -s "$GHOSTOS_REPO_LOG"
 
+# Regression: df -Pk reports KiB. 399 GB must not pass a 400 GB threshold.
+cat > "$WORK/bin/df" <<'MOCK_DF'
+#!/usr/bin/env bash
+printf 'Filesystem 1024-blocks Used Available Capacity Mounted on\n'
+printf '/dev/mock 500000000 100000000 399000000 20%% /\n'
+MOCK_DF
+chmod +x "$WORK/bin/df"
+DISK_399_TARGET="$WORK/disk-399gb"
+if ANDROID_DIR="$DISK_399_TARGET" DEVICE=larry GHOSTOS_MIN_RAM_GIB=1 GHOSTOS_MIN_DISK_GB=400 \
+    bash "$ROOT/scripts/ghostos-build.sh" > "$WORK/disk-399.log" 2>&1; then
+  echo "Build preflight incorrectly accepted 399 GB for a 400 GB minimum" >&2
+  exit 1
+fi
+grep -Fq "requires at least 400 GB free disk" "$WORK/disk-399.log"
+test ! -e "$DISK_399_TARGET"
+test ! -s "$GHOSTOS_REPO_LOG"
+rm "$WORK/bin/df"
+
 # With explicit low test thresholds, preflight passes and repo init/sync is reached.
 # The fake sync exits 23 intentionally so no source tree is downloaded.
 PASS_TARGET="$WORK/preflight-passed"
